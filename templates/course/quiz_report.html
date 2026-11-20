@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'quizzes' %}
+    {% include "course/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    <style>
+        .cq-level-weak { color: #ef4444; font-weight: 800; }
+        .cq-level-average { color: #f59e0b; font-weight: 800; }
+        .cq-level-good { color: #3b82f6; font-weight: 800; }
+        .cq-level-excellent { color: #22c55e; font-weight: 800; }
+        .cq-num { text-align: right; font-variant-numeric: tabular-nums; }
+        .cq-cell { text-align: center; font-weight: 700; color: #1f2937; min-width: 54px; }
+        .cq-cell small { display: block; font-weight: 600; opacity: 0.65; font-size: 10px; }
+        .cq-trend { display: flex; align-items: flex-end; gap: 14px; height: 150px; margin: 10px 0 4px; }
+        .cq-trend div { flex: 1; max-width: 90px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-weight: 800; font-size: 12px; text-align: center; }
+        .cq-trend span { display: block; width: 100%; min-height: 2px; border-radius: 6px 6px 0 0; background: #3b82f6; }
+        .cq-trend-labels { display: flex; gap: 14px; font-size: 11px; opacity: 0.75; }
+        .cq-trend-labels div { flex: 1; max-width: 90px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h3 class="course-section-title" style="margin-top: 0">{{ _('Mock exams') }}</h3>
+    {% if exams %}
+        <div class="problem-rows">
+            {% for quiz in exams %}
+                <a class="pr-row quiz-attempt-row" href="{{ quiz.get_absolute_url() }}">
+                    <span class="pr-main">
+                        <span class="pr-line"><span class="pr-name">{{ quiz.title }}</span></span>
+                        <span class="lesson-sub">
+                            {% if quiz.start_time %}{{ quiz.start_time|date('d/m/Y H:i') }}{% endif %}{% if quiz.end_time %} → {{ quiz.end_time|date('d/m/Y H:i') }}{% endif %}
+                            {% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}
+                        </span>
+                    </span>
+                    <span class="pr-pts">
+                        <span class="cbadge {{ 'cbadge-open' if quiz.current_phase == 'running' else 'cbadge-private' }}">
+                            {% if quiz.current_phase == 'upcoming' %}{{ _('Upcoming') }}{% elif quiz.current_phase == 'running' %}{{ _('Open now') }}{% else %}{{ _('Ended') }}{% endif %}
+                        </span>
+                        {% if can_edit %}<a href="{{ url('quiz_results', quiz.slug) }}" title="{{ _('Results') }}"><i class="fa fa-trophy"></i></a>{% endif %}
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="course-empty course-empty-small"><p>{{ _('This course has no mock exams yet.') }}</p></div>
+    {% endif %}
+
+    {% if can_edit and trend|length > 1 %}
+        <h3 class="course-section-title">{{ _('Average score per exam') }}</h3>
+        <div class="cq-trend">
+            {% for quiz, taken, avg in trend %}
+                <div title="{{ quiz.title }} ({{ taken }})">{{ avg }}<span style="height: {{ (avg * 10)|round|int }}%"></span></div>
+            {% endfor %}
+        </div>
+        <div class="cq-trend-labels">{% for quiz, taken, avg in trend %}<div title="{{ quiz.title }}">{{ quiz.title }}</div>{% endfor %}</div>
+    {% endif %}
+
+    <h3 class="course-section-title">{{ _('Students') if can_edit else _('My results') }}</h3>
+    {% if rows %}
+        <div class="h-scrollable-table">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>{{ _('Student') }}</th>
+                    <th class="cq-num">{{ _('Quizzes done') }}</th>
+                    <th class="cq-num">{{ _('Mock exams') }}</th>
+                    <th class="cq-num">{{ _('Average') }}</th>
+                    <th class="cq-num">{{ _('Best') }}</th>
+                    <th class="cq-num">{{ _('Latest') }}</th>
+                    <th>{{ _('Level') }}</th>
+                    {% if can_edit %}<th class="cq-num">{{ _('Violations') }}</th>{% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ link_user(row.user) }}</td>
+                        <td class="cq-num">{{ row.quizzes_done }}</td>
+                        <td class="cq-num">{{ row.exams }}</td>
+                        <td class="cq-num">{{ row.avg if row.avg is not none else '–' }}</td>
+                        <td class="cq-num">{{ row.best if row.best is not none else '–' }}</td>
+                        <td class="cq-num">{{ row.last if row.last is not none else '–' }}</td>
+                        <td>{% if row.level %}<span class="cq-level-{{ row.level }}">{{ row.level_label }}</span> <small>({{ row.level_score }})</small>{% else %}–{% endif %}</td>
+                        {% if can_edit %}<td class="cq-num">{{ row.violations }}</td>{% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="course-empty course-empty-small"><p>{{ _('No students have joined yet.') }}</p></div>
+    {% endif %}
+
+    {% if can_edit and heatmap and heatmap.tags %}
+        <h3 class="course-section-title">{{ _('Strengths and weaknesses by topic') }}</h3>
+        <p class="qz-note">{{ _('Accuracy weighted by difficulty. Red cells are topics the student struggles with; the first row is the class average.') }}</p>
+        <div class="h-scrollable-table">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>{{ _('Student') }}</th>
+                    {% for name, avg in heatmap.tags %}<th class="cq-num" title="{{ name }}">{{ name|truncate(14) }}</th>{% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><b>{{ _('Class average') }}</b></td>
+                    {% for name, avg in heatmap.tags %}
+                        <td class="cq-cell"{% if avg is not none %} style="background: hsl({{ (avg * 1.2)|round|int }}, 70%, 82%)"{% endif %}>{{ avg ~ '%' if avg is not none else '–' }}</td>
+                    {% endfor %}
+                </tr>
+                {% for student, cells in heatmap.rows %}
+                    <tr>
+                        <td>{{ link_user(student) }}</td>
+                        {% for pct, answered in cells %}
+                            <td class="cq-cell"{% if pct is not none %} style="background: hsl({{ (pct * 1.2)|round|int }}, 70%, 82%)"{% endif %}>{% if pct is not none %}{{ pct }}%<small>{{ answered }}</small>{% else %}–{% endif %}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

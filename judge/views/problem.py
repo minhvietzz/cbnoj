@@ -38,6 +38,7 @@ from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
+from judge.utils.run_service import RUN_LANGUAGES, language_family
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
@@ -334,9 +335,20 @@ class ProblemSubmitMixin:
         except ObjectDoesNotExist:
             has_test_data = self.object.is_manually_managed
 
+        form = self.get_submit_form()
+        user_templates = {}
+        if form is not None:
+            profile = self.request.profile
+            by_family = {'cpp': profile.template_cpp, 'c': profile.template_c,
+                         'py': profile.template_py, 'pas': profile.template_pas}
+            for lang in form.fields['language'].queryset:
+                text = by_family.get(language_family(lang.key))
+                if text and text.strip():
+                    user_templates[lang.id] = text.replace('\r\n', '\n')
         return {
             'has_test_data': has_test_data,
-            'form': self.get_submit_form(),
+            'user_templates': user_templates,
+            'form': form,
             'langs': Language.objects.all(),
             'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
             'submissions_left': self.remaining_submission_count,
@@ -454,6 +466,16 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
 
+    def get_template_names(self):
+        # The old page is the default; a user picks the workspace (statement | editor + try-run) in the profile.
+        if self.request.user.is_authenticated:
+            ui = self.request.profile.problem_ui
+        else:
+            ui = self.request.COOKIES.get('cbnoj_ui', 'old')
+        if ui != 'new' or not getattr(settings, 'RUN_ENABLED', True):
+            return ['problem/problem.html']
+        return ['problem/problem-ws.html']
+
     def get_context_data(self, **kwargs):
         context = super(ProblemDetail, self).get_context_data(**kwargs)
         user = self.request.user
@@ -524,6 +546,7 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
             submit_context = self.get_submit_context()
             context.update(submit_context)
             context['no_judges'] = not context['form'].fields['language'].queryset if context.get('form') else True
+            context['run_language_keys'] = ','.join(sorted(RUN_LANGUAGES))
 
         return context
 

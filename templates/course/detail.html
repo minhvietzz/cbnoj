@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'home' %}
+    {% include "course/tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    <section class="course-hero tone-{{ course_color }}">
+        <div class="course-hero-main">
+            <div class="course-head">
+                <span class="course-badges">
+                    {% if can_access %}<span class="cbadge cbadge-joined">{{ _('Joined') }}</span>{% endif %}
+                    {% if not course.is_public %}<span class="cbadge cbadge-private">{{ _('Private') }}</span>{% endif %}
+                    {% if course.is_open %}
+                        <span class="cbadge cbadge-open">{{ _('Open') }}</span>
+                    {% else %}
+                        <span class="cbadge cbadge-closed">{{ _('Closed') }}</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% if course.about %}
+                <div class="content-description course-about">{{ course.about|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+            {% endif %}
+            <div class="course-meta">
+                {% if teachers %}
+                    <span><i class="fa fa-user"></i>
+                        {% for teacher in teachers %}{{ link_user(teacher) }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    </span>
+                {% endif %}
+                <span><i class="fa fa-book"></i> {{ lesson_count }} {{ _('lessons') }}</span>
+                <span><i class="fa fa-users"></i> {{ student_count }} {{ _('students') }}</span>
+            </div>
+        </div>
+        <div class="course-hero-side">
+            {% if course.image_url %}
+                <img class="course-hero-img" src="{{ course.image_url }}" alt="" onerror="this.remove();">
+            {% else %}
+                <span class="course-hero-initial">{{ course.initial }}</span>
+            {% endif %}
+            {% if can_access %}
+                <div class="course-ring" style="--p: {{ overall_percent }}">
+                    <b>{{ overall_percent }}%</b>
+                </div>
+                <div class="course-ring-caption">{{ overall_solved }}/{{ overall_total }} {{ _('problems solved') }}</div>
+                {% if is_member %}
+                    <form method="post" action="{{ url('course_leave', course.slug) }}" class="course-leave"
+                          onsubmit="return confirm({{ _('Are you sure you want to leave this course?')|htmltojs }});">
+                        {% csrf_token %}
+                        <button type="submit" class="course-leave-btn"><i class="fa fa-sign-out"></i> {{ _('Leave course') }}</button>
+                    </form>
+                {% endif %}
+            {% elif can_join %}
+                <form method="post" action="{{ url('course_join', course.slug) }}">
+                    {% csrf_token %}
+                    <button type="submit" class="course-join">{{ _('Join this course') }}</button>
+                </form>
+            {% elif not request.user.is_authenticated and course.is_open %}
+                <a class="course-join" href="{{ url('auth_login') }}?next={{ request.path|urlencode }}">{{ _('Log in to join') }}</a>
+            {% else %}
+                <div class="course-ring-caption"><i class="fa fa-lock"></i> {{ _('Registration is closed.') }}</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <h3 class="course-section-title">{{ _('Lessons') }}</h3>
+    {% if lessons %}
+        <ol class="lesson-list">
+            {% for lesson in lessons %}
+                {% if can_access %}
+                    <li class="lesson-row{% if not lesson.is_visible %} lesson-hidden{% endif %}">
+                        <a class="lesson-link" href="{{ lesson.get_absolute_url() }}">
+                            <span class="lesson-no">{{ loop.index }}</span>
+                            <span class="lesson-info">
+                                <span class="lesson-title">{{ lesson.title }}{% if not lesson.is_visible %} <small>({{ _('hidden') }})</small>{% endif %}</span>
+                                <span class="lesson-sub">
+                                    {% if lesson.progress.total %}{{ lesson.progress.solved }}/{{ lesson.progress.total }} {{ _('problems solved') }}{% else %}{{ _('Reading only') }}{% endif %}
+                                </span>
+                            </span>
+                            {% if lesson.progress.total %}
+                                <span class="lesson-bar"><i style="width: {{ lesson.progress.percent }}%"></i></span>
+                                <span class="lesson-pct">{{ lesson.progress.percent }}%</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="lesson-row lesson-locked">
+                        <span class="lesson-link">
+                            <span class="lesson-no"><i class="fa fa-lock"></i></span>
+                            <span class="lesson-info"><span class="lesson-title">{{ lesson.title }}</span></span>
+                        </span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    {% else %}
+        <div class="course-empty course-empty-small"><p>{{ _('This course has no lessons yet.') }}</p></div>
+    {% endif %}
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+{% endblock %}

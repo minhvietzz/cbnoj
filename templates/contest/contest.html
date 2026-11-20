@@ -42,9 +42,27 @@
 {% endblock %}
 
 {% block body %}
-    <div id="banner">
+
+    {% if is_in_contest and not request.participation.live %}
+        {% if request.participation.spectate %}{% set ct_state = 'spectate' %}{% else %}{% set ct_state = 'virtual' %}{% endif %}
+    {% elif contest.start_time > now %}{% set ct_state = 'upcoming' %}
+    {% elif contest.end_time < now %}{% set ct_state = 'ended' %}
+    {% else %}{% set ct_state = 'live' %}{% endif %}
+
+    <section id="banner" class="ct-hero ct-{{ ct_state }}">
+        <div class="ct-hero-top">
+            <span class="ct-state">
+                <i class="fa fa-circle"></i>
+                {% if ct_state == 'live' %}{{ _('Live now') }}
+                {% elif ct_state == 'upcoming' %}{{ _('Upcoming') }}
+                {% elif ct_state == 'ended' %}{{ _('Finished') }}
+                {% elif ct_state == 'spectate' %}{{ _('Spectating') }}
+                {% else %}{{ _('Virtual participation') }}{% endif %}
+            </span>
+            {% if contest.is_rated %}<span class="ct-badge"><i class="fa fa-line-chart"></i> {{ _('Rated') }}</span>{% endif %}
+        </div>
         <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.name|urlquote('') }}&amp;iso=
-                {{- (contest.start_time if contest.start_time >= now else contest.end_time)|utc|date('Y-m-d\TH:i:s') }}" class="date">
+                {{- (contest.start_time if contest.start_time >= now else contest.end_time)|utc|date('Y-m-d\TH:i:s') }}" class="date ct-count">
             {%- if is_in_contest and not request.participation.live -%}
                 {% if request.participation.spectate %}
                     {{- _('Spectating, contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}
@@ -71,7 +89,8 @@
                 {% endif %}
             {%- endif -%}
         </a>
-        <div id="time">
+        <div id="time" class="ct-time">
+            <i class="fa fa-clock-o"></i>
             {% with start_time=contest.start_time|date(_("F j, Y, G:i T")) %}
                 {% if contest.time_limit %}
                     {% set end_time=contest.end_time|date(_("F j, Y, G:i T")) %}
@@ -84,7 +103,8 @@
             {% endwith %}
         </div>
         {% if contest.show_short_display %}
-            <div id="details">
+            <details class="ct-rules"><summary><i class="fa fa-list-ul"></i> {{ _('Rules and scoring') }}</summary>
+            <div class="ct-rules-body" id="details">
                 <ul>
                     {% with authors=contest.authors.all().prefetch_related('user') %}
                         {% if not contest.hide_problem_authors and authors %}
@@ -184,174 +204,122 @@
                     {% endif %}
                 </ul>
             </div>
+            </details>
         {% endif %}
-    </div>
+    </section>
 
     {% if is_in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
-        <div class="contest-problems">
-            <h2 style="margin-bottom: 0.2em; float:left;"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
-            {% if can_edit %}
-                <form method="post" action="{{ url('contest_problems_make_public', contest.key) }}" style="display: inline; float:right; margin-left: 10px;">
-                    {% csrf_token %}
-                    <button type="submit" class="button" onclick="return confirm('{{ _('Are you sure you want to make all problems in this contest public?') }}');">
-                        <i class="fa fa-unlock"></i> {{ _('Make All Problems Public') }}
-                    </button>
-                </form>
-            {% endif %}
-            {% if request.user.is_superuser %}
-                <form method="post" action="{{ url('contest_problems_set_source', contest.key) }}" style="display: inline; float:right; margin-left: 10px;">
-                    {% csrf_token %}
-                    <button type="submit" class="button" onclick="return confirm('{{ _('Set this contest as the source of all problems that have no source?') }}');">
-                        <i class="fa fa-link"></i> {{ _('Set Problems Source') }}
-                    </button>
-                </form>
-            {% endif %}
-            {% if can_edit and can_download_data %}
-                <a class="button" style="float:right" href="{{ url('contest_prepare_data', contest.key) }}">{{ _('Download data') }}</a>
-            {% endif %}
-            <table class="table striped">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    {% if request.user.is_authenticated %}
-                        <th><i class="fa fa-check"></i></th>
+        <section class="contest-problems ct-section">
+            <div class="ct-head">
+                <h2 class="ct-h"><i class="fa fa-fw fa-question-circle"></i> {{ _('Problems') }}</h2>
+                <div class="ct-actions">
+                    {% if can_edit and can_download_data %}
+                        <a class="button" href="{{ url('contest_prepare_data', contest.key) }}"><i class="fa fa-download"></i> {{ _('Download data') }}</a>
                     {% endif %}
-                    <th>{{ _('Problem') }}</th>
-                    <th>Time limit</th>
-                    <th>Memory limit</th>
-                    {% if not is_ICPC_format %}
-                        <th>{{ _('Points') }}</th>
+                    {% if request.user.is_superuser %}
+                        <form method="post" action="{{ url('contest_problems_set_source', contest.key) }}">
+                            {% csrf_token %}
+                            <button type="submit" class="button" onclick="return confirm('{{ _('Set this contest as the source of all problems that have no source?') }}');">
+                                <i class="fa fa-link"></i> {{ _('Set Problems Source') }}
+                            </button>
+                        </form>
                     {% endif %}
-                    {% if metadata.has_public_editorials %}
-                        <th>{{ _('Editorials') }}</th>
+                    {% if can_edit %}
+                        <form method="post" action="{{ url('contest_problems_make_public', contest.key) }}">
+                            {% csrf_token %}
+                            <button type="submit" class="button" onclick="return confirm('{{ _('Are you sure you want to make all problems in this contest public?') }}');">
+                                <i class="fa fa-unlock"></i> {{ _('Make All Problems Public') }}
+                            </button>
+                        </form>
                     {% endif %}
-                </tr>
-                </thead>
-                <tbody>
+                </div>
+            </div>
+            <div class="problem-rows ct-problems">
                 {% for problem in contest_problems %}
-                    <tr>
-                        <td style="width: 1em;">{{contest.get_label_for_problem(loop.index0)}}</td>
+                    <div class="pr-row">
+                        <span class="ct-label">{{ contest.get_label_for_problem(loop.index0) }}</span>
                         {% if request.user.is_authenticated %}
-                            {% if problem.id in completed_problem_ids %}
-                                <td style="width: 1em;">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                                        {% if problem.is_public %}
-                                            <i class="solved-problem-color fa fa-check-circle"></i>
-                                        {% else %}
-                                            <i class="solved-problem-color fa fa-lock"></i>
-                                        {% endif %}
-                                    </a>
-                                </td>
-                            {% elif problem.id in attempted_problem_ids %}
-                                <td style="width: 1em;">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                                        {% if problem.is_public %}
-                                            <i class="attempted-problem-color fa fa-frown-o"></i>
-                                        {% else %}
-                                            <i class="attempted-problem-color fa fa-lock"></i>
-                                        {% endif %}
-                                    </a>
-                                </td>
-                            {% else %}
-                                <td style="width: 1em;">
-                                    {% if problem.is_public %}
-                                        <i class="unsolved-problem-color fa"></i>
+                            <span class="pr-solved">
+                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    {% if problem.id in completed_problem_ids %}
+                                        <span class="pr-bubble pr-done"><i class="fa fa-check"></i></span>
+                                    {% elif problem.id in attempted_problem_ids %}
+                                        <span class="pr-bubble pr-tried"><i class="fa fa-frown-o"></i></span>
                                     {% else %}
-                                        <i class="unsolved-problem-color fa fa-lock"></i>
+                                        <span class="pr-bubble pr-todo"></span>
                                     {% endif %}
-                                </td>
-                            {% endif %}
+                                </a>
+                            </span>
                         {% endif %}
-                        <td style="text-align: left; padding-left: 2em;">
-                            {% if can_view_all_problems or problem.is_public %}
-                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
-                            {% else %}
-                                {{ problem.i18n_name or problem.name }}
-                            {% endif %}
-                        </td>
-                        <td> {{ problem.time_limit }} </td>
-                        <td> {{ problem.memory_limit|kbsimpleformat }} </td>
-                        {% if not is_ICPC_format %}
-                            <td>{{ problem.points|floatformat(-2) }}</td>
-                        {% endif %}
-                        {% if metadata.has_public_editorials %}
-                            <td>
-                                {% if problem.is_public and problem.has_public_editorial %}
-                                    <a href="{{ url('problem_editorial', problem.code) }}">{{ _('Editorial') }}</a>
+                        <span class="pr-main">
+                            <span class="pr-line">
+                                {% if can_view_all_problems or problem.is_public %}
+                                    <a class="pr-name" href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                                {% else %}
+                                    <span class="pr-name">{{ problem.i18n_name or problem.name }}</span>
                                 {% endif %}
-                            </td>
+                                {% if not problem.is_public %}<span class="ct-chip ct-chip-lock" title="{{ _('Private') }}"><i class="fa fa-lock"></i></span>{% endif %}
+                            </span>
+                            <span class="ct-chips">
+                                <span class="ct-chip" title="Time limit"><i class="fa fa-clock-o"></i> {{ problem.time_limit|floatformat(-2) }}s</span>
+                                <span class="ct-chip" title="Memory limit"><i class="fa fa-database"></i> {{ problem.memory_limit|kbsimpleformat }}</span>
+                                {% if metadata.has_public_editorials and problem.is_public and problem.has_public_editorial %}
+                                    <a class="ct-chip ct-chip-link" href="{{ url('problem_editorial', problem.code) }}"><i class="fa fa-book"></i> {{ _('Editorial') }}</a>
+                                {% endif %}
+                            </span>
+                        </span>
+                        {% if not is_ICPC_format %}
+                            <span class="pr-pts"><span class="pr-pbubble pb-b" title="{{ _('Points') }}">{{ problem.points|floatformat(-2) }}</span></span>
                         {% endif %}
-                    </tr>
+                    </div>
                 {% endfor %}
-                </tbody>
-            </table>
+            </div>
             {% if can_view_all_problems %}
-            <a class="button" style="width: fit-content" href="{{ url('contest_all_problems', contest.key) }}">{{ _('All problems') }}</a>
+                <div class="ct-foot"><a class="button" href="{{ url('contest_all_problems', contest.key) }}"><i class="fa fa-th-list"></i> {{ _('All problems') }}</a></div>
             {% endif %}
-        </div>
+        </section>
+
         {% if has_announcements or can_edit %}
-        <div class="contest-clartifications">
-            <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Announcements') }}</h2>
-            <table id="contest-clartifications" class="table">
-                <thead>
-                    <tr>
-                        <th>{{ _('When') }}</th>
-                        <th>{{ _('Title') }}</th>
-                        <th>{{ _('Description') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for announcement in announcements %}
-                    <tr>
-                        <td style="width: 15%;">{{ announcement.date|date(_("F j, Y, G:i")) }}</td>
-                        <td style="width: 20%; text-align: left; padding-left: 2em;">
-                            {{ announcement.title }}
-                        </td>
-                        <td style="text-align: left; padding-left: 2em;">
-                            {{ announcement.description|markdown('announcement', MATH_ENGINE)|reference }}
-                        </td>
-                    </tr>
-                {% endfor %}
-                {% if can_edit %}
-                    <tr>
-                        <td colspan="3">
-                            <a class="button" href="{{ url('contest_announce', contest.key) }}">{{ _('Add an announcement') }}</a>
-                        </td>
-                    </tr>
+            <section class="contest-clartifications ct-section">
+                <div class="ct-head">
+                    <h2 class="ct-h"><i class="fa fa-bullhorn"></i> {{ _('Announcements') }}</h2>
+                    {% if can_edit %}
+                        <div class="ct-actions"><a class="button" href="{{ url('contest_announce', contest.key) }}"><i class="fa fa-plus"></i> {{ _('Add an announcement') }}</a></div>
+                    {% endif %}
+                </div>
+                {% if announcements %}
+                    <div class="ct-cards">
+                        {% for announcement in announcements %}
+                            <article class="ct-card">
+                                <header>
+                                    <b>{{ announcement.title }}</b>
+                                    <span class="ct-date"><i class="fa fa-clock-o"></i> {{ announcement.date|date(_("F j, Y, G:i")) }}</span>
+                                </header>
+                                <div class="content-description">{{ announcement.description|markdown('announcement', MATH_ENGINE)|reference }}</div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="ct-empty">{{ _('No announcements yet.') }}</p>
                 {% endif %}
-                </tbody>
-            </table>
-        </div>
+            </section>
         {% endif %}
+
         {% if has_clarifications %}
-        <div class="contest-clartifications">
-            <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Clarifications') }}</h2>
-            <table id="contest-clartifications" class="table">
-                <thead>
-                    <tr>
-                        <th>{{ _('When') }}</th>
-                        <th>{{ _('Problem') }}</th>
-                        <th>{{ _('Description') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for clarification in clarifications %}
-                    <tr>
-                        <td style="width: 15%;">{{ clarification.date|date(_("F j, Y, G:i")) }}</td>
-                        <td style="width: 20%; text-align: left; padding-left: 2em;">
-                            <a href="{{ url('problem_detail', clarification.problem.code) }}"
-                                class="problem">
-                                {{ clarification.problem.name }}
-                            </a>
-                        </td>
-                        <td style="text-align: left; padding-left: 2em;">
-                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            <section class="contest-clartifications ct-section">
+                <div class="ct-head"><h2 class="ct-h"><i class="fa fa-comments-o"></i> {{ _('Clarifications') }}</h2></div>
+                <div class="ct-cards">
+                    {% for clarification in clarifications %}
+                        <article class="ct-card">
+                            <header>
+                                <a href="{{ url('problem_detail', clarification.problem.code) }}" class="problem ct-chip ct-chip-link">{{ clarification.problem.name }}</a>
+                                <span class="ct-date"><i class="fa fa-clock-o"></i> {{ clarification.date|date(_("F j, Y, G:i")) }}</span>
+                            </header>
+                            <div class="content-description">{{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}</div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
         {% endif %}
     {% endif %}
 

@@ -11,7 +11,12 @@ window.MathJax = {
         },
         inlineMath: [
             ['~', '~'],
+            ['$', '$'],
             ['\\(', '\\)']
+        ],
+        displayMath: [
+            ['$$', '$$'],
+            ['\\[', '\\]']
         ]
     },
     options: {

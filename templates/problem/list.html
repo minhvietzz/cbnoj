@@ -158,118 +158,86 @@
             </div>
         </div>
         <div id="content-left" class="problems h-scrollable-table">
-            <table id="problem-table" class="table striped">
-                <thead>
-                <tr>
+            <div id="problem-table" class="problem-rows">
+                <div class="pr-head">
                     {% if request.user.is_authenticated %}
-                        <th class="solved">
-                            <a{% if sort_links.solved %} href="{{ sort_links.solved }}"{% endif %}>
-                                <i class="fa fa-check"></i>{{ sort_order.solved }}
-                            </a>
-                        </th>
+                        <span class="pr-solved">
+                            <a{% if sort_links.solved %} href="{{ sort_links.solved }}"{% endif %}>{{ _('Done') }}{{ sort_order.solved }}</a>
+                        </span>
                     {% endif %}
-                    <th class="problem-code">
-                        <a{% if sort_links.code %} href="{{ sort_links.code }}"{% endif %}>{{ _('ID') }}{{ sort_order.code}}</a>
-                    </th>
-                    <th class="problem-name">
+                    <span class="pr-main">
                         <a{% if sort_links.name %} href="{{ sort_links.name }}"{% endif %}>{{ _('Problem') }}{{ sort_order.name }}</a>
-                    </th>
-                    {% if not show_org_tags %}
-                    <th class="category">
-                        <a{% if sort_links.group %} href="{{ sort_links.group }}"{% endif %}>{{ _('Category') }}{{ sort_order.group }}</a>
-                    </th>
-                    {% endif %}
-                    {% if show_types %}
-                        <th class="types">
-                            <a{% if sort_links.type %} href="{{ sort_links.type }}"{% endif %}>{{ _('Types') }}{{ sort_order.type }}</a>
-                        </th>
-                    {% endif %}
-                    <th class="points">
-                        <a{% if sort_links.points %} href="{{ sort_links.points }}"{% endif %}>{{ _('Points') }}{{ sort_order.points }}</a>
-                    </th>
-                    <th class="ac-rate">
-                        <a{% if sort_links.ac_rate %} href="{{ sort_links.ac_rate }}"{% endif %}>{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
-                    </th>
-                    <th class="users">
-                        <a{% if sort_links.user_count %} href="{{ sort_links.user_count }}"{% endif %}>{{ _('# AC') }}{{ sort_order.user_count }}</a>
-                    </th>
-                    <th class="editorial" title="{{ _('Editorial') }}">
-                        <a{% if sort_links.editorial %} href="{{ sort_links.editorial }}"{% endif %}>
-                            <i class="fa fa-book"></i>{{ sort_order.editorial }}
-                        </a>
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for problem in problems %}
-                    <tr>
-                        {% if request.user.is_authenticated %}
-                            {% if problem.id in completed_problem_ids %}
-                                <td class="solved" solved="1">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                                        {% if problem.is_public %}
-                                            <i class="solved-problem-color fa fa-check-circle"></i>
-                                        {% else %}
-                                            <i class="solved-problem-color fa fa-lock"></i>
-                                        {% endif %}
-                                    </a>
-                                </td>
-                            {% elif problem.id in attempted_problems %}
-                                <td class="solved" solved="0">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                                        {% if problem.is_public %}
-                                            <i class="attempted-problem-color fa fa-frown-o"></i>
-                                        {% else %}
-                                            <i class="attempted-problem-color fa fa-lock"></i>
-                                        {% endif %}
-                                    </a>
-                                </td>
-                            {% else %}
-                                <td class="solved" solved="-1">
-                                    {% if problem.is_public %}
-                                        <i class="unsolved-problem-color fa"></i>
-                                    {% else %}
-                                        <i class="unsolved-problem-color fa fa-lock"></i>
-                                    {% endif %}
-                                </td>
-                            {% endif %}
-                        {% endif %}
-                        <td class="problem-code">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
-                        </td>
-                        <td class="problem-name">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
-                        </td>
+                        <a{% if sort_links.code %} href="{{ sort_links.code }}"{% endif %}>{{ _('ID') }}{{ sort_order.code }}</a>
                         {% if not show_org_tags %}
-                        <td class="category">{{ problem.group.full_name }}</td>
+                            <a{% if sort_links.group %} href="{{ sort_links.group }}"{% endif %}>{{ _('Category') }}{{ sort_order.group }}</a>
                         {% endif %}
                         {% if show_types %}
-                            <td class="types">
-                                {% for type in problem.types_list %}
-                                    <span class="type-tag">{{ type }}</span>{% if not loop.last %}, {% endif %}
-                                {% endfor %}
-                            </td>
+                            <a{% if sort_links.type %} href="{{ sort_links.type }}"{% endif %}>{{ _('Types') }}{{ sort_order.type }}</a>
                         {% endif %}
-                        <td class="p">{{ problem.points|floatformat(2) }}</td>
-                        <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
-                        <td class="users">
-                            <a href="{{ url('ranked_submissions', problem.code) if problem.is_public else url('chronological_submissions', problem.code) }}">
-                                {{ problem.user_count }}
-                            </a>
-                        </td>
-                        <td>
+                    </span>
+                    <span class="pr-pts">
+                        <a{% if sort_links.points %} href="{{ sort_links.points }}"{% endif %}>{{ _('Points') }}{{ sort_order.points }}</a>
+                    </span>
+                    <span class="pr-ac">
+                        <a{% if sort_links.ac_rate %} href="{{ sort_links.ac_rate }}"{% endif %}>{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
+                    </span>
+                    <span class="pr-users">
+                        <a{% if sort_links.user_count %} href="{{ sort_links.user_count }}"{% endif %}>{{ _('# AC') }}{{ sort_order.user_count }}</a>
+                    </span>
+                    <span class="pr-ed" title="{{ _('Editorial') }}">
+                        <a{% if sort_links.editorial %} href="{{ sort_links.editorial }}"{% endif %}><i class="fa fa-book"></i>{{ sort_order.editorial }}</a>
+                    </span>
+                </div>
+                {% for problem in problems %}
+                    <div class="pr-row">
+                        {% if request.user.is_authenticated %}
+                            <span class="pr-solved">
+                                {% if problem.id in completed_problem_ids %}
+                                    <a class="pr-bubble pr-done" href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                        {% if problem.is_public %}<i class="fa fa-check"></i>{% else %}<i class="fa fa-lock"></i>{% endif %}
+                                    </a>
+                                {% elif problem.id in attempted_problems %}
+                                    <a class="pr-bubble pr-tried" href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                        {% if problem.is_public %}<i class="fa fa-frown-o"></i>{% else %}<i class="fa fa-lock"></i>{% endif %}
+                                    </a>
+                                {% else %}
+                                    <span class="pr-bubble pr-todo">{% if not problem.is_public %}<i class="fa fa-lock"></i>{% endif %}</span>
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                        <span class="pr-main">
+                            <span class="pr-line">
+                                <a class="pr-name" href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                                <a class="pr-code" href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
+                            </span>
+                            <span class="pr-tags">
+                                {% if not show_org_tags %}<span class="cat-pill">{{ problem.group.full_name }}</span>{% endif %}
+                                {% if show_types %}
+                                    {% for type in problem.types_list %}<span class="type-tag">{{ type }}</span>{% endfor %}
+                                {% endif %}
+                            </span>
+                        </span>
+                        <span class="pr-pts">
+                            {% set pts = problem.points %}
+                            <span class="pr-pbubble {{ 'pb-a' if pts <= 2 else ('pb-b' if pts <= 4 else ('pb-c' if pts <= 6 else 'pb-d')) }}">{{ pts|floatformat(2) }}</span>
+                        </span>
+                        <span class="pr-ac">
+                            <b>{{ problem.ac_rate|floatformat(1) }}%</b>
+                            <span class="pr-bar"><i style="width: {{ problem.ac_rate|round|int }}%"></i></span>
+                        </span>
+                        <span class="pr-users">
+                            <a href="{{ url('ranked_submissions', problem.code) if problem.is_public else url('chronological_submissions', problem.code) }}">{{ problem.user_count }}</a>
+                        </span>
+                        <span class="pr-ed">
                             {% if problem.has_public_editorial %}
-                                <a href="{{ url('problem_editorial', problem.code) }}">
-                                    <i class="has-editorial-color fa fa-check-circle"></i>
-                                </a>
+                                <a href="{{ url('problem_editorial', problem.code) }}"><i class="has-editorial-color fa fa-check-circle"></i></a>
                             {% else %}
                                 <i class="no-editorial-color fa fa-minus-circle"></i>
                             {% endif %}
-                        </td>
-                    </tr>
+                        </span>
+                    </div>
                 {% endfor %}
-                </tbody>
-            </table>
+            </div>
         </div>
     </div>
    {% if page_obj.has_other_pages() %}

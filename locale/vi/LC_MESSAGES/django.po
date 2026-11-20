@@ -136,7 +136,7 @@ msgstr "Bài"
 #: templates/contest/edit.html:410 templates/contest/edit.html:416
 #: templates/organization/tags.html:120 templates/problem/problem.html:409
 msgid "Problems"
-msgstr "Bài"
+msgstr "Bài tập"
 
 #: judge/admin/contest.py:79 judge/admin/submission.py:250
 #: templates/admin/judge/submission/change_form.html:14
@@ -719,7 +719,7 @@ msgstr "IOI (trước 2016)"
 
 #: judge/contest_format/vnoj.py:43
 msgid "VNOJ"
-msgstr "VNOJ"
+msgstr "CBNoj"
 
 #: judge/custom_translations.py:11
 #, python-format
@@ -1411,7 +1411,7 @@ msgid ""
 "for ICPC and VNOJ format."
 msgstr ""
 "Nếu được thiết lập, bảng xếp hạng sẽ dược đóng băng trong X phút cuối. Chỉ "
-"hỗ trợ format ICPC và VNOJ."
+"hỗ trợ format ICPC và CBNoj."
 
 #: judge/models/contest.py:101 judge/models/problem.py:216
 msgid "publicly visible"
@@ -9671,8 +9671,8 @@ msgstr "URL rút gọn này không hoạt động."
 #~ msgid "???"
 #~ msgstr "???"
 
-#~ msgid "Live"
-#~ msgstr "Trực tuyến"
+msgid "Live"
+msgstr "Trực tiếp"
 
 #, python-format
 #~ msgid "Storage Dashboard - %s"
@@ -9764,3 +9764,1867 @@ msgstr "URL rút gọn này không hoạt động."
 
 #~ msgid "Maximum single-case runtime:"
 #~ msgstr "Thời gian chạy test lâu nhất:"
+
+msgid "Courses"
+msgstr "Khóa học"
+
+msgid "Available courses"
+msgstr "Khóa học có sẵn"
+
+msgid "My courses"
+msgstr "Khóa học của tôi"
+
+msgid "Search courses..."
+msgstr "Tìm khóa học..."
+
+msgid "Joined"
+msgstr "Đã tham gia"
+
+msgid "Private"
+msgstr "Riêng tư"
+
+msgid "Open"
+msgstr "Mở"
+
+msgid "Closed"
+msgstr "Đóng"
+
+msgid "lessons"
+msgstr "bài học"
+
+msgid "students"
+msgstr "học viên"
+
+msgid "No courses yet"
+msgstr "Chưa có khóa học nào"
+
+msgid "You have not joined any course."
+msgstr "Bạn chưa tham gia khóa học nào."
+
+msgid "Courses will appear here once they are published."
+msgstr "Các khóa học sẽ hiện ở đây khi được công bố."
+
+msgid "Course home"
+msgstr "Trang khóa học"
+
+msgid "problems solved"
+msgstr "bài đã giải"
+
+msgid "Join this course"
+msgstr "Tham gia khóa học"
+
+msgid "Log in to join"
+msgstr "Đăng nhập để tham gia"
+
+msgid "Registration is closed."
+msgstr "Khóa học đã đóng đăng ký."
+
+msgid "Lessons"
+msgstr "Bài học"
+
+msgid "Reading only"
+msgstr "Chỉ có lý thuyết"
+
+msgid "This course has no lessons yet."
+msgstr "Khóa học này chưa có bài học."
+
+msgid "Lesson"
+msgstr "Bài học"
+
+msgid "This lesson has no reading material."
+msgstr "Bài học này chưa có nội dung lý thuyết."
+
+msgid "Practice problems"
+msgstr "Bài tập thực hành"
+
+msgid "Total"
+msgstr "Tổng"
+
+msgid "No students have joined yet."
+msgstr "Chưa có học viên nào tham gia."
+
+msgid "Cannot join this course"
+msgstr "Không thể tham gia khóa học"
+
+msgid "This course is not open for registration."
+msgstr "Khóa học này không mở đăng ký."
+
+msgid "Student"
+msgstr "Học viên"
+
+msgid "Assistant"
+msgstr "Trợ giảng"
+
+msgid "Grades"
+msgstr "Điểm"
+
+msgid "0 means no time limit."
+msgstr "0 là không giới hạn thời gian."
+
+msgid "0 means unlimited attempts."
+msgstr "0 là không giới hạn số lần làm."
+
+msgid "A question without options is a short-answer question; [ans] lists the accepted answers separated by |."
+msgstr "Câu hỏi không có đáp án A. B. là câu trả lời ngắn; [ans] ghi các đáp án chấp nhận, cách nhau bởi dấu |."
+
+msgid "Accepted answers"
+msgstr "Đáp án chấp nhận"
+
+msgid "All quizzes"
+msgstr "Tất cả đề"
+
+msgid "Attach to course lesson (optional)"
+msgstr "Gắn vào bài học của khóa (không bắt buộc)"
+
+msgid "Attempt"
+msgstr "Lần làm"
+
+msgid "Back to edit"
+msgstr "Quay lại chỉnh sửa"
+
+msgid "Back to quiz"
+msgstr "Về đề trắc nghiệm"
+
+msgid "Check and preview"
+msgstr "Kiểm tra và xem trước"
+
+msgid "Choose one answer"
+msgstr "Chọn một đáp án"
+
+msgid "Continue attempt"
+msgstr "Làm tiếp"
+
+msgid "Correct"
+msgstr "Đúng"
+
+msgid "Could not save"
+msgstr "Không lưu được"
+
+msgid "Danger zone"
+msgstr "Vùng nguy hiểm"
+
+msgid "Delete quiz"
+msgstr "Xóa đề"
+
+msgid "Delete this quiz and all its attempts?"
+msgstr "Xóa đề này cùng toàn bộ lượt làm bài?"
+
+msgid "Do not use Word automatic numbering for A. B. C. — type the letters. Old .doc files must be saved as .docx."
+msgstr "Không dùng danh sách tự đánh số của Word cho A. B. C. — hãy gõ chữ cái. File .doc cũ phải lưu lại thành .docx."
+
+msgid "Download the sample .docx"
+msgstr "Tải file .docx mẫu"
+
+msgid "Explanation"
+msgstr "Giải thích"
+
+msgid "Log in to take this quiz"
+msgstr "Đăng nhập để làm bài"
+
+msgid "Maximum attempts (0 = unlimited)"
+msgstr "Số lần làm tối đa (0 = không giới hạn)"
+
+msgid "Multiple choice"
+msgstr "Nhiều đáp án đúng"
+
+msgid "My attempts"
+msgstr "Bài đã làm"
+
+msgid "My quizzes"
+msgstr "Đề của tôi"
+
+msgid "No one has finished this quiz yet."
+msgstr "Chưa ai hoàn thành đề này."
+
+msgid "No quizzes yet"
+msgstr "Chưa có đề trắc nghiệm"
+
+msgid "No time limit"
+msgstr "Không giới hạn thời gian"
+
+msgid "Not answered"
+msgstr "Chưa trả lời"
+
+msgid "Notes"
+msgstr "Ghi chú"
+
+msgid "Only alphanumeric and hyphens"
+msgstr "Chỉ gồm chữ, số và dấu gạch ngang"
+
+msgid "Optional. Members of the course can take it even if it is not public."
+msgstr "Không bắt buộc. Thành viên khóa học vẫn làm được dù đề không công khai."
+
+msgid "Or paste the quiz text"
+msgstr "Hoặc dán nội dung đề vào đây"
+
+msgid "Publicly visible"
+msgstr "Hiển thị công khai"
+
+msgid "Question"
+msgstr "Câu"
+
+msgid "Questions"
+msgstr "Câu hỏi"
+
+msgid "Quiz file (.docx, .txt, .md)"
+msgstr "File đề (.docx, .txt, .md)"
+
+msgid "Quiz file format"
+msgstr "Định dạng file đề"
+
+msgid "Quizzes"
+msgstr "Trắc nghiệm"
+
+msgid "Quizzes will appear here once they are published."
+msgstr "Các đề trắc nghiệm sẽ hiện ở đây khi được công bố."
+
+msgid "Replace questions"
+msgstr "Thay bộ câu hỏi"
+
+msgid "Save changes"
+msgstr "Lưu thay đổi"
+
+msgid "Save quiz"
+msgstr "Lưu đề"
+
+msgid "Saved"
+msgstr "Đã lưu"
+
+msgid "Saving..."
+msgstr "Đang lưu..."
+
+msgid "Search quizzes..."
+msgstr "Tìm đề trắc nghiệm..."
+
+msgid "Select all correct answers"
+msgstr "Chọn tất cả đáp án đúng"
+
+msgid "Short answer"
+msgstr "Trả lời ngắn"
+
+msgid "Short answer only: one accepted answer per line."
+msgstr "Chỉ cho câu trả lời ngắn: mỗi dòng một đáp án chấp nhận."
+
+msgid "Show correct answers after submitting"
+msgstr "Hiện đáp án đúng sau khi nộp bài"
+
+msgid "Shuffle options"
+msgstr "Đảo thứ tự đáp án"
+
+msgid "Shuffle questions"
+msgstr "Đảo thứ tự câu hỏi"
+
+msgid "Shuffled"
+msgstr "Đảo thứ tự"
+
+msgid "Single choice"
+msgstr "Một đáp án đúng"
+
+msgid "Some questions are unanswered. Submit anyway?"
+msgstr "Còn câu chưa trả lời. Vẫn nộp bài?"
+
+msgid "Start quiz"
+msgstr "Bắt đầu làm bài"
+
+msgid "The author has chosen not to show the correct answers."
+msgstr "Người ra đề chọn không hiển thị đáp án đúng."
+
+msgid "The existing questions of this quiz will be replaced. Old attempts keep their scores but their answer review will no longer match."
+msgstr "Các câu hỏi hiện có của đề sẽ bị thay thế. Các lượt làm cũ vẫn giữ điểm nhưng phần xem lại đáp án sẽ không còn khớp."
+
+msgid "The file is larger than 5 MB."
+msgstr "File lớn hơn 5 MB."
+
+msgid "The quiz has errors, fix them and upload again"
+msgstr "Đề có lỗi, hãy sửa rồi tải lên lại"
+
+msgid "This quiz has no questions yet."
+msgstr "Đề này chưa có câu hỏi."
+
+msgid "Time limit (minutes, 0 = none)"
+msgstr "Thời gian làm bài (phút, 0 = không giới hạn)"
+
+msgid "Top scores"
+msgstr "Điểm cao nhất"
+
+msgid "Type your answer"
+msgstr "Nhập câu trả lời"
+
+msgid "Unlimited attempts"
+msgstr "Không giới hạn số lần"
+
+msgid "Upload a file or paste the quiz text."
+msgstr "Hãy tải file lên hoặc dán nội dung đề."
+
+msgid "Upload quiz"
+msgstr "Tải đề lên"
+
+msgid "View quiz"
+msgstr "Xem đề"
+
+msgid "Write the quiz in Word (.docx), or in a .txt/.md file. Put a marker at the start of each line:"
+msgstr "Soạn đề trong Word (.docx), hoặc file .txt/.md. Đặt ký hiệu ở đầu dòng:"
+
+msgid "You do not have permission to upload quizzes."
+msgstr "Bạn không có quyền tải đề lên."
+
+msgid "You have not finished any attempt yet."
+msgstr "Bạn chưa hoàn thành lượt làm nào."
+
+msgid "You have not taken any quiz."
+msgstr "Bạn chưa làm đề nào."
+
+msgid "You have not uploaded any quiz."
+msgstr "Bạn chưa tải đề nào lên."
+
+msgid "You have used all attempts for this quiz."
+msgstr "Bạn đã dùng hết số lần làm của đề này."
+
+msgid "You have used all attempts."
+msgstr "Bạn đã dùng hết số lần làm."
+
+msgid "Your answer"
+msgstr "Câu trả lời của bạn"
+
+msgid "Your attempts"
+msgstr "Các lần làm của bạn"
+
+msgid "accepted answers"
+msgstr "đáp án chấp nhận"
+
+msgid "answered"
+msgstr "đã trả lời"
+
+msgid "attempts"
+msgstr "lần làm"
+
+msgid "attempts left"
+msgstr "lần làm còn lại"
+
+msgid "correct"
+msgstr "đúng"
+
+msgid "correct letter, e.g. B. Several letters (B, D) make a multiple-answer question"
+msgstr "chữ cái đáp án đúng, ví dụ B. Nhiều chữ cái (B, D) là câu nhiều đáp án đúng"
+
+msgid "explanation (optional)"
+msgstr "giải thích (không bắt buộc)"
+
+msgid "finished attempts"
+msgstr "lượt hoàn thành"
+
+msgid "line"
+msgstr "dòng"
+
+msgid "people"
+msgstr "người"
+
+msgid "points of the question (optional, default 1)"
+msgstr "điểm của câu (không bắt buộc, mặc định 1)"
+
+msgid "questions"
+msgstr "câu hỏi"
+
+msgid "quizzes"
+msgstr "đề trắc nghiệm"
+
+msgid "starts a question"
+msgstr "bắt đầu một câu hỏi"
+
+msgid "the options, typed by hand"
+msgstr "các đáp án, gõ tay"
+
+msgid "Text before the first [qus] is ignored."
+msgstr "Văn bản trước [qus] đầu tiên bị bỏ qua."
+
+msgid "[pts] must be a non-negative number."
+msgstr "[pts] phải là số không âm."
+
+msgid "Unexpected text after [ans] is ignored."
+msgstr "Văn bản sau [ans] bị bỏ qua."
+
+msgid "The question text is empty."
+msgstr "Nội dung câu hỏi đang trống."
+
+msgid "A choice question needs at least 2 options (A, B, ...)."
+msgstr "Câu trắc nghiệm cần ít nhất 2 đáp án (A, B, ...)."
+
+msgid "Missing [ans] with the correct option letter(s)."
+msgstr "Thiếu [ans] ghi chữ cái đáp án đúng."
+
+msgid "No valid correct option."
+msgstr "Không có đáp án đúng hợp lệ."
+
+msgid "A question without options needs [ans] with the accepted answer(s)."
+msgstr "Câu không có đáp án A. B. cần [ans] ghi các đáp án chấp nhận."
+
+msgid "No questions found. Each question must start with [qus]."
+msgstr "Không tìm thấy câu hỏi nào. Mỗi câu phải bắt đầu bằng [qus]."
+
+msgid "not a valid .docx file (save the document as .docx, not .doc)"
+msgstr "không phải file .docx hợp lệ (hãy lưu tài liệu thành .docx, không phải .doc)"
+
+msgid "cannot read the document content"
+msgstr "không đọc được nội dung tài liệu"
+
+msgid "old .doc files are not supported: open it in Word and save as .docx"
+msgstr "không hỗ trợ file .doc cũ: hãy mở bằng Word và lưu thành .docx"
+
+msgid "unsupported file type, use .docx, .txt or .md"
+msgstr "định dạng file không được hỗ trợ, hãy dùng .docx, .txt hoặc .md"
+
+msgid "cannot decode the file"
+msgstr "không đọc được mã hóa của file"
+
+msgid "Question bank"
+msgstr "Ngân hàng đề"
+
+msgid "You do not have permission to use the question bank."
+msgstr "Bạn không có quyền dùng ngân hàng đề."
+
+msgid "Select at least one question first."
+msgstr "Hãy chọn ít nhất một câu hỏi."
+
+msgid "%(n)d questions deleted."
+msgstr "Đã xóa %(n)d câu hỏi."
+
+msgid "You can only delete questions you added."
+msgstr "Bạn chỉ xóa được các câu hỏi do mình thêm."
+
+msgid "Enter a tag name."
+msgstr "Hãy nhập tên thẻ."
+
+msgid "Tags added to %(n)d questions."
+msgstr "Đã gắn thẻ cho %(n)d câu hỏi."
+
+msgid "Import to question bank"
+msgstr "Nhập vào ngân hàng đề"
+
+msgid "%(added)d new questions were added to the question bank (%(skipped)d already existed)."
+msgstr "Đã thêm %(added)d câu hỏi mới vào ngân hàng đề (%(skipped)d câu đã có sẵn)."
+
+msgid "Edit bank question"
+msgstr "Sửa câu hỏi trong ngân hàng"
+
+msgid "Exactly one question is expected here."
+msgstr "Ở đây chỉ nhập đúng một câu hỏi."
+
+msgid "Another question in the bank is identical (#%(id)d)."
+msgstr "Ngân hàng đã có câu hỏi giống hệt (#%(id)d)."
+
+msgid "Question saved."
+msgstr "Đã lưu câu hỏi."
+
+msgid "Build a quiz from the bank"
+msgstr "Soạn đề từ ngân hàng"
+
+msgid "Only %(n)d matching questions were available."
+msgstr "Chỉ có %(n)d câu phù hợp."
+
+msgid "%(n)d random questions added."
+msgstr "Đã thêm %(n)d câu ngẫu nhiên."
+
+msgid "Add some questions first."
+msgstr "Hãy thêm câu hỏi trước."
+
+msgid "Quiz created with %(n)d questions."
+msgstr "Đã tạo đề với %(n)d câu hỏi."
+
+msgid "Also add the questions to the question bank"
+msgstr "Đồng thời thêm các câu hỏi vào ngân hàng đề"
+
+msgid "Extra question bank tags (comma separated)"
+msgstr "Thẻ bổ sung cho ngân hàng đề (cách nhau bằng dấu phẩy)"
+
+msgid "questions in the bank"
+msgstr "câu hỏi trong ngân hàng"
+
+msgid "Questions from every uploaded quiz land here automatically. Pick some and build a new quiz in a few clicks."
+msgstr "Câu hỏi từ mọi đề tải lên được gom về đây tự động. Chọn vài câu là soạn được đề mới chỉ với vài cú nhấp."
+
+msgid "Import questions"
+msgstr "Nhập câu hỏi"
+
+msgid "Build a quiz"
+msgstr "Soạn đề"
+
+msgid "Search question text..."
+msgstr "Tìm theo nội dung câu hỏi..."
+
+msgid "All types"
+msgstr "Tất cả loại"
+
+msgid "Any difficulty"
+msgstr "Mọi độ khó"
+
+msgid "Unrated"
+msgstr "Chưa phân loại"
+
+msgid "Easy"
+msgstr "Dễ"
+
+msgid "Medium"
+msgstr "Trung bình"
+
+msgid "Hard"
+msgstr "Khó"
+
+msgid "Mine only"
+msgstr "Chỉ của tôi"
+
+msgid "matching questions"
+msgstr "câu phù hợp"
+
+msgid "Select"
+msgstr "Chọn"
+
+msgid "Select all on this page"
+msgstr "Chọn cả trang"
+
+msgid "selected"
+msgstr "đã chọn"
+
+msgid "Add to new quiz"
+msgstr "Thêm vào đề mới"
+
+msgid "Add tag"
+msgstr "Gắn thẻ"
+
+msgid "Delete the selected questions from the bank?"
+msgstr "Xóa các câu hỏi đã chọn khỏi ngân hàng?"
+
+msgid "The question bank is empty"
+msgstr "Ngân hàng đề đang trống"
+
+msgid "Upload a quiz or import a file and its questions will be collected here."
+msgstr "Tải đề lên hoặc nhập file, các câu hỏi sẽ được gom về đây."
+
+msgid "Import into the question bank"
+msgstr "Nhập vào ngân hàng đề"
+
+msgid "Upload a quiz file. Every question is filtered out of it and stored in the bank; questions that are already in the bank are skipped automatically."
+msgstr "Tải file đề lên. Mọi câu hỏi được lọc ra và lưu vào ngân hàng; câu đã có sẵn sẽ tự động bị bỏ qua."
+
+msgid "topics separated by commas, used to filter the bank (optional)"
+msgstr "chủ đề cách nhau bằng dấu phẩy, dùng để lọc ngân hàng (không bắt buộc)"
+
+msgid "difficulty 1 easy, 2 medium, 3 hard (optional)"
+msgstr "độ khó 1 dễ, 2 trung bình, 3 khó (không bắt buộc)"
+
+msgid "explanation and points (optional)"
+msgstr "giải thích và điểm (không bắt buộc)"
+
+msgid "The file has errors, fix them and upload again"
+msgstr "File có lỗi, hãy sửa rồi tải lên lại"
+
+msgid "Extra tags for all questions (comma separated)"
+msgstr "Thẻ bổ sung cho mọi câu (cách nhau bằng dấu phẩy)"
+
+msgid "Ready to import"
+msgstr "Sẵn sàng nhập"
+
+msgid "questions found"
+msgstr "câu hỏi tìm thấy"
+
+msgid "new"
+msgstr "mới"
+
+msgid "already in the bank"
+msgstr "đã có trong ngân hàng"
+
+msgid "repeated in this file"
+msgstr "lặp lại trong file này"
+
+msgid "Questions that already exist are skipped (their tags are still merged)."
+msgstr "Câu đã tồn tại sẽ bị bỏ qua (thẻ của chúng vẫn được gộp)."
+
+msgid "Add to the bank"
+msgstr "Thêm vào ngân hàng"
+
+msgid "The question is written in the same format as the upload file. Change the text, options, [ans], [tag] or [lvl] lines and save."
+msgstr "Câu hỏi được viết theo đúng định dạng file tải lên. Sửa nội dung, đáp án, dòng [ans], [tag] hoặc [lvl] rồi lưu."
+
+msgid "Selected questions"
+msgstr "Các câu đã chọn"
+
+msgid "Tick questions to remove them. The number on the right is the points of the question in this quiz."
+msgstr "Tick các câu để loại bỏ. Số bên phải là điểm của câu trong đề này."
+
+msgid "Remove ticked"
+msgstr "Bỏ các câu đã tick"
+
+msgid "Clear all"
+msgstr "Xóa tất cả"
+
+msgid "No questions selected yet. Add some from the bank or pick random ones."
+msgstr "Chưa chọn câu nào. Hãy chọn từ ngân hàng hoặc thêm ngẫu nhiên."
+
+msgid "Choose from the bank"
+msgstr "Chọn từ ngân hàng"
+
+msgid "Add random questions"
+msgstr "Thêm câu ngẫu nhiên"
+
+msgid "How many"
+msgstr "Số lượng"
+
+msgid "Any tag"
+msgstr "Thẻ bất kỳ"
+
+msgid "Add random"
+msgstr "Thêm ngẫu nhiên"
+
+msgid "Quiz settings"
+msgstr "Cài đặt đề"
+
+msgid "Mix the order of the selected questions"
+msgstr "Trộn thứ tự các câu đã chọn"
+
+msgid "Create quiz"
+msgstr "Tạo đề"
+
+msgid "[lvl] must be 1, 2 or 3 (easy, medium, hard)."
+msgstr "[lvl] phải là 1, 2 hoặc 3 (dễ, trung bình, khó)."
+
+msgid "question bank tag"
+msgstr "thẻ ngân hàng đề"
+
+msgid "difficulty"
+msgstr "độ khó"
+
+msgid "Lesson tools"
+msgstr "Công cụ bài học"
+
+msgid "All lessons"
+msgstr "Danh sách bài học"
+
+msgid "Previous lesson"
+msgstr "Bài trước"
+
+msgid "Next lesson"
+msgstr "Bài sau"
+
+msgid "Back to top"
+msgstr "Lên đầu trang"
+
+msgid "Edit this lesson"
+msgstr "Sửa bài này"
+
+msgid "Contents"
+msgstr "Nội dung"
+
+msgid "Course menu"
+msgstr "Menu khóa học"
+
+msgid "Memory"
+msgstr "Bộ nhớ"
+
+msgid "Submission"
+msgstr "Bài nộp"
+
+msgid "by"
+msgstr "bởi"
+
+msgid "Done"
+msgstr "Xong"
+
+msgid "Welcome to %(site)s!"
+msgstr "Chào mừng bạn đến với %(site)s!"
+
+msgid "Thanks for creating an account. Confirm your email address to start solving problems."
+msgstr "Cảm ơn bạn đã tạo tài khoản. Hãy xác nhận địa chỉ email để bắt đầu giải bài."
+
+msgid "Activate my account"
+msgstr "Kích hoạt tài khoản"
+
+msgid "This link works for %(days)d days."
+msgstr "Liên kết có hiệu lực trong %(days)d ngày."
+
+msgid "If the button does not work, copy this address into your browser:"
+msgstr "Nếu nút không bấm được, hãy sao chép địa chỉ sau vào trình duyệt:"
+
+msgid "If you did not create this account, you can safely ignore this email."
+msgstr "Nếu bạn không tạo tài khoản này, bạn có thể bỏ qua email này."
+
+msgid "Need help? Use the \"Report an issue\" link on the website."
+msgstr "Cần hỗ trợ? Hãy dùng mục \"Báo cáo vấn đề\" trên website."
+
+msgid "Reset your password"
+msgstr "Đặt lại mật khẩu của bạn"
+
+msgid "We received a request to reset the password of the account \"%(username)s\"."
+msgstr "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản \"%(username)s\"."
+
+msgid "Reset password"
+msgstr "Đặt lại mật khẩu"
+
+msgid "If you did not ask for this, you can ignore this email; your password will not change."
+msgstr "Nếu bạn không yêu cầu việc này, hãy bỏ qua email này; mật khẩu của bạn sẽ không thay đổi."
+
+msgid "Server status"
+msgstr "Trạng thái máy chủ"
+
+msgid "Resources"
+msgstr "Tài nguyên"
+
+msgid "Live updates"
+msgstr "Cập nhật trực tiếp"
+
+msgid "refreshes every 4 seconds"
+msgstr "tự làm mới mỗi 4 giây"
+
+msgid "cores"
+msgstr "nhân"
+
+msgid "Load average"
+msgstr "Tải trung bình"
+
+msgid "Available"
+msgstr "Khả dụng"
+
+msgid "Cache"
+msgstr "Bộ nhớ đệm"
+
+msgid "Disk"
+msgstr "Ổ cứng"
+
+msgid "Free"
+msgstr "Còn trống"
+
+msgid "days"
+msgstr "ngày"
+
+msgid "Swap"
+msgstr "Swap"
+
+msgid "Not used"
+msgstr "Không dùng"
+
+msgid "Judges online"
+msgstr "Máy chấm online"
+
+msgid "Disabled"
+msgstr "Đã tắt"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "Top processes by memory"
+msgstr "Tiến trình dùng nhiều RAM nhất"
+
+msgid "Connection lost"
+msgstr "Mất kết nối"
+
+msgid "You do not have permission to view the server status."
+msgstr "Bạn không có quyền xem trạng thái máy chủ."
+
+# --- Quiz, mock exam and practice (added by the exam feature) ---
+
+#, python-format
+msgid "%(n)d attempts submitted."
+msgstr "Đã nộp %(n)d bài làm."
+
+#, python-format
+msgid "%(n)d attempts updated."
+msgstr "Đã cập nhật %(n)d bài làm."
+
+#, python-format
+msgid "%(n)d automatically submitted attempts were reopened."
+msgstr "Đã mở lại %(n)d bài bị tự động nộp."
+
+msgid "0 means never auto-submit."
+msgstr "0 nghĩa là không bao giờ tự nộp bài."
+
+msgid "A mock exam must belong to a course."
+msgstr "Đề thi thử phải thuộc một khóa học."
+
+msgid "A mock exam needs a start and an end time."
+msgstr "Đề thi thử cần có giờ bắt đầu và giờ kết thúc."
+
+msgid "Accuracy per question"
+msgstr "Tỉ lệ đúng theo từng câu"
+
+msgid "Accuracy weighted by difficulty. Red cells are topics the student struggles with; the first row is the class average."
+msgstr "Độ chính xác có tính trọng số theo độ khó. Ô màu đỏ là chủ đề học sinh còn yếu; dòng đầu là trung bình cả lớp."
+
+msgid "Add time for everyone"
+msgstr "Cộng giờ cho cả phòng"
+
+msgid "Add time to selected"
+msgstr "Cộng giờ cho các bài đã chọn"
+
+#, python-format
+msgid "Added %(m)d minutes to %(n)d attempts."
+msgstr "Đã cộng %(m)d phút cho %(n)d bài làm."
+
+#, python-format
+msgid "Added %(n)d minutes for everyone."
+msgstr "Đã cộng %(n)d phút cho tất cả thí sinh."
+
+msgid "Added by a teacher during the exam, e.g. after an outage."
+msgstr "Giáo viên cộng thêm trong lúc thi, ví dụ sau khi gặp sự cố."
+
+msgid "After the exam window closes"
+msgstr "Sau khi đóng đề"
+
+msgid "Any"
+msgstr "Bất kỳ"
+
+msgid "Applied informatics"
+msgstr "Tin học ứng dụng"
+
+msgid "Average"
+msgstr "Trung bình"
+
+msgid "Average exam score"
+msgstr "Điểm thi thử trung bình"
+
+msgid "Average score per exam"
+msgstr "Điểm trung bình theo từng đề"
+
+msgid "Back to the exam"
+msgstr "Quay lại bài thi"
+
+msgid "Behaviour"
+msgstr "Cách hoạt động"
+
+msgid "Best exam score"
+msgstr "Điểm thi thử cao nhất"
+
+msgid "Blocked shortcut"
+msgstr "Phím tắt bị chặn"
+
+msgid "Browse quizzes"
+msgstr "Xem các bài trắc nghiệm"
+
+msgid "Build a practice set"
+msgstr "Tạo bộ câu hỏi luyện tập"
+
+msgid "Cancel selected"
+msgstr "Hủy các bài đã chọn"
+
+msgid "Cancel the selected attempts? They leave the ranking and the student may retake."
+msgstr "Hủy các bài làm đã chọn? Chúng sẽ bị loại khỏi bảng xếp hạng và học sinh được thi lại."
+
+msgid "Candidate"
+msgstr "Thí sinh"
+
+msgid "Candidate no."
+msgstr "Số báo danh"
+
+msgid "Check"
+msgstr "Kiểm tra"
+
+msgid "Class average"
+msgstr "Trung bình lớp"
+
+msgid "Closes"
+msgstr "Đóng lúc"
+
+msgid "Computer science"
+msgstr "Khoa học máy tính"
+
+msgid "Connection lost. Your answers are kept in this page; reconnect soon."
+msgstr "Mất kết nối. Đáp án của bạn vẫn được giữ trên trang này; hãy kết nối lại sớm."
+
+msgid "Copy attempt"
+msgstr "Cố gắng sao chép"
+
+msgid "Correct!"
+msgstr "Chính xác!"
+
+msgid "Could not submit - retrying..."
+msgstr "Chưa nộp được - đang thử lại..."
+
+msgid "Counted"
+msgstr "Được tính"
+
+msgid "Difficulty"
+msgstr "Độ khó"
+
+msgid "Do not leave the exam page."
+msgstr "Không được rời khỏi trang làm bài."
+
+msgid "Ended"
+msgstr "Đã kết thúc"
+
+msgid "Enter fullscreen and start"
+msgstr "Vào toàn màn hình và bắt đầu"
+
+msgid "Enter how many minutes to add."
+msgstr "Hãy nhập số phút cần cộng thêm."
+
+msgid "Exam end"
+msgstr "Giờ kết thúc"
+
+msgid "Exam opened elsewhere"
+msgstr "Bài thi đang mở ở nơi khác"
+
+msgid "Exam start"
+msgstr "Giờ bắt đầu"
+
+msgid "Excellent"
+msgstr "Giỏi"
+
+msgid "Excluded from rankings and statistics."
+msgstr "Bị loại khỏi bảng xếp hạng và thống kê."
+
+msgid "Export CSV"
+msgstr "Xuất CSV"
+
+msgid "Export Excel"
+msgstr "Xuất Excel"
+
+msgid "Export selected attempts as CSV"
+msgstr "Xuất các bài làm đã chọn ra CSV"
+
+msgid "Extra"
+msgstr "Cộng thêm"
+
+msgid "Extra time granted to this candidate only."
+msgstr "Thời gian cộng thêm chỉ cho riêng thí sinh này."
+
+msgid "False"
+msgstr "Sai"
+
+msgid "Fullscreen lock"
+msgstr "Khóa toàn màn hình"
+
+msgid "Fully correct"
+msgstr "Đúng hoàn toàn"
+
+msgid "Good"
+msgstr "Khá"
+
+msgid "Hide results"
+msgstr "Ẩn kết quả"
+
+msgid "Hide results again"
+msgstr "Ẩn kết quả trở lại"
+
+msgid "Highest"
+msgstr "Cao nhất"
+
+msgid "I have read the exam rules and agree to be monitored."
+msgstr "Tôi đã đọc quy chế thi và đồng ý bị giám sát."
+
+msgid "Invalidate selected attempts (leaves rankings; the student may retake)"
+msgstr "Hủy các bài làm đã chọn (bị loại khỏi xếp hạng; học sinh được thi lại)"
+
+msgid "Key"
+msgstr "Đáp án"
+
+msgid "Last missed"
+msgstr "Sai gần nhất"
+
+msgid "Left fullscreen"
+msgstr "Thoát toàn màn hình"
+
+msgid "Level"
+msgstr "Trình độ"
+
+msgid "Light (block copy and right click)"
+msgstr "Nhẹ (chặn sao chép và chuột phải)"
+
+msgid "List of {\"text\": ..., \"correct\": true/false}"
+msgstr "Danh sách {\"text\": ..., \"correct\": true/false}"
+
+msgid "Live data unavailable"
+msgstr "Không lấy được dữ liệu trực tiếp"
+
+msgid "Lost focus"
+msgstr "Mất tiêu điểm cửa sổ"
+
+msgid "Lowest"
+msgstr "Thấp nhất"
+
+msgid "Mark each statement True or False"
+msgstr "Chọn Đúng hoặc Sai cho từng ý"
+
+msgid "Median"
+msgstr "Trung vị"
+
+msgid "Minutes"
+msgstr "Số phút"
+
+msgid "Mistake notebook"
+msgstr "Sổ lỗi"
+
+msgid "Mock exam"
+msgstr "Thi thử"
+
+msgid "Mock exam only. Every attempt is closed at this time."
+msgstr "Chỉ dành cho thi thử. Mọi bài làm đóng lại vào lúc này."
+
+msgid "Mock exam only. Nobody can start before this time."
+msgstr "Chỉ dành cho thi thử. Không ai được bắt đầu trước giờ này."
+
+msgid "Mock exam scores"
+msgstr "Điểm các lần thi thử"
+
+msgid "Mock exams"
+msgstr "Đề thi thử"
+
+msgid "Mock exams taken"
+msgstr "Số đề thi thử đã làm"
+
+msgid "Mode"
+msgstr "Chế độ"
+
+msgid "My progress"
+msgstr "Tiến độ của tôi"
+
+msgid "My results"
+msgstr "Kết quả của tôi"
+
+msgid "Needs at least"
+msgstr "Cần làm ít nhất"
+
+msgid "No connection - your answers are kept here and will be sent automatically"
+msgstr "Mất kết nối - đáp án được giữ lại ở đây và sẽ tự gửi khi có mạng"
+
+msgid "No questions match your choice. Try other topics or levels."
+msgstr "Không có câu hỏi nào phù hợp. Hãy thử chủ đề hoặc mức độ khác."
+
+msgid "Nobody is writing the exam right now."
+msgstr "Hiện không có ai đang làm bài."
+
+msgid "Not quite."
+msgstr "Chưa đúng."
+
+msgid "Not rated"
+msgstr "Chưa xếp loại"
+
+msgid "Not specified"
+msgstr "Không xác định"
+
+msgid "Off"
+msgstr "Tắt"
+
+msgid "Open now"
+msgstr "Đang mở"
+
+msgid "Opened in another tab or device"
+msgstr "Mở ở tab hoặc thiết bị khác"
+
+msgid "Opens"
+msgstr "Mở lúc"
+
+msgid "Optional heading such as \"Part I\"; consecutive questions share a section."
+msgstr "Tiêu đề tùy chọn, ví dụ \"Phần I\"; các câu liên tiếp dùng chung một phần."
+
+msgid "Optional. When set, the exam can only be taken in Safe Exam Browser configured with this Browser Exam Key."
+msgstr "Tùy chọn. Nếu đặt, đề chỉ làm được trong Safe Exam Browser cấu hình với Browser Exam Key này."
+
+msgid "Page reload"
+msgstr "Tải lại trang"
+
+msgid "Paper code"
+msgstr "Mã đề"
+
+msgid "Partly correct"
+msgstr "Đúng một phần"
+
+msgid "Paste attempt"
+msgstr "Cố gắng dán"
+
+msgid "Personal practice"
+msgstr "Luyện tập cá nhân"
+
+msgid "Pick what you want to revise. You get instant feedback after each question, and wrong answers go to your mistake notebook."
+msgstr "Chọn nội dung bạn muốn ôn. Bạn được phản hồi ngay sau mỗi câu, và các câu sai sẽ được đưa vào sổ lỗi."
+
+msgid "Points earned per question id."
+msgstr "Điểm đạt được theo từng câu hỏi."
+
+msgid "Possible developer tools"
+msgstr "Có thể đang mở công cụ nhà phát triển"
+
+msgid "Practice"
+msgstr "Luyện tập"
+
+msgid "Practice is available to members of a course."
+msgstr "Chức năng luyện tập dành cho thành viên của một khóa học."
+
+msgid "Practice mistakes"
+msgstr "Ôn lại các câu sai"
+
+msgid "Practice sessions"
+msgstr "Số lần luyện tập"
+
+msgid "Practise the selected (or all)"
+msgstr "Ôn các câu đã chọn (hoặc tất cả)"
+
+msgid "Prefer questions I have not mastered yet"
+msgstr "Ưu tiên các câu tôi chưa làm đúng"
+
+msgid "Print attempt"
+msgstr "Cố gắng in"
+
+msgid "Proctoring log"
+msgstr "Nhật ký giám sát"
+
+msgid "Publish results"
+msgstr "Công bố kết quả"
+
+msgid "Publish results (manual release)"
+msgstr "Công bố kết quả (công bố thủ công)"
+
+msgid "Question type"
+msgstr "Loại câu hỏi"
+
+msgid "Questions correct"
+msgstr "Số câu đúng"
+
+msgid "Questions weighted by difficulty."
+msgstr "Số câu tính theo trọng số độ khó."
+
+msgid "Questions whose latest answer was wrong. Answer one correctly and it leaves the notebook."
+msgstr "Các câu mà lần trả lời gần nhất bị sai. Trả lời đúng một lần là câu đó rời khỏi sổ."
+
+msgid "Quizzes done"
+msgstr "Số bài đã làm"
+
+msgid "Ready to start?"
+msgstr "Sẵn sàng bắt đầu?"
+
+msgid "Recent attempts"
+msgstr "Các lần làm gần đây"
+
+msgid "Recompute statistics of the selected users"
+msgstr "Tính lại thống kê của các người dùng đã chọn"
+
+msgid "Required for mock exams: only members of the course can take them."
+msgstr "Bắt buộc với đề thi thử: chỉ thành viên của khóa học mới làm được."
+
+msgid "Restore selected"
+msgstr "Khôi phục các bài đã chọn"
+
+msgid "Restore selected attempts"
+msgstr "Khôi phục các bài làm đã chọn"
+
+msgid "Results"
+msgstr "Kết quả"
+
+msgid "Results hidden."
+msgstr "Đã ẩn kết quả."
+
+msgid "Results published."
+msgstr "Đã công bố kết quả."
+
+msgid "Return to fullscreen to continue. This was recorded as a violation."
+msgstr "Hãy quay lại toàn màn hình để tiếp tục. Việc này đã được ghi nhận là một vi phạm."
+
+msgid "Review later"
+msgstr "Xem lại sau"
+
+msgid "Right after submitting"
+msgstr "Ngay sau khi nộp bài"
+
+msgid "Right click"
+msgstr "Nhấn chuột phải"
+
+msgid "Safe Exam Browser key"
+msgstr "Khóa Safe Exam Browser"
+
+msgid "Score distribution"
+msgstr "Phân bố điểm"
+
+msgid "Select all"
+msgstr "Chọn tất cả"
+
+msgid "Select at least one attempt first."
+msgstr "Hãy chọn ít nhất một bài làm trước."
+
+msgid "Start practising"
+msgstr "Bắt đầu luyện tập"
+
+msgid "Start the exam"
+msgstr "Bắt đầu làm bài thi"
+
+msgid "Starts in"
+msgstr "Bắt đầu sau"
+
+msgid "Strengths and weaknesses by topic"
+msgstr "Điểm mạnh và điểm yếu theo chủ đề"
+
+msgid "Strict (fullscreen lock and monitoring)"
+msgstr "Nghiêm (khóa toàn màn hình và giám sát)"
+
+msgid "Students"
+msgstr "Học sinh"
+
+msgid "Submit selected now"
+msgstr "Nộp ngay các bài đã chọn"
+
+msgid "Submit your answers now? You cannot change them afterwards."
+msgstr "Nộp bài ngay bây giờ? Sau đó bạn không thể thay đổi đáp án."
+
+msgid "Submitted"
+msgstr "Đã nộp lúc"
+
+msgid "Submitted at"
+msgstr "Nộp lúc"
+
+msgid "Submitted automatically"
+msgstr "Bị tự động nộp"
+
+msgid "Switched tab or window"
+msgstr "Chuyển tab hoặc cửa sổ"
+
+msgid "The correct answers and explanations will be shown once the exam has closed for everyone."
+msgstr "Đáp án đúng và lời giải sẽ hiện sau khi đề thi đã đóng với tất cả thí sinh."
+
+msgid "The exam must end after it starts."
+msgstr "Giờ kết thúc phải sau giờ bắt đầu."
+
+msgid "The exam was submitted automatically."
+msgstr "Bài thi đã được tự động nộp."
+
+msgid "The question bank has no tagged questions yet."
+msgstr "Ngân hàng câu hỏi chưa có câu nào được gắn thẻ."
+
+msgid "The ranking will be shown when the results are released."
+msgstr "Bảng xếp hạng sẽ hiện khi kết quả được công bố."
+
+msgid "The server refused the submission. Reload the page."
+msgstr "Máy chủ từ chối bài nộp. Hãy tải lại trang."
+
+msgid "This action is not allowed during the exam."
+msgstr "Thao tác này không được phép trong lúc thi."
+
+msgid "This course has no mock exams yet."
+msgstr "Khóa học này chưa có đề thi thử."
+
+msgid "This device cannot take the exam"
+msgstr "Thiết bị này không thể dùng để thi"
+
+msgid "This exam can only be taken in Safe Exam Browser."
+msgstr "Đề này chỉ làm được trong Safe Exam Browser."
+
+msgid "This exam has ended."
+msgstr "Kỳ thi này đã kết thúc."
+
+msgid "This exam has not started yet."
+msgstr "Kỳ thi này chưa bắt đầu."
+
+msgid "This exam runs in fullscreen. Leaving fullscreen, switching tabs or windows, copying and printing are blocked or recorded, and too many violations submit your exam automatically. The clock is already running."
+msgstr "Bài thi diễn ra ở chế độ toàn màn hình. Thoát toàn màn hình, chuyển tab hoặc cửa sổ, sao chép và in đều bị chặn hoặc ghi lại; vi phạm quá nhiều lần bài thi sẽ tự động được nộp. Đồng hồ đã bắt đầu chạy."
+
+msgid "This exam was opened in another tab or device, so this page is locked. Close it and continue in the newest tab."
+msgstr "Bài thi này đã được mở ở tab hoặc thiết bị khác nên trang này bị khóa. Hãy đóng trang và tiếp tục ở tab mới nhất."
+
+msgid "Time left"
+msgstr "Thời gian còn lại"
+
+msgid "Times wrong"
+msgstr "Số lần sai"
+
+msgid "Topic"
+msgstr "Chủ đề"
+
+msgid "Topics"
+msgstr "Chủ đề"
+
+msgid "Track"
+msgstr "Mảng"
+
+msgid "True"
+msgstr "Đúng"
+
+msgid "True/False"
+msgstr "Đúng/Sai"
+
+msgid "True/False (4 statements)"
+msgstr "Đúng/Sai (4 ý)"
+
+msgid "Upcoming"
+msgstr "Sắp diễn ra"
+
+msgid "Used when results are released manually."
+msgstr "Dùng khi kết quả được công bố thủ công."
+
+msgid "Violation {0} of {1}"
+msgstr "Vi phạm {0}/{1}"
+
+msgid "Violation {0} of {1}. One more and your exam is submitted automatically."
+msgstr "Vi phạm {0}/{1}. Thêm một lần nữa bài thi sẽ tự động được nộp."
+
+msgid "Violations"
+msgstr "Vi phạm"
+
+msgid "Weak"
+msgstr "Yếu"
+
+msgid "When the teacher publishes them"
+msgstr "Khi giáo viên công bố"
+
+msgid "You"
+msgstr "Bạn"
+
+msgid "You have not finished any quiz yet. Your progress will appear here."
+msgstr "Bạn chưa hoàn thành bài trắc nghiệm nào. Tiến độ của bạn sẽ hiện ở đây."
+
+msgid "You left fullscreen"
+msgstr "Bạn đã thoát toàn màn hình"
+
+msgid "You must accept the exam rules before starting."
+msgstr "Bạn phải đồng ý với quy chế thi trước khi bắt đầu."
+
+msgid "Your browser does not support fullscreen mode (iPhone and some tablets). Please use a computer."
+msgstr "Trình duyệt của bạn không hỗ trợ chế độ toàn màn hình (iPhone và một số máy tính bảng). Hãy dùng máy tính."
+
+msgid "Your exam has been submitted"
+msgstr "Bài thi của bạn đã được nộp"
+
+msgid "Your mistake notebook is empty. Questions you answer wrongly will show up here."
+msgstr "Sổ lỗi của bạn đang trống. Các câu bạn trả lời sai sẽ hiện ở đây."
+
+msgid "Your score and the answers will be shown once the results are released."
+msgstr "Điểm và đáp án sẽ hiện khi kết quả được công bố."
+
+msgid "answered questions"
+msgstr "câu đã trả lời"
+
+msgid "attempt"
+msgstr "bài làm"
+
+msgid "auto-submitted"
+msgstr "tự động nộp"
+
+msgid "average exam score (/10)"
+msgstr "điểm thi thử trung bình (/10)"
+
+msgid "bank question"
+msgstr "câu hỏi ngân hàng"
+
+msgid "best exam score (/10)"
+msgstr "điểm thi thử cao nhất (/10)"
+
+msgid "counts towards the automatic submission limit"
+msgstr "được tính vào giới hạn tự động nộp bài"
+
+msgid "course"
+msgstr "khóa học"
+
+msgid "course lesson"
+msgstr "bài học trong khóa"
+
+msgid "created"
+msgstr "ngày tạo"
+
+msgid "creator"
+msgstr "người tạo"
+
+msgid "detail"
+msgstr "chi tiết"
+
+msgid "exam end"
+msgstr "giờ kết thúc"
+
+msgid "exam rules"
+msgstr "quy chế thi"
+
+msgid "exam start"
+msgstr "giờ bắt đầu"
+
+msgid "explanation"
+msgstr "lời giải"
+
+msgid "extra minutes"
+msgstr "phút cộng thêm"
+
+msgid "extra minutes for everyone"
+msgstr "phút cộng thêm cho cả phòng"
+
+msgid "finished"
+msgstr "hoàn thành lúc"
+
+msgid "group"
+msgstr "nhóm"
+
+msgid "invalidated"
+msgstr "đã hủy"
+
+msgid "level"
+msgstr "trình độ"
+
+msgid "level score (/10)"
+msgstr "điểm trình độ (/10)"
+
+msgid "maximum attempts"
+msgstr "số lần làm tối đa"
+
+msgid "minutes for everyone"
+msgstr "phút cho cả phòng"
+
+msgid "mock exams taken"
+msgstr "đề thi thử đã làm"
+
+msgid "mode"
+msgstr "chế độ"
+
+msgid "none selected = all topics"
+msgstr "không chọn = tất cả chủ đề"
+
+msgid "offline"
+msgstr "mất kết nối"
+
+msgid "online"
+msgstr "trực tuyến"
+
+msgid "option"
+msgstr "đáp án"
+
+msgid "options"
+msgstr "các đáp án"
+
+msgid "practice sessions"
+msgstr "số lần luyện tập"
+
+msgid "proctoring"
+msgstr "giám sát"
+
+msgid "question"
+msgstr "câu hỏi"
+
+msgid "question bank"
+msgstr "ngân hàng câu hỏi"
+
+msgid "question bank tags"
+msgstr "thẻ ngân hàng câu hỏi"
+
+msgid "questions answered"
+msgstr "số câu đã làm"
+
+msgid "questions correct"
+msgstr "số câu đúng"
+
+msgid "quiz"
+msgstr "bài trắc nghiệm"
+
+msgid "quiz attempt"
+msgstr "bài làm trắc nghiệm"
+
+msgid "quiz attempts"
+msgstr "các bài làm trắc nghiệm"
+
+msgid "quiz option"
+msgstr "đáp án trắc nghiệm"
+
+msgid "quiz options"
+msgstr "các đáp án trắc nghiệm"
+
+msgid "quiz question"
+msgstr "câu hỏi trắc nghiệm"
+
+msgid "quiz questions"
+msgstr "các câu hỏi trắc nghiệm"
+
+msgid "quiz slug"
+msgstr "đường dẫn bài trắc nghiệm"
+
+msgid "quiz title"
+msgstr "tên bài trắc nghiệm"
+
+msgid "quiz topic statistic"
+msgstr "thống kê chủ đề trắc nghiệm"
+
+msgid "quiz topic statistics"
+msgstr "thống kê chủ đề trắc nghiệm"
+
+msgid "quiz user statistic"
+msgstr "thống kê người dùng trắc nghiệm"
+
+msgid "quiz user statistics"
+msgstr "thống kê người dùng trắc nghiệm"
+
+msgid "quiz violation"
+msgstr "vi phạm khi làm bài"
+
+msgid "quiz violations"
+msgstr "các vi phạm khi làm bài"
+
+msgid "release results"
+msgstr "công bố kết quả"
+
+msgid "reopen automatic submissions"
+msgstr "mở lại các bài bị tự động nộp"
+
+msgid "results published"
+msgstr "đã công bố kết quả"
+
+msgid "score /10"
+msgstr "điểm /10"
+
+msgid "section"
+msgstr "phần"
+
+msgid "show correct answers after submitting"
+msgstr "hiện đáp án đúng sau khi nộp bài"
+
+msgid "shuffle options"
+msgstr "xáo trộn đáp án"
+
+msgid "shuffle questions"
+msgstr "xáo trộn câu hỏi"
+
+msgid "source file"
+msgstr "tệp nguồn"
+
+msgid "started"
+msgstr "bắt đầu lúc"
+
+msgid "tag"
+msgstr "thẻ"
+
+msgid "time limit (minutes)"
+msgstr "thời gian làm bài (phút)"
+
+msgid "took the quiz"
+msgstr "đã làm bài"
+
+msgid "track"
+msgstr "mảng"
+
+msgid "type"
+msgstr "loại"
+
+msgid "violations"
+msgstr "vi phạm"
+
+msgid "violations before auto-submit"
+msgstr "số vi phạm trước khi tự nộp"
+
+msgid "weakest first"
+msgstr "yếu nhất lên trước"
+
+msgid "{0} writing · {1} finished · {2} not started"
+msgstr "{0} đang làm · {1} đã nộp · {2} chưa bắt đầu"
+
+#, python-format
+msgid "%d quiz published."
+msgid_plural "%d quizzes published."
+msgstr[0] "Đã công bố %d bài trắc nghiệm."
+
+#, python-format
+msgid "%d quiz hidden."
+msgid_plural "%d quizzes hidden."
+msgstr[0] "Đã ẩn %d bài trắc nghiệm."
+
+#, python-format
+msgid "%d attempt invalidated."
+msgid_plural "%d attempts invalidated."
+msgstr[0] "Đã hủy %d bài làm."
+
+#, python-format
+msgid "%d attempt restored."
+msgid_plural "%d attempts restored."
+msgstr[0] "Đã khôi phục %d bài làm."
+
+#, python-format
+msgid "Statistics of %d user rebuilt."
+msgid_plural "Statistics of %d users rebuilt."
+msgstr[0] "Đã tính lại thống kê của %d người dùng."
+
+msgid "Prerequisite"
+msgstr "Điều kiện tiên quyết"
+
+msgid "you have"
+msgstr "bạn đang có"
+
+msgid "Total score"
+msgstr "Tổng điểm"
+
+msgid "needs"
+msgstr "cần"
+
+msgid "This lesson is locked"
+msgstr "Bài học này đang bị khóa"
+
+#, python-format
+msgid ""
+"Reach at least %(percent)d%% of the score in \"%(lesson)s\" to open this "
+"lesson (you have %(current)d%%)."
+msgstr ""
+"Hãy đạt ít nhất %(percent)d%% số điểm của bài \"%(lesson)s\" để mở bài học "
+"này (hiện bạn đang có %(current)d%%)."
+
+msgid "prerequisite lesson"
+msgstr "bài học tiên quyết"
+
+msgid "required score (%)"
+msgstr "điểm yêu cầu (%)"
+
+msgid "Students must reach the required score in this lesson first."
+msgstr "Học viên phải đạt số điểm yêu cầu ở bài học này trước."
+
+msgid "have started"
+msgstr "đã bắt đầu làm"
+
+msgid "halfway or more"
+msgstr "đạt từ một nửa điểm"
+
+msgid "class average"
+msgstr "điểm trung bình lớp"
+
+msgid "Search students..."
+msgstr "Tìm học viên..."
+
+msgid "Your progress"
+msgstr "Tiến độ của bạn"
+
+msgid "not started"
+msgstr "chưa làm"
+
+msgid "in progress"
+msgstr "đang làm"
+
+msgid "complete"
+msgstr "hoàn thành"
+
+msgid "Lesson key"
+msgstr "Danh sách bài học"
+
+msgid "Live now"
+msgstr "Đang diễn ra"
+
+msgid "Finished"
+msgstr "Đã kết thúc"
+
+msgid "Spectating"
+msgstr "Đang theo dõi"
+
+msgid "Virtual participation"
+msgstr "Thi ảo"
+
+msgid "Rules and scoring"
+msgstr "Thể lệ và cách tính điểm"
+
+msgid "No announcements yet."
+msgstr "Chưa có thông báo nào."
+
+msgid "Rated"
+msgstr "Tính rating"
+
+msgid "Study"
+msgstr "Học tập"
+
+msgid "PRACTICE"
+msgstr "LUYỆN TẬP"
+
+msgid "COMPETE"
+msgstr "THI ĐẤU"
+
+msgid "LEADERBOARD"
+msgstr "BẢNG VÀNG"
+
+msgid "SUBMISSION HISTORY"
+msgstr "LỊCH SỬ CHẤM"
+
+msgid "LEARNING PATHS"
+msgstr "HỌC THEO LỘ TRÌNH"
+
+msgid "Ranks"
+msgstr "Xếp hạng"
+
+msgid "Welcome back"
+msgstr "Chào mừng trở lại"
+
+msgid "CURRENT COURSE"
+msgstr "KHÓA ĐANG HỌC"
+
+msgid "Continue"
+msgstr "Học tiếp"
+
+msgid "Activity, last 7 days"
+msgstr "Hoạt động 7 ngày"
+
+msgid "Not accepted"
+msgstr "Chưa đúng"
+
+msgid "See all"
+msgstr "Xem tất cả"
+
+msgid "Solve problems. Compete. Improve."
+msgstr "Giải bài. Thi đấu. Tiến bộ."
+
+msgid "Practice with automatic judging, join contests and follow your progress in one place."
+msgstr "Luyện bài có chấm tự động, tham gia kỳ thi và theo dõi tiến độ của bạn trên cùng một nơi."
+
+msgid "Your first problem is one submission away."
+msgstr "Bài đầu tiên chỉ cách bạn một lần nộp."
+
+msgid "Create an account and submit a solution to see your first AC."
+msgstr "Tạo tài khoản, nộp một lời giải và xem kết quả AC đầu tiên của bạn."
+
+msgid "TODAY'S GOAL"
+msgstr "MỤC TIÊU HÔM NAY"
+
+msgid "Solve %(n)s more problems to reach the daily goal."
+msgstr "Giải thêm %(n)s bài để hoàn thành mục tiêu ngày."
+
+msgid "Daily goal complete. Nice work!"
+msgstr "Đã hoàn thành mục tiêu hôm nay. Làm tốt lắm!"
+
+msgid "day streak with an AC"
+msgstr "ngày liên tiếp có bài AC"
+
+msgid "STREAK OF"
+msgstr "STREAK CỦA"
+
+msgid "STATISTICS"
+msgstr "THỐNG KÊ"
+
+msgid "ACTIVITY STREAK"
+msgstr "CHUỖI HOẠT ĐỘNG"
+
+msgid "Current"
+msgstr "Hiện tại"
+
+msgid "Record"
+msgstr "Kỷ lục"
+
+msgid "Problems solved"
+msgstr "Bài đã giải"
+
+msgid "Rank by points"
+msgstr "Hạng điểm"
+
+msgid "Rank by rating"
+msgstr "Xếp hạng rating"
+
+msgid "Min. rating"
+msgstr "Rating thấp nhất"
+
+msgid "Max rating"
+msgstr "Rating cao nhất"
+
+msgid "Contests written"
+msgstr "Kỳ thi đã tham gia"
+
+msgid "Last 30 days"
+msgstr "30 ngày gần đây"
+
+msgid "Member since"
+msgstr "Tham gia"
+
+msgid "PERSONAL INFO"
+msgstr "THÔNG TIN CÁ NHÂN"
+
+msgid "PREFERENCES"
+msgstr "TÙY CHỌN"
+
+msgid "SECURITY"
+msgstr "BẢO MẬT"
+
+msgid "Leave course"
+msgstr "Rời khóa học"
+
+msgid "Are you sure you want to leave this course?"
+msgstr "Bạn có chắc muốn rời khóa học này không?"
+
+msgid "Cannot leave this course"
+msgstr "Không thể rời khóa học này"
+
+msgid "You are the only teacher of this course."
+msgstr "Bạn là giáo viên duy nhất của khóa học này."
+
+msgid "LESSON RANKING"
+msgstr "XẾP HẠNG BÀI HỌC"
+
+msgid "Lesson ranking"
+msgstr "Xếp hạng bài học"
+
+msgid "your rank"
+msgstr "hạng của bạn"
+
+msgid "solved"
+msgstr "đã giải"
+
+msgid "Problem key"
+msgstr "Danh sách bài"
+
+msgid "This lesson has no practice problems."
+msgstr "Bài học này chưa có bài tập."
+
+msgid "Languages"
+msgstr "Ngôn ngữ"
+
+msgid "Back"
+msgstr "Quay lại"
+
+msgid "Answered"
+msgstr "Số câu đã trả lời"
+
+msgid "Connected"
+msgstr "Đang kết nối"
+
+msgid "Reconnecting..."
+msgstr "Đang kết nối lại..."
+
+msgid "SUBMIT"
+msgstr "NỘP BÀI"
+
+msgid "Fullscreen"
+msgstr "Toàn màn hình"
+
+msgid "Subject"
+msgstr "Môn thi"
+
+msgid "reading passage"
+msgstr "đoạn ngữ liệu"
+
+msgid "Optional shared text shown beside the question in the exam room. Consecutive questions with the same text share one passage."
+msgstr "Tùy chọn. Văn bản dùng chung hiển thị bên trái câu hỏi trong phòng thi. Các câu liên tiếp có cùng đoạn văn sẽ dùng chung một ngữ liệu."
+
+msgid "Next question"
+msgstr "Tiếp theo"
+
+msgid "Answer the questions below, then submit."
+msgstr "Trả lời các câu hỏi bên dưới rồi nộp bài."
+
+msgid "Unanswered"
+msgstr "Chưa trả lời"
+
+msgid "Flagged"
+msgstr "Đã đánh dấu"
+
+msgid "Not saved yet"
+msgstr "chưa lưu"
+
+msgid "Go to the first unanswered question"
+msgstr "Đến câu chưa trả lời đầu tiên"
+
+msgid "Create quiz exam"
+msgstr "Tạo kỳ thi trắc nghiệm"
+
+msgid "Take the quiz"
+msgstr "Vào thi"
+
+msgid "Optional. A mock exam in a course is only open to its members; without a course it follows \"publicly visible\"."
+msgstr "Không bắt buộc. Đề thi thử thuộc khóa học chỉ dành cho thành viên khóa đó; không thuộc khóa học thì theo mục \"Hiển thị công khai\"."
+
+msgid "Optional. A mock exam without a course and with organizations is open only to their members."
+msgstr "Không bắt buộc. Đề thi thử không thuộc khóa học và có chọn tổ chức thì chỉ thành viên các tổ chức đó làm được."
+
+msgid "The exam was created for %(org)s. Set its start and end time here."
+msgstr "Đã tạo kỳ thi cho %(org)s. Hãy đặt giờ bắt đầu và kết thúc tại đây."
+
+msgid "CODE TEMPLATES"
+msgstr "TEMPLATE CODE"
+
+msgid "The template is put in the editor when you open a problem and have not saved code for it. Leave a box empty to use the default template of the site."
+msgstr "Template được đưa vào editor khi bạn mở bài chưa lưu code. Để trống thì dùng mẫu mặc định của site."
+
+msgid "Problem page:"
+msgstr "Trang bài tập:"
+
+msgid "Sections"
+msgstr "Các mục"
+
+msgid "questions per attempt"
+msgstr "Số câu mỗi bài thi"
+
+msgid "Each attempt draws this many random questions from the quiz. 0 means all questions."
+msgstr "Mỗi lượt làm bài bốc ngẫu nhiên đúng số câu này từ bộ đề. 0 nghĩa là lấy tất cả các câu."

@@ -11,9 +11,10 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
+from judge.views import TitledTemplateView, api, blog, bank, comment, contests, course, quiz, server_status, language, license, mailgun, notification, \
     organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
     submission, tag, tasks, ticket, two_factor, user, widgets
+from judge.views import practice, problem_run, quiz_exam, quiz_report
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -100,6 +101,48 @@ def paged_list_view(view, name):
     ])
 
 
+# The quiz / mock exam / practice feature is switched off unless local_settings.py says QUIZ_ENABLED = True.
+# Its code, templates and database tables stay in place; only the pages, the menu entry and the admin entries go.
+QUIZ_ENABLED = getattr(settings, 'QUIZ_ENABLED', False)
+
+quiz_patterns = [
+    path('bank/', include([
+        path('', bank.BankList.as_view(), name='bank_list'),
+        path('action/', bank.BankAction.as_view(), name='bank_action'),
+        path('import/', bank.BankImport.as_view(), name='bank_import'),
+        path('import/confirm/', bank.BankImportConfirm.as_view(), name='bank_import_confirm'),
+        path('compose/', bank.BankCompose.as_view(), name='bank_compose'),
+        path('<int:pk>/edit/', bank.BankEdit.as_view(), name='bank_edit'),
+    ])),
+    path('quizzes/', quiz.QuizList.as_view(), name='quiz_list'),
+    path('quizzes/me/', quiz_report.QuizMe.as_view(), name='quiz_me'),
+    path('practice/', practice.PracticeSetup.as_view(), name='practice'),
+    path('practice/mistakes/', practice.PracticeMistakes.as_view(), name='practice_mistakes'),
+    path('quizzes/upload/', quiz.QuizUpload.as_view(), name='quiz_upload'),
+    path('quizzes/upload/confirm/', quiz.QuizUploadConfirm.as_view(), name='quiz_upload_confirm'),
+    path('quizzes/template.docx', quiz.QuizTemplateDownload.as_view(), name='quiz_template'),
+    path('quiz/<slug:slug>/', include([
+        path('', quiz.QuizDetail.as_view(), name='quiz_detail'),
+        path('start/', quiz.QuizStart.as_view(), name='quiz_start'),
+        path('manage/', quiz.QuizManage.as_view(), name='quiz_manage'),
+        path('results/', quiz_report.QuizResults.as_view(), name='quiz_results'),
+        path('results/live/', quiz_report.QuizLive.as_view(), name='quiz_live'),
+        path('results/action/', quiz_report.QuizResultsAction.as_view(), name='quiz_results_action'),
+        path('delete/', quiz.QuizDelete.as_view(), name='quiz_delete'),
+        path('attempt/<int:attempt>/', quiz.QuizAttemptView.as_view(), name='quiz_attempt'),
+        path('attempt/<int:attempt>/save/', quiz.QuizAttemptSave.as_view(), name='quiz_attempt_save'),
+        path('attempt/<int:attempt>/check/', practice.PracticeCheck.as_view(), name='quiz_attempt_check'),
+        path('attempt/<int:attempt>/heartbeat/', quiz_exam.QuizAttemptHeartbeat.as_view(),
+             name='quiz_attempt_heartbeat'),
+        path('attempt/<int:attempt>/event/', quiz_exam.QuizAttemptEvent.as_view(), name='quiz_attempt_event'),
+        path('attempt/<int:attempt>/result/', quiz.QuizResult.as_view(), name='quiz_result'),
+    ])),
+] if QUIZ_ENABLED else []
+
+course_quiz_patterns = [
+    path('quizzes/', quiz_report.CourseQuizReport.as_view(), name='course_quizzes'),
+] if QUIZ_ENABLED else []
+
 urlpatterns = [
     path('', blog.PostList.as_view(template_name='home.html', title=_('Home')), kwargs={'page': 1}, name='home'),
     path('500/', exception),
@@ -132,6 +175,7 @@ urlpatterns = [
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
         path('/delete', problem.ProblemDelete.as_view(), name='problem_delete'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
+        path('/run', problem_run.ProblemRun.as_view(), name='problem_run'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
@@ -206,6 +250,7 @@ urlpatterns = [
     path('user', user.UserAboutPage.as_view(), name='user_page'),
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
     path('set-theme/', user.set_theme, name='set_theme'),
+    path('set-problem-ui/', user.set_problem_ui, name='set_problem_ui'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('user/<str:user>', include([
@@ -234,6 +279,20 @@ urlpatterns = [
         path('edit/ajax', comment.CommentEditAjax.as_view(), name='comment_edit_ajax'),
         path('votes/ajax', comment.CommentVotesAjax.as_view(), name='comment_votes_ajax'),
         path('render', comment.CommentContent.as_view(), name='comment_content'),
+    ])),
+
+    path('courses/', course.CourseList.as_view(), name='course_list'),
+    path('server-status/', server_status.ServerStatusPage.as_view(), name='server_status'),
+    path('server-status/data/', server_status.ServerStatusData.as_view(), name='server_status_data'),
+    *quiz_patterns,
+    path('course/<slug:slug>/', include([
+        path('', course.CourseDetail.as_view(), name='course_detail'),
+        path('lesson/<int:lesson>/', course.CourseLessonDetail.as_view(), name='course_lesson'),
+        path('lesson/<int:lesson>/ranking/', course.CourseLessonRanking.as_view(), name='course_lesson_ranking'),
+        path('grades/', course.CourseGrades.as_view(), name='course_grades'),
+        *course_quiz_patterns,
+        path('join/', course.CourseJoin.as_view(), name='course_join'),
+        path('leave/', course.CourseLeave.as_view(), name='course_leave'),
     ])),
 
     path('contests/', paged_list_view(contests.ContestList, 'contest_list')),

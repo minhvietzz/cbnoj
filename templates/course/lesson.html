@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+{% block title_row %}{% endblock %}
+
+{% block body %}
+    <div class="lesson-tools" id="lesson-tools" role="toolbar" aria-label="{{ _('Lesson tools') }}">
+        <a class="lt-btn lt-main" href="{{ course.get_absolute_url() }}" aria-label="{{ _('Course home') }}"><i class="fa fa-home"></i><span class="lt-tip">{{ _('Course home') }}</span></a>
+        <button type="button" class="lt-btn" id="lt-list" aria-label="{{ _('All lessons') }}" aria-controls="lesson-panel" aria-expanded="false"><i class="fa fa-list-ol"></i><span class="lt-tip">{{ _('All lessons') }}</span></button>
+        <span class="lt-sep"></span>
+        {% if prev_lesson %}<a class="lt-btn" href="{{ prev_lesson.get_absolute_url() }}" aria-label="{{ _('Previous lesson') }}"><i class="fa fa-arrow-left"></i><span class="lt-tip">{{ _('Previous lesson') }}</span></a>{% else %}<span class="lt-btn is-disabled"><i class="fa fa-arrow-left"></i></span>{% endif %}
+        {% if next_lesson %}<a class="lt-btn" href="{{ next_lesson.get_absolute_url() }}" aria-label="{{ _('Next lesson') }}"><i class="fa fa-arrow-right"></i><span class="lt-tip">{{ _('Next lesson') }}</span></a>{% else %}<span class="lt-btn is-disabled"><i class="fa fa-arrow-right"></i></span>{% endif %}
+        <span class="lt-sep"></span>
+        <a class="lt-btn" href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}" aria-label="{{ _('Lesson ranking') }}"><i class="fa fa-trophy"></i><span class="lt-tip">{{ _('Lesson ranking') }}</span></a>
+        <a class="lt-btn" href="{{ url('course_grades', course.slug) }}" aria-label="{{ _('Grades') }}"><i class="fa fa-check-square-o"></i><span class="lt-tip">{{ _('Grades') }}</span></a>
+        {% if can_edit and request.user.is_staff %}
+            <a class="lt-btn" href="{{ url('admin:judge_courselesson_change', lesson.id) }}" aria-label="{{ _('Edit this lesson') }}"><i class="fa fa-pencil"></i><span class="lt-tip">{{ _('Edit this lesson') }}</span></a>
+        {% endif %}
+        <a class="lt-btn" href="#" id="lt-top" aria-label="{{ _('Back to top') }}"><i class="fa fa-arrow-up"></i><span class="lt-tip">{{ _('Back to top') }}</span></a>
+    </div>
+
+    <aside class="lesson-panel" id="lesson-panel" aria-label="{{ _('All lessons') }}">
+        <div class="lp-head">
+            <a class="lp-course" href="{{ course.get_absolute_url() }}">{{ course.name }}</a>
+        </div>
+        <div class="lp-progress">
+            <div class="lesson-bar"><i style="width: {{ course_percent }}%"></i></div>
+            <span>{{ course_percent }}%</span>
+        </div>
+        <div class="lp-lessons">
+            {% for l in lessons %}
+                <a class="lp-item{% if l.id == lesson.id %} current{% endif %}" href="{{ l.get_absolute_url() }}">
+                    <span class="lp-no">{% if l.progress.total and l.progress.percent == 100 %}<i class="fa fa-check"></i>{% else %}{{ loop.index }}{% endif %}</span>
+                    <span class="lp-title">{{ l.title }}</span>
+                    {% if l.progress.total %}<span class="lp-pct">{{ l.progress.percent }}%</span>{% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <article class="lesson-doc tone-{{ course_color }}">
+        <header class="lesson-doc-head">
+            <span class="lesson-chip">{{ _('Lesson') }} {{ lesson_index }}/{{ lesson_total }}</span>
+            <h1 class="lesson-doc-title">{{ lesson.title }}</h1>
+        </header>
+        {% if lesson.content %}
+            <div class="content-description lesson-content" id="lesson-content">{{ lesson.content|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+        {% else %}
+            <p class="lesson-empty">{{ _('This lesson has no reading material.') }}</p>
+        {% endif %}
+    </article>
+
+    {% if progress.problems %}
+        <h3 class="course-section-title">
+            {{ _('Practice problems') }}
+            <span class="lesson-score">{{ progress.score }}/{{ progress.max }} {{ _('points') }}</span>
+            <a class="lesson-rank-link" href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}"><i class="fa fa-trophy"></i> {{ _('Ranking') }}</a>
+        </h3>
+        <div class="problem-rows lesson-problems">
+            {% for item in progress.problems %}
+                <div class="pr-row">
+                    <span class="pr-solved">
+                        {% if item.solved %}
+                            <span class="pr-bubble pr-done"><i class="fa fa-check"></i></span>
+                        {% elif item.tried %}
+                            <span class="pr-bubble pr-tried"><i class="fa fa-frown-o"></i></span>
+                        {% else %}
+                            <span class="pr-bubble pr-todo"></span>
+                        {% endif %}
+                    </span>
+                    <span class="pr-main">
+                        <span class="pr-line">
+                            <a class="pr-name" href="{{ url('problem_detail', item.problem.code) }}">{{ item.problem.name }}</a>
+                            <a class="pr-code" href="{{ url('problem_detail', item.problem.code) }}">{{ item.problem.code }}</a>
+                        </span>
+                    </span>
+                    <span class="pr-pts"><span class="pr-pbubble {{ 'pb-a' if item.solved else 'pb-c' }}">{{ item.score|round|int }}/{{ item.max }}</span></span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if quizzes %}
+        <h3 class="course-section-title">{{ _('Quizzes') }}</h3>
+        <div class="problem-rows">
+            {% for quiz in quizzes %}
+                <a class="pr-row quiz-attempt-row" href="{{ quiz.get_absolute_url() }}">
+                    <span class="pr-main">
+                        <span class="pr-line"><span class="pr-name">{{ quiz.title }}</span></span>
+                        <span class="lesson-sub">{{ quiz.qcount }} {{ _('questions') }}{% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}</span>
+                    </span>
+                    <span class="pr-pts"><span class="pr-pbubble {{ ('pb-a' if quiz.my_best.percent >= 80 else ('pb-b' if quiz.my_best.percent >= 50 else 'pb-d')) if quiz.my_best else 'pb-c' }}">{% if quiz.my_best %}{{ quiz.my_best.percent }}%{% else %}<i class="fa fa-play"></i>{% endif %}</span></span>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="lesson-nav">
+        {% if prev_lesson %}<a class="lesson-nav-btn" href="{{ prev_lesson.get_absolute_url() }}"><i class="fa fa-arrow-left"></i> {{ prev_lesson.title }}</a>{% else %}<span></span>{% endif %}
+        {% if next_lesson %}<a class="lesson-nav-btn lesson-nav-next" href="{{ next_lesson.get_absolute_url() }}">{{ next_lesson.title }} <i class="fa fa-arrow-right"></i></a>{% endif %}
+    </div>
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            // ---- lesson list popover (the toolbar itself is always visible)
+            var $panel = $('#lesson-panel'), $btn = $('#lt-list');
+            function setOpen(open) {
+                $panel.toggleClass('open', open);
+                $btn.toggleClass('active', open).attr('aria-expanded', open ? 'true' : 'false');
+            }
+            $btn.on('click', function (e) { e.stopPropagation(); setOpen(!$panel.hasClass('open')); });
+            $panel.on('click', function (e) { e.stopPropagation(); });
+            $(document).on('click', function () { setOpen(false); });
+            $(document).on('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+            $('#lt-top').on('click', function (e) { e.preventDefault(); $('html, body').animate({scrollTop: 0}, 250); });
+
+            var content = document.getElementById('lesson-content');
+            if (!content) return;
+
+            // ---- "C++:" / "Python:" label + code block pairs become language tabs
+            var LANGS = /^(c\+\+|c|python|java|pascal|javascript|c#|kotlin|go|rust)\s*:?$/i;
+            function isLabel(node) {
+                return node && node.tagName === 'P' && LANGS.test($.trim(node.textContent)) && node.textContent.length < 14;
+            }
+            function isCode(node) {
+                return node && (node.tagName === 'PRE' || (node.classList && node.classList.contains('highlight')) ||
+                    (node.querySelector && node.children.length === 1 && node.children[0].tagName === 'PRE'));
+            }
+            var kids = Array.prototype.slice.call(content.children);
+            for (var i = 0; i < kids.length; i++) {
+                if (!(isLabel(kids[i]) && isCode(kids[i + 1]))) continue;
+                var pairs = [], j = i;
+                while (isLabel(kids[j]) && isCode(kids[j + 1])) {
+                    pairs.push([$.trim(kids[j].textContent).replace(/:$/, ''), kids[j + 1]]);
+                    j += 2;
+                }
+                var box = $('<div class="code-tabs"></div>'), bar = $('<div class="code-tabs-bar" role="tablist"></div>');
+                box.append(bar);
+                pairs.forEach(function (pair, idx) {
+                    var pane = $('<div class="code-tabs-pane"></div>').append(pair[1]);
+                    var tab = $('<button type="button" role="tab"></button>').text(pair[0]).on('click', function () {
+                        bar.children().removeClass('active'); box.children('.code-tabs-pane').removeClass('active');
+                        $(this).addClass('active'); pane.addClass('active');
+                    });
+                    if (idx === 0) { tab.addClass('active'); pane.addClass('active'); }
+                    bar.append(tab); box.append(pane);
+                });
+                $(kids[i]).before(box);
+                for (var k = i; k < j; k++) { $(kids[k]).remove(); }
+                kids = Array.prototype.slice.call(content.children);
+                i = Array.prototype.indexOf.call(content.children, box[0]);
+            }
+
+            // ---- table of contents from headings
+            var heads = $(content).find('h2, h3').filter(function () { return $.trim($(this).text()).length; });
+            if (heads.length >= 3) {
+                var toc = $('<div class="lesson-toc"><h4>' + {{ _('Contents')|htmltojs }} + '</h4></div>');
+                var list = $('<ul></ul>'), sub = null;
+                heads.each(function (n) {
+                    if (!this.id) this.id = 'sec-' + (n + 1);
+                    var link = $('<a></a>').attr('href', '#' + this.id).text($.trim($(this).text()));
+                    if (this.tagName === 'H2') { var li = $('<li></li>').append(link); list.append(li); sub = null; }
+                    else {
+                        if (!sub) { sub = $('<ul></ul>'); (list.children().last().length ? list.children().last() : list).append(sub); }
+                        sub.append($('<li></li>').append(link));
+                    }
+                });
+                toc.append(list);
+                $(content).prepend(toc);
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+{% endblock %}

@@ -53,6 +53,8 @@
         {% endif %}
         {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
+        <link rel="stylesheet" href="{{ static('nunito.css') }}">
+        <link rel="stylesheet" href="{{ static('jetbrains-mono.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
     {% endcompress %}
@@ -227,7 +229,8 @@
         </style>
     </noscript>
 </head>
-<body data-theme="{{ SITE_THEME_NAME }}">
+{% set eyebrows = {'problems': _('PRACTICE'), 'contest': _('COMPETE'), 'user': _('LEADERBOARD'), 'submit': _('SUBMISSION HISTORY'), 'courses': _('LEARNING PATHS')} %}
+<body data-theme="{{ SITE_THEME_NAME }}"{% for k in nav_tab %}{% if k in eyebrows %} style="--eyebrow: '{{ eyebrows[k] }}'"{% endif %}{% endfor %}>
 <svg width="0" height="0" style="display: block">
     <defs>
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
@@ -235,13 +238,20 @@
 </svg>
 <nav id="navigation" class="unselectable">
     <div id="nav-container">
+        {% if request.organization is defined %}{% set brand_url = url('organization_home', request.organization.slug) %}{% else %}{% set brand_url = url('home') %}{% endif %}
+        <a class="nav-brand" href="{{ brand_url }}">
+            {% if (request.in_contest and request.participation.contest.logo_override_image) or (logo_override_image is defined and logo_override_image) %}
+                {% include "site-logo-fragment.html" %}
+            {% else %}
+                <span class="nav-brand-chip">{{ SITE_NAME[:2]|upper }}</span><span class="nav-brand-name">{{ SITE_NAME }}</span>
+            {% endif %}
+        </a>
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
         <ul id="nav-list">
             {% if request.organization is not defined %}
-                <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
-                <li class="home-nav-element"><span class="nav-divider"></span></li>
-                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
+                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home{% if request.path == '/' %} active{% endif %}">{{ _('Study') }}</a></li>
                 {% for node in mptt_tree(nav_bar) recursive %}
+                    {% if node.key != 'server' or can_view_server_status %}
                     <li>
                         <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
                             {{ _(node.label) }}
@@ -253,6 +263,7 @@
                             {% if children %}<ul>{{ loop(children) }}</ul>{% endif %}
                         {% endwith %}
                     </li>
+                    {% endif %}
                 {% endfor %}
             {% else %}
                 {% macro make_navbar_item(key, url, text) %}
@@ -263,8 +274,6 @@
                     </li>
                 {% endmacro %}
                 {% set org = request.organization %}
-                <li class="home-nav-element"><a href="{{ url('organization_home', org.slug) }}">{% include "site-logo-fragment.html" %}</a></li>
-                <li class="home-nav-element"><span class="nav-divider"></span></li>
                 {{ make_navbar_item('problem-list', url('problem_list_organization', org.slug), _('PRoblems')) }}
                 {{ make_navbar_item('submission-list', url('submission_list_organization', org.slug), _('Submissions')) }}
                 {{ make_navbar_item('contest-list',  url('contest_list_organization', org.slug), _('Contests')) }}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    {% set level_names = [_('Unrated'), _('Easy'), _('Medium'), _('Hard')] %}
+    {% set kind_names = {'single': _('Single choice'), 'multi': _('Multiple choice'), 'short': _('Short answer')} %}
+
+    <section class="course-hero tone-lilac bk-hero">
+        <div class="course-hero-main">
+            <h3 class="course-section-title" style="margin: 0">{{ total }} {{ _('questions in the bank') }}</h3>
+            <p class="qz-note">{{ _('Questions from every uploaded quiz land here automatically. Pick some and build a new quiz in a few clicks.') }}</p>
+        </div>
+        <div class="course-hero-side bk-hero-side">
+            <a class="course-join" href="{{ url('bank_import') }}"><i class="fa fa-upload"></i> {{ _('Import questions') }}</a>
+            <a class="lesson-nav-btn" href="{{ url('bank_compose') }}"><i class="fa fa-magic"></i> {{ _('Build a quiz') }}{% if compose_count %} ({{ compose_count }}){% endif %}</a>
+        </div>
+    </section>
+
+    <form class="bk-filters" method="get" action="{{ url('bank_list') }}">
+        <input type="search" name="q" value="{{ f.q }}" placeholder="{{ _('Search question text...') }}">
+        <select name="tag">
+            <option value="">{{ _('All tags') }}</option>
+            {% for t in tags %}<option value="{{ t.id }}"{% if f.tag == t.id|string %} selected{% endif %}>{{ t.name }} ({{ t.n }})</option>{% endfor %}
+        </select>
+        <select name="kind">
+            <option value="">{{ _('All types') }}</option>
+            {% for k, label in kind_names.items() %}<option value="{{ k }}"{% if f.kind == k %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <select name="level">
+            <option value="">{{ _('Any difficulty') }}</option>
+            {% for name in level_names %}<option value="{{ loop.index0 }}"{% if f.level == loop.index0|string %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+        <label class="qf-check"><input type="checkbox" name="mine" value="1"{% if f.mine %} checked{% endif %}> {{ _('Mine only') }}</label>
+        <button type="submit">{{ _('Filter') }}</button>
+    </form>
+
+    {% if questions %}
+        <p class="qz-note bk-count">{{ filtered }} {{ _('matching questions') }}</p>
+        <form method="post" action="{{ url('bank_action') }}" id="bank-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            <div class="bk-list">
+                {% for q in questions %}
+                    <article class="bk-card">
+                        <label class="bk-check" title="{{ _('Select') }}"><input type="checkbox" name="ids" value="{{ q.id }}" class="bk-id"></label>
+                        <div class="bk-main">
+                            <div class="bk-chips">
+                                <span class="cbadge cbadge-open">{{ kind_names[q.kind] }}</span>
+                                {% if q.level %}<span class="cbadge {{ ['', 'cbadge-open', 'cbadge-joined', 'cbadge-private'][q.level] }}">{{ level_names[q.level] }}</span>{% endif %}
+                                {% for t in q.tags.all() %}<a class="bk-tag" href="?tag={{ t.id }}">{{ t.name }}</a>{% endfor %}
+                            </div>
+                            <div class="bk-text">{{ q.text|striptags|truncate(260) }}</div>
+                            {% if q.kind != 'short' %}
+                                <div class="bk-opts">
+                                    {% for o in q.options %}<span class="{{ 'ok' if o.correct else '' }}">{{ 'ABCDEFGHIJ'[loop.index0] }}. {{ o.text|striptags|truncate(40) }}</span>{% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="bk-opts"><span class="ok">{{ q.accepted_list()|join(' | ') }}</span></div>
+                            {% endif %}
+                            <div class="course-meta">
+                                <span><i class="fa fa-star"></i> {{ q.points|round(2) }}</span>
+                                {% if q.creator %}<span><i class="fa fa-user"></i> {{ link_user(q.creator) }}</span>{% endif %}
+                                {% if q.source_name %}<span><i class="fa fa-file-text-o"></i> {{ q.source_name }}</span>{% endif %}
+                                {% if q.is_manageable_by(request.user) %}<span><a href="{{ url('bank_edit', q.id) }}"><i class="fa fa-pencil"></i> {{ _('Edit') }}</a></span>{% endif %}
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            <div class="bk-bar">
+                <label class="qf-check"><input type="checkbox" id="bk-all"> {{ _('Select all on this page') }}</label>
+                <span class="bk-selected"><b id="bk-n">0</b> {{ _('selected') }}</span>
+                <button type="submit" name="action" value="compose" class="course-join">{{ _('Add to new quiz') }}</button>
+                <input type="text" name="tag_name" placeholder="{{ _('Tag name') }}">
+                <button type="submit" name="action" value="tag">{{ _('Add tag') }}</button>
+                <button type="submit" name="action" value="delete" class="qz-danger" onclick="return confirm({{ _('Delete the selected questions from the bank?')|htmltojs }});">{{ _('Delete') }}</button>
+            </div>
+        </form>
+        {% if page_obj.has_other_pages() %}
+            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+    {% else %}
+        <div class="course-empty">
+            <div class="course-empty-blob"><i class="fa fa-database"></i></div>
+            <h3>{{ _('The question bank is empty') }}</h3>
+            <p>{{ _('Upload a quiz or import a file and its questions will be collected here.') }}</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            function count() { $('#bk-n').text($('.bk-id:checked').length); $('.bk-card').each(function () { $(this).toggleClass('picked', $(this).find('.bk-id').prop('checked')); }); }
+            $('.bk-id').on('change', count);
+            $('#bk-all').on('change', function () { $('.bk-id').prop('checked', this.checked); count(); });
+            count();
+        });
+    </script>
+{% endblock %}

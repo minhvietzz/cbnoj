@@ -55,6 +55,7 @@
         </ul>
     </div>
     <div id="blog-container">
+        {% block posts_box %}
         <div class="blog-content sidebox">
             {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
@@ -76,8 +77,10 @@
                 <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
             {% endif %}
         </div>
+        {% endblock %}
 
         <div class="blog-sidebar">
+            {% block sidebar_boxes %}
             {% if own_open_tickets %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('My open tickets') }} <i class="fa fa-question-circle"></i></h3>
@@ -120,7 +123,7 @@
                     </div>
                 </div>
             {% endif %}
-            {% if current_contests %}
+            {% if current_contests and not home_dashboard %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('Ongoing contests') }} <i class="fa fa-trophy"></i></h3>
                     <div class="sidebox-content sidebox-ongoing-contest">
@@ -138,7 +141,7 @@
                 </div>
             {% endif %}
 
-            {% if future_contests %}
+            {% if future_contests and not home_dashboard %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('Upcoming contests') }} <i class="fa fa-trophy"></i></h3>
                     <div class="sidebox-content">
@@ -192,6 +195,7 @@
                     </span>
                 </div>
             </div>
+            {% if not home_dashboard %}
             <div class="blog-sidebox sidebox">
                 <h3>{{ _('New problems') }} <i class="fa fa-puzzle-piece"></i>
                 </h3>
@@ -208,6 +212,8 @@
                     </span>
                 </div>
             </div>
+            {% endif %}
+            {% endblock %}
         </div>
     </div>
     {% block after_posts %}{% endblock %}

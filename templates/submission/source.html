@@ -61,40 +61,69 @@
     {% block content_js_media %}{% endblock %}
 {% endblock %}
 
-{% block body %}
-    <br>
-    <div><a href="{{ url('submission_status', submission.id) }}">{{ _('View status') }}</a></div>
-    <div><a href="{{ url('submission_source_raw', submission.id) }}">{{ _('View raw source') }}</a></div>
-    {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
-        <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
-    {% endif %}
-    {% set can_edit = submission.problem.is_editable_by(request.user) %}
-    {% if perms.judge.rejudge_submission and can_edit and not submission.is_locked %}
-        <div>
-            <form action="{{ url('submission_rejudge') }}" method="post">
-                {% csrf_token %}
-                <a href="#" onclick="parentNode.submit()">{{ _('Rejudge') }}</a>
-                <input type="hidden" name="id" value="{{ submission.id }}">
-                <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
-            </form>
-        </div>
-    {% endif %}
-    <br>
-    <hr>
-    <div class="source-wrap">
-        <table>
-            <tr>
-                <td class="source-ln">
-                    <div>
-                        {% for line in raw_source.split('\n') %}
-                            <a href="#line-{{ loop.index }}" name="line-{{ loop.index }}">
-                                <pre class="line">{{ loop.index }}</pre>
-                            </a>
-                        {% endfor %}
-                    </div>
-                </td>
-                <td class="source-code">{{ highlighted_source }}</td>
-            </tr>
-        </table>
+{% block header %}{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="sub-head">
+        <span class="sub-kicker">{{ _('Submission') }} #{{ submission.id }}</span>
+        <h2 class="sub-title">
+            <a href="{{ url('problem_detail', submission.problem.code) }}">{{ submission.problem.translated_name(LANGUAGE_CODE) }}</a>
+            <small>{{ _('by') }} {{ link_user(submission.user) }}</small>
+        </h2>
     </div>
+{% endblock %}
+
+{% block body %}
+    {% set can_edit = submission.problem.is_editable_by(request.user) %}
+    <section class="sub-hero sub-hero-compact">
+        <div class="sub-hero-main">
+            <div class="sub-verdict-line">
+                {% if not submission.is_graded %}<i class="fa fa-spinner fa-pulse"></i>{% endif %}
+                <span class="sub-verdict {{ submission.result_class }}">{{ submission.long_status }}</span>
+            </div>
+            <div class="sub-meta">
+                <span><i class="fa fa-clock-o"></i> {{ submission.date|date(_('N j, Y, g:i a')) }}</span>
+                {% if can_edit and submission.judged_on %}<span><i class="fa fa-server"></i> {{ submission.judged_on.name }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="sub-tiles">
+            <div class="sub-tile"><span>{{ _('Language') }}</span><b>{{ submission.language }}</b></div>
+        </div>
+        <div class="sub-actions">
+            <a href="{{ url('submission_status', submission.id) }}"><i class="fa fa-flag-checkered"></i> {{ _('View status') }}</a>
+            <a href="{{ url('submission_source_raw', submission.id) }}"><i class="fa fa-file-text-o"></i> {{ _('View raw source') }}</a>
+            {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
+                <a href="{{ url('problem_submit', submission.problem.code, submission.id) }}"><i class="fa fa-repeat"></i> {{ _('Resubmit') }}</a>
+            {% endif %}
+            {% if perms.judge.rejudge_submission and can_edit and not submission.is_locked %}
+                <form action="{{ url('submission_rejudge') }}" method="post">
+                    {% csrf_token %}
+                    <a href="#" onclick="parentNode.submit(); return false;"><i class="fa fa-refresh"></i> {{ _('Rejudge') }}</a>
+                    <input type="hidden" name="id" value="{{ submission.id }}">
+                    <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
+                </form>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="sub-code">
+        <div class="source-wrap">
+            <table>
+                <tr>
+                    <td class="source-ln">
+                        <div>
+                            {% for line in raw_source.split('\n') %}
+                                <a href="#line-{{ loop.index }}" name="line-{{ loop.index }}">
+                                    <pre class="line">{{ loop.index }}</pre>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="source-code">{{ highlighted_source }}</td>
+                </tr>
+            </table>
+        </div>
+    </section>
 {% endblock %}

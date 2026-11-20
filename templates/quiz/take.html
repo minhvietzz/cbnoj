@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% if not quiz.is_exam %}
+        <div class="tabs">
+            <h2>{{ quiz.title }}</h2>
+        </div>
+        <p class="qp-sub">{{ _('Answer the questions below, then submit.') }}</p>
+    {% endif %}
+{% endblock %}
+
+{% block media %}
+    <style>
+        .qz-candidate { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 0 4px 12px; font-weight: 700; font-size: 14px; opacity: 0.85; }
+        .qz-section { margin: 22px 4px 10px; font-size: 1.15em; font-weight: 900; }
+        .qz-flag { margin-left: 8px; border: 2px solid rgba(128, 128, 128, 0.4); background: transparent; color: inherit; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .qz-flag.on { background: #f59e0b; border-color: #f59e0b; color: #1f2937; }
+        .qz-dots a.flag { outline: 3px solid #f59e0b; outline-offset: 1px; }
+
+        /* True/false statements: the generic .qz-option hides its inputs, so the choices are styled labels. */
+        .qz-option.qz-tf-row { border-radius: 18px; cursor: default; flex-wrap: wrap; }
+        .qz-option.qz-tf-row:has(input:checked) { background: transparent; border-color: rgba(128, 128, 128, 0.3); }
+        .qz-tf-choice { position: relative; padding: 6px 18px; border: 2px solid rgba(128, 128, 128, 0.45); border-radius: 999px; font-weight: 800; cursor: pointer; user-select: none; }
+        .qz-tf-choice:has(input:checked) { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+        .qz-tf-choice:has(input:focus-visible) { outline: 3px solid #f59e0b; }
+
+        /* Personal practice: instant feedback */
+        .qz-check { margin-left: 8px; border: 0; border-radius: 999px; padding: 4px 16px; font-weight: 800; font-size: 13px; cursor: pointer; background: #3b82f6; color: #fff; }
+        .qz-question.qz-checked .qz-check { display: none; }
+        .qz-question.qz-checked .qz-options { pointer-events: none; }
+        .qz-question.qz-checked .qz-short { pointer-events: none; }
+        .qz-question .qz-option.qz-ok { border-color: #22c55e; background: rgba(34, 197, 94, 0.16); }
+        .qz-question .qz-option.qz-bad { border-color: #ef4444; background: rgba(239, 68, 68, 0.16); }
+        .qz-verdict { margin-top: 12px; font-weight: 800; }
+        .qz-verdict.ok { color: #22c55e; }
+        .qz-verdict.bad { color: #ef4444; }
+        .qz-verdict.part { color: #f59e0b; }
+
+        /* Exam lock */
+        body.qz-secure { -webkit-user-select: none; user-select: none; }
+        body.qz-secure input[type=text] { -webkit-user-select: text; user-select: text; }
+        .qz-watermark { position: fixed; inset: 0; z-index: 9999; pointer-events: none; }
+        #qz-lock { position: fixed; inset: 0; z-index: 100000; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; background: rgba(15, 18, 40, 0.97); color: #fff; }
+        #qz-lock.on { display: flex; }
+        #qz-lock .box { max-width: 540px; }
+        #qz-lock h2 { margin: 0 0 12px; color: #fff; }
+        #qz-lock p { margin: 0 0 18px; line-height: 1.5; }
+        #qz-lock button { cursor: pointer; border: 0; border-radius: 999px; padding: 12px 28px; font-weight: 900; font-size: 16px; background: #3b82f6; color: #fff; }
+        #qz-lock button[disabled] { opacity: 0.5; cursor: not-allowed; }
+        #qz-confirm { position: fixed; inset: 0; z-index: 99990; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(15, 18, 40, 0.6); }
+        #qz-confirm.on { display: flex; }
+        #qz-confirm .box { max-width: 420px; width: 100%; padding: 24px; border-radius: 18px; background: #fff; color: #1f2937; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+        #qz-confirm p { margin: 0 0 18px; font-weight: 700; line-height: 1.5; }
+        #qz-confirm .row { display: flex; gap: 10px; justify-content: center; }
+        #qz-confirm button { cursor: pointer; border: 0; border-radius: 999px; padding: 10px 24px; font-weight: 900; font-size: 15px; background: #3b82f6; color: #fff; }
+        #qz-confirm button.alt { background: #e5e7eb; color: #374151; }
+        #qz-toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 100001; display: none; max-width: 90vw; padding: 10px 22px; border-radius: 999px; background: #f59e0b; color: #1f2937; font-weight: 800; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); }
+        #qz-toast.on { display: block; }
+        #qz-toast.bad { background: #ef4444; color: #fff; }
+        @media print { body.qz-secure * { display: none !important; } }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <form id="quiz-form"{% if quiz.is_exam %} class="moet"{% endif %} method="post" action="{{ url('quiz_attempt', quiz.slug, attempt.id) }}" autocomplete="off">
+        {% csrf_token %}
+        {% if quiz.is_secured %}<input type="hidden" name="attempt_token" value="{{ attempt.session_key }}">{% endif %}
+        {% if quiz.is_exam %}
+        <div class="moet-room">
+            <header class="moet-top">
+                <div class="moet-cand">
+                    <div class="moet-name">{{ request.user.get_full_name() or request.user.username }}</div>
+                    <div class="moet-meta">
+                        <span>{{ _('Candidate no.') }}: {{ '%06d'|format(request.user.profile.id) }}</span>
+                        <span>{{ _('Subject') }}: {{ quiz.title }}</span>
+                        <span>{{ _('Date') }}: {{ (quiz.start_time or attempt.started)|date('d/m/Y') }}</span>
+                        <span>{{ _('Paper code') }}: {{ attempt.exam_code }}</span>
+                        {% if violations_left is not none and quiz.proctoring == 'strict' %}
+                            <span>{{ _('Violations') }}: <b id="qz-violations">{{ attempt.violation_count }}</b>/{{ quiz.max_violations }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="moet-tools">
+                    {% if seconds_left is not none %}
+                        <div class="qz-timer" id="qz-timer" data-seconds="{{ seconds_left }}"><i class="fa fa-clock-o"></i> <span id="qz-time">--:--</span></div>
+                    {% endif %}
+                    <span class="moet-conn" id="qz-conn"><i class="moet-dot"></i> <span id="qz-conn-text">{{ _('Connected') }}</span></span>
+                    <button type="submit" id="qz-submit" class="moet-submit">{{ _('SUBMIT') }}</button>
+                    <button type="button" id="moet-full" class="moet-icon" title="{{ _('Fullscreen') }}"><i class="fa fa-expand"></i></button>
+                </div>
+            </header>
+            <div class="moet-actions">
+                <div class="moet-nav">
+                    <button type="button" id="moet-prev" class="moet-btn moet-btn-ghost"><i class="fa fa-arrow-left"></i> {{ _('Back') }}</button>
+                    <button type="button" id="moet-next" class="moet-btn">{{ _('Next question') }} <i class="fa fa-arrow-right"></i></button>
+                </div>
+                <div class="moet-progress">
+                    {{ _('Answered') }}: <b id="qz-answered">0</b> / {{ questions|length }}
+                    <span class="qz-saved" id="qz-saved"></span>
+                    <button type="button" id="moet-save" class="moet-btn"><i class="fa fa-floppy-o"></i> {{ _('Save') }}</button>
+                </div>
+            </div>
+            <div class="moet-work{% if passages %} has-passage{% endif %}">
+                {% if passages %}
+                    <aside class="moet-left" id="moet-left">
+                        {% for text in passages %}
+                            <div class="moet-passage content-description" data-p="{{ loop.index }}" hidden>{{ text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                        {% endfor %}
+                    </aside>
+                {% endif %}
+                <div class="moet-right" id="moet-right">
+        {% else %}
+        <div class="qp-layout">
+        <div class="qp-main" id="qp-main">
+        {% endif %}
+
+        {% for q in questions %}
+            {% if q.section and (loop.first or loop.previtem.section != q.section) %}
+                <h3 class="qz-section">{{ q.section }}</h3>
+            {% endif %}
+            <section class="qz-question" id="q{{ q.id }}" data-id="{{ q.id }}" data-kind="{{ q.kind }}" data-passage="{{ q.passage_no }}">
+                <header>
+                    <span class="qz-no">{{ loop.index }}</span>
+                    <span class="qz-kind">
+                        {% if q.kind == 'tf4' %}{{ _('Mark each statement True or False') }}{% elif q.kind == 'multi' %}{{ _('Select all correct answers') }}{% elif q.kind == 'short' %}{{ _('Type your answer') }}{% else %}{{ _('Choose one answer') }}{% endif %}
+                    </span>
+                    {% if quiz.mode == 'personal' %}
+                        <button type="button" class="qz-check" data-q="{{ q.id }}"><i class="fa fa-check"></i> {{ _('Check') }}</button>
+                    {% endif %}
+                    <span class="qz-pts">{{ q.points|round(2) }} {{ _('points') }}</span>
+                    <button type="button" class="qz-flag" data-q="{{ q.id }}" title="{{ _('Review later') }}" aria-label="{{ _('Review later') }}"><i class="fa fa-flag-o"></i></button>
+                </header>
+                <div class="content-description qz-text">{{ q.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                {% if q.kind == 'tf4' %}
+                    <div class="qz-options qz-tf">
+                        {% for o in q.shown_options %}
+                            <div class="qz-option qz-tf-row" data-tf-row>
+                                <span class="qz-letter">{{ 'abcd'[loop.index0] }}</span>
+                                <span class="qz-otext">{{ o.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span>
+                                <label class="qz-tf-choice"><input type="radio" name="q{{ q.id }}_{{ o.id }}" value="T"{% if q.saved_tf.get(o.id) is true %} checked{% endif %}> {{ _('True') }}</label>
+                                <label class="qz-tf-choice"><input type="radio" name="q{{ q.id }}_{{ o.id }}" value="F"{% if q.saved_tf.get(o.id) is false %} checked{% endif %}> {{ _('False') }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% elif q.kind == 'short' %}
+                    <input class="qz-short" type="text" name="q{{ q.id }}" value="{{ q.saved_text }}" maxlength="500" placeholder="{{ _('Your answer') }}">
+                {% else %}
+                    <div class="qz-options">
+                        {% for o in q.shown_options %}
+                            <label class="qz-option">
+                                <input type="{{ 'checkbox' if q.kind == 'multi' else 'radio' }}" name="q{{ q.id }}" value="{{ o.id }}"{% if o.id in q.saved_ids %} checked{% endif %}>
+                                <span class="qz-letter">{{ 'ABCDEFGHIJ'[loop.index0] }}</span>
+                                <span class="qz-otext">{{ o.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if quiz.mode == 'personal' %}
+                    <div class="qz-verdict" id="verdict{{ q.id }}" hidden></div>
+                    {% if q.explanation %}
+                        <div class="qz-explain" id="explain{{ q.id }}" hidden><b>{{ _('Explanation') }}</b>
+                            <div class="content-description">{{ q.explanation|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </section>
+        {% endfor %}
+
+        {% if quiz.is_exam %}
+                </div>
+            </div>
+            <footer class="moet-foot">
+                <div class="qz-dots" id="qz-dots">
+                    {% for q in questions %}<a href="#q{{ q.id }}" data-q="{{ q.id }}">{{ loop.index }}</a>{% endfor %}
+                </div>
+            </footer>
+        </div>
+        {% else %}
+        </div>
+        <aside class="qp-side" id="qp-side">
+            <div class="qp-card">
+                {% if seconds_left is not none %}
+                    <div class="qz-timer" id="qz-timer" data-seconds="{{ seconds_left }}"><i class="fa fa-clock-o"></i> <span id="qz-time">--:--</span></div>
+                {% endif %}
+                <div class="qp-count"><b id="qz-answered">0</b> / {{ questions|length }} {{ _('answered') }}</div>
+                <div class="qp-bar"><i id="qp-bar-fill"></i></div>
+                <div class="qp-filters" id="qp-filters">
+                    <button type="button" class="qp-chip active" data-filter="all">{{ _('All') }}</button>
+                    <button type="button" class="qp-chip" data-filter="todo">{{ _('Unanswered') }} <span class="qp-n" id="qp-todo">{{ questions|length }}</span></button>
+                    <button type="button" class="qp-chip" data-filter="flag">{{ _('Flagged') }} <span class="qp-n" id="qp-flag">0</span></button>
+                </div>
+                <div class="qp-title">{{ _('Questions') }}</div>
+                <div class="qp-legend">
+                    <span><i class="lg-done"></i>{{ _('answered') }}</span>
+                    <span><i class="lg-flag"></i>{{ _('Flagged') }}</span>
+                    <span><i class="lg-todo"></i>{{ _('Unanswered') }}</span>
+                </div>
+                <div class="qz-dots" id="qz-dots">
+                    {% for q in questions %}<a href="#q{{ q.id }}" data-q="{{ q.id }}">{{ loop.index }}</a>{% endfor %}
+                </div>
+                <button type="button" class="qp-next" id="qp-next">{{ _('Go to the first unanswered question') }}</button>
+            </div>
+        </aside>
+        </div>
+        <div class="qp-foot">
+            <span class="qp-saveline"><i class="fa fa-floppy-o"></i> <span class="qz-saved" id="qz-saved">{{ _('Not saved yet') }}</span></span>
+            <button type="submit" id="qz-submit" class="qp-submit">{{ _('Submit') }}</button>
+        </div>
+        {% endif %}
+    </form>
+
+    <div id="qz-toast" role="alert"></div>
+    {# Own dialog instead of window.confirm(): a native dialog blurs the page and can drop fullscreen, which the lock counts as a violation. #}
+    <div id="qz-confirm" role="dialog" aria-modal="true">
+        <div class="box">
+            <p id="qz-confirm-text"></p>
+            <div class="row">
+                <button type="button" class="alt" id="qz-confirm-no">{{ _('Cancel') }}</button>
+                <button type="button" id="qz-confirm-yes">{{ _('Submit') }}</button>
+            </div>
+        </div>
+    </div>
+    <div id="qz-lock" role="dialog" aria-modal="true">
+        <div class="box">
+            <h2 id="qz-lock-title"></h2>
+            <p id="qz-lock-text"></p>
+            <button type="button" id="qz-lock-btn"></button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            var form = document.getElementById('quiz-form');
+            var saveUrl = {{ url('quiz_attempt_save', quiz.slug, attempt.id)|htmltojs }};
+            var submitting = false;
+            var frozen = false;
+            var timer = null;
+            var end = null;
+
+            function questionDone($q) {
+                var kind = $q.data('kind'), done = false;
+                if (kind === 'tf4') {
+                    var rows = $q.find('[data-tf-row]').length;
+                    done = rows > 0 && $q.find('input[type=radio]:checked').length === rows;
+                } else {
+                    $q.find('input[type=radio],input[type=checkbox]').each(function () { if (this.checked) done = true; });
+                    $q.find('input[type=text]').each(function () { if ($.trim(this.value)) done = true; });
+                }
+                return done;
+            }
+
+            function answered() {
+                var count = 0;
+                $('.qz-question').each(function () {
+                    var $q = $(this), done = questionDone($q);
+                    $q.data('done', done);
+                    $('#qz-dots a[data-q=' + $q.data('id') + ']').toggleClass('done', done);
+                    if (done) count++;
+                });
+                $('#qz-answered').text(count);
+                var total = $('.qz-question').length;
+                $('#qp-todo').text(total - count);
+                $('#qp-bar-fill').css('width', (total ? Math.round(100 * count / total) : 0) + '%');
+            }
+
+            // ---- practice layout: filter chips, jump to first unanswered, current-question marker ----------
+            var filter = 'all';
+            function applyFilter() {
+                if (!$('#qp-filters').length) return;
+                $('.qz-question').each(function () {
+                    var $q = $(this), show = true;
+                    if (filter === 'todo') show = !$q.data('done');
+                    else if (filter === 'flag') show = $q.find('.qz-flag').hasClass('on');
+                    $q.toggleClass('qp-hide', !show);
+                });
+                $('.qz-section').toggleClass('qp-hide', filter !== 'all');
+                $('#qp-main').toggleClass('qp-empty', filter !== 'all' && !$('.qz-question:not(.qp-hide)').length);
+            }
+            $('#qp-filters').on('click', '.qp-chip', function () {
+                filter = $(this).data('filter');
+                $('#qp-filters .qp-chip').removeClass('active');
+                $(this).addClass('active');
+                applyFilter();
+            });
+            function goTo($q) {
+                if (!$q.length) return;
+                if ($q.hasClass('qp-hide')) {
+                    filter = 'all';
+                    $('#qp-filters .qp-chip').removeClass('active').first().addClass('active');
+                    applyFilter();
+                }
+                $q[0].scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+            $('#qp-next').on('click', function () {
+                var $t = $('.qz-question').filter(function () { return !$(this).data('done'); }).first();
+                goTo($t.length ? $t : $('.qz-question').first());
+            });
+            if ($('#qp-main').length) {
+                $('#qz-dots').on('click', 'a', function (e) {
+                    e.preventDefault();
+                    goTo($('#q' + $(this).data('q')));
+                });
+                var spy = null;
+                $(window).on('scroll resize', function () {
+                    clearTimeout(spy);
+                    spy = setTimeout(function () {
+                        var idx = null;
+                        $('.qz-question:not(.qp-hide)').each(function () {
+                            if (this.getBoundingClientRect().bottom > 140) { idx = $(this).data('id'); return false; }
+                        });
+                        if (idx !== null) $('#qz-dots a').removeClass('active').filter('[data-q=' + idx + ']').addClass('active');
+                    }, 50);
+                });
+            }
+
+            // ---- never lose an answer: keep a local copy until the server confirms it ----------------------
+            var OT = {saving: {{ _('Saving...')|htmltojs }}, saved: {{ _('Saved')|htmltojs }},
+                      offline: {{ _('No connection - your answers are kept here and will be sent automatically')|htmltojs }},
+                      submitFailed: {{ _('Could not submit - retrying...')|htmltojs }},
+                      submitDenied: {{ _('The server refused the submission. Reload the page.')|htmltojs }}};
+            var storeKey = 'qz-attempt-' + {{ attempt.id }};
+            var resultUrl = {{ url('quiz_result', quiz.slug, attempt.id)|htmltojs }};
+            var version = 0, retry = null;
+
+            function stash(dirty) {
+                try {
+                    localStorage.setItem(storeKey, JSON.stringify({dirty: dirty, data: $(form).serializeArray()}));
+                } catch (e) { /* private mode or storage full: the server copy is still there */ }
+            }
+
+            function restoreLocal() {
+                var saved = null;
+                try { saved = JSON.parse(localStorage.getItem(storeKey) || 'null'); } catch (e) {}
+                if (!saved || !saved.dirty) return false;
+                var wanted = {};
+                saved.data.forEach(function (pair) { (wanted[pair.name] = wanted[pair.name] || []).push(pair.value); });
+                $(form).find('input').each(function () {
+                    if (this.type === 'hidden') return;
+                    var values = wanted[this.name] || [];
+                    if (this.type === 'radio' || this.type === 'checkbox') this.checked = values.indexOf(this.value) >= 0;
+                    else if (this.type === 'text') this.value = values.length ? values[0] : '';
+                });
+                return true;
+            }
+
+            function save() {
+                if (submitting || frozen) return;
+                clearTimeout(retry);
+                var sent = version;
+                $('#qz-saved').text(OT.saving);
+                $.ajax({url: saveUrl, type: 'POST', data: $(form).serialize(), timeout: 15000})
+                    .done(function () {
+                        $('#qz-saved').text(OT.saved);
+                        if (sent === version) stash(false);      // nothing changed meanwhile: the server has it all
+                    })
+                    .fail(function (xhr) {
+                        if (xhr.status === 409 && window.qzApi && xhr.responseJSON) { window.qzApi.apply(xhr.responseJSON); return; }
+                        $('#qz-saved').text(OT.offline);
+                        retry = setTimeout(save, 8000);
+                    });
+            }
+
+            $(form).on('change input', 'input', function () {
+                version++;
+                answered();
+                stash(true);
+                clearTimeout(timer);
+                timer = setTimeout(save, 700);
+            });
+            window.addEventListener('online', save);
+
+            function submitNow() {
+                if (frozen) return;
+                submitting = true;
+                clearTimeout(timer);
+                clearTimeout(retry);
+                $('#qz-confirm').removeClass('on');
+                $('#qz-submit, .qz-finish button').prop('disabled', true);
+                $.ajax({url: form.action, type: 'POST', data: $(form).serialize(), timeout: 20000})
+                    .done(function () {
+                        try { localStorage.removeItem(storeKey); } catch (e) {}
+                        try {
+                            var exit = document.exitFullscreen || document.webkitExitFullscreen;
+                            if ((document.fullscreenElement || document.webkitFullscreenElement) && exit) {
+                                var closed = exit.call(document);
+                                if (closed && closed.catch) closed.catch(function () {});
+                            }
+                        } catch (e) {}
+                        window.location.href = resultUrl;
+                    })
+                    .fail(function (xhr) {
+                        if (xhr.status >= 400 && xhr.status < 500) {   // refused for good: do not loop
+                            $('#qz-saved').text(OT.submitDenied);
+                            submitting = false;
+                            $('#qz-submit, .qz-finish button').prop('disabled', false);
+                            return;
+                        }
+                        $('#qz-saved').text(OT.submitFailed);        // offline or server hiccup: keep trying
+                        setTimeout(submitNow, 5000);
+                    });
+            }
+
+            {% if quiz.mode == 'personal' %}
+            var checkUrl = {{ url('quiz_attempt_check', quiz.slug, attempt.id)|htmltojs }};
+            var T = {right: {{ _('Correct!')|htmltojs }}, wrong: {{ _('Not quite.')|htmltojs }},
+                     partial: {{ _('Partly correct')|htmltojs }}, points: {{ _('points')|htmltojs }},
+                     accepted: {{ _('Accepted answers')|htmltojs }}};
+
+            function mark($q, r) {
+                var id = $q.data('id');
+                $q.addClass('qz-checked ' + (r.fraction >= 1 ? 'qz-right' : 'qz-wrong'));
+                if (r.kind === 'tf4') {
+                    $q.find('[data-tf-row]').each(function () {
+                        var $row = $(this), $radios = $row.find('input[type=radio]');
+                        var optionId = $radios.first().attr('name').split('_')[1];
+                        var chosen = $radios.filter(':checked').val();
+                        var truth = r.tf[optionId] ? 'T' : 'F';
+                        $row.addClass(chosen === truth ? 'qz-ok' : 'qz-bad');
+                    });
+                } else if (r.kind === 'short') {
+                    $q.find('.qz-short').after($('<div class="qz-answer-line">').append(
+                        $('<span>').text(T.accepted), $('<b class="ok">').text(r.accepted.join(' | '))));
+                } else {
+                    $q.find('.qz-option').each(function () {
+                        var $o = $(this), $i = $o.find('input'), ok = r.correct.indexOf(parseInt($i.val(), 10)) >= 0;
+                        $o.toggleClass('qz-ok', ok).toggleClass('qz-bad', !ok && $i.prop('checked'));
+                    });
+                }
+                var cls = r.fraction >= 1 ? 'ok' : (r.fraction > 0 ? 'part' : 'bad');
+                var text = r.fraction >= 1 ? T.right : (r.fraction > 0 ? T.partial : T.wrong);
+                $('#verdict' + id).text(text + ' (' + r.points + '/' + r.max + ' ' + T.points + ')')
+                    .attr('class', 'qz-verdict ' + cls).prop('hidden', false);
+                $('#explain' + id).prop('hidden', false);
+            }
+
+            $(form).on('click', '.qz-check', function () {
+                var $q = $(this).closest('.qz-question');
+                var data = $q.find(':input').serialize() + '&question=' + $q.data('id') +
+                    '&csrfmiddlewaretoken=' + encodeURIComponent($(form).find('[name=csrfmiddlewaretoken]').val());
+                $.post(checkUrl, data).done(function (r) { mark($q, r); answered(); });
+            });
+            {% endif %}
+
+            $(form).on('click', '.qz-flag', function () {
+                var $b = $(this).toggleClass('on');
+                $b.find('i').toggleClass('fa-flag', $b.hasClass('on')).toggleClass('fa-flag-o', !$b.hasClass('on'));
+                $('#qz-dots a[data-q=' + $b.data('q') + ']').toggleClass('flag', $b.hasClass('on'));
+                $('#qp-flag').text($('.qz-flag.on').length);
+            });
+
+            $(form).on('submit', function (e) {
+                e.preventDefault();
+                if (submitting || frozen) return;
+                var left = $('.qz-question').filter(function () { return !questionDone($(this)); }).length;
+                var msg = left > 0 ? {{ _('Some questions are unanswered. Submit anyway?')|htmltojs }}
+                                   : {{ _('Submit your answers now? You cannot change them afterwards.')|htmltojs }};
+                var $ask = $('#qz-confirm');
+                $('#qz-confirm-text').text(msg);
+                $ask.addClass('on');
+                $('#qz-confirm-yes').off('click').on('click', submitNow).trigger('focus');
+                $('#qz-confirm-no').off('click').on('click', function () { $ask.removeClass('on'); });
+            });
+
+            var $timer = $('#qz-timer');
+            if ($timer.length) {
+                end = Date.now() + parseInt($timer.data('seconds'), 10) * 1000;
+                (function tick() {
+                    var left = Math.max(0, Math.round((end - Date.now()) / 1000));
+                    var m = Math.floor(left / 60), s = left % 60;
+                    $('#qz-time').text((m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s);
+                    $timer.toggleClass('qz-timer-low', left <= 60);
+                    if (left <= 0) {
+                        submitNow();
+                        return;
+                    }
+                    setTimeout(tick, 500);
+                })();
+            }
+
+            // Hooks used by the proctoring script below.
+            window.qzApi = {
+                form: form,
+                setSeconds: function (s) { if ($timer.length) end = Date.now() + s * 1000; },
+                leave: function () { submitting = true; },
+                isSubmitting: function () { return submitting; },
+                save: function () { version++; save(); },
+                freeze: function () { frozen = true; }
+            };
+            {% if quiz.is_exam %}
+            // ---- exam room: two-pane layout, question matrix, passage that follows the current question ----
+            var $right = $('#moet-right'), $qs = $right.children('.qz-question'), cur = 0;
+            $('body').addClass('qz-moet-page');
+
+            function setCurrent(i, scroll) {
+                if (i < 0 || i >= $qs.length) return;
+                cur = i;
+                var $q = $qs.eq(i), id = $q.data('id'), p = String($q.data('passage') || 0);
+                $('#qz-dots a').removeClass('active').filter('[data-q=' + id + ']').addClass('active');
+                $qs.removeClass('current').eq(i).addClass('current');
+                $('.moet-passage').each(function () { this.hidden = String($(this).data('p')) !== p; });
+                if (scroll) $right.stop().animate({scrollTop: $right.scrollTop() + $q.position().top - 8}, 160);
+            }
+            function fromScroll() {
+                var top = $right.offset().top + 24, idx = 0;
+                $qs.each(function (i) { if (this.getBoundingClientRect().bottom > top) { idx = i; return false; } });
+                if ($right.scrollTop() + $right.innerHeight() >= $right[0].scrollHeight - 4) idx = $qs.length - 1;
+                if (idx !== cur) setCurrent(idx, false);
+            }
+            var scrollTimer = null;
+            $right.on('scroll', function () { clearTimeout(scrollTimer); scrollTimer = setTimeout(fromScroll, 60); });
+            $('#qz-dots').on('click', 'a', function (e) {
+                e.preventDefault();
+                setCurrent($qs.index($('#q' + $(this).data('q'))), true);
+            });
+            $right.on('focusin click', '.qz-question', function () { setCurrent($qs.index(this), false); });
+            $('#moet-prev').on('click', function () { setCurrent(cur - 1, true); });
+            $('#moet-next').on('click', function () { setCurrent(cur + 1, true); });
+            $(document).on('keydown', function (e) {
+                if (/^(INPUT|TEXTAREA)$/.test(e.target.nodeName) && e.target.type === 'text') return;
+                if (e.key === 'ArrowLeft') setCurrent(cur - 1, true);
+                else if (e.key === 'ArrowRight') setCurrent(cur + 1, true);
+            });
+            $('#moet-save').on('click', function () { window.qzApi.save(); });
+            $('#moet-full').on('click', function () {
+                var el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+                if (req && !(document.fullscreenElement || document.webkitFullscreenElement)) req.call(el);
+            });
+            function syncFull() {
+                $('#moet-full').toggle(!(document.fullscreenElement || document.webkitFullscreenElement));
+            }
+            document.addEventListener('fullscreenchange', syncFull);
+            document.addEventListener('webkitfullscreenchange', syncFull);
+            syncFull();
+            window.addEventListener('online', function () { $('#qz-conn').removeClass('off'); });
+            window.addEventListener('offline', function () { $('#qz-conn').addClass('off'); });
+            window.qzApi.conn = function (ok) {
+                $('#qz-conn').toggleClass('off', !ok);
+                $('#qz-conn-text').text(ok ? {{ _('Connected')|htmltojs }} : {{ _('Reconnecting...')|htmltojs }});
+            };
+            setCurrent(0, false);
+            {% endif %}
+            if (restoreLocal()) save();     // answers typed while offline in a previous load of this page
+            answered();
+        });
+    </script>
+    {% if quiz.is_secured %}
+        {% include "quiz/proctor.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+{% endblock %}

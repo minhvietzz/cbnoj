@@ -1,9 +1,13 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from django.contrib.flatpages.models import FlatPage
 
 from judge.admin.comments import CommentAdmin
+from judge.admin.course import CourseAdmin, CourseLessonAdmin
+from judge.admin.quiz import BankQuestionAdmin, BankTagAdmin, QuizAdmin, QuizAttemptAdmin, QuizProfileStatAdmin, \
+    QuizQuestionAdmin
 from judge.admin.contest import ContestAdmin, ContestParticipationAdmin, ContestTagAdmin
 from judge.admin.interface import BlogPostAdmin, BlogPostTagAdmin, FlatPageAdmin, LicenseAdmin, LogEntryAdmin, \
     NavigationBarAdmin
@@ -16,7 +20,7 @@ from judge.admin.tag import TagAdmin, TagGroupAdmin, TagProblemAdmin
 from judge.admin.taxon import OrganizationProblemTagAdmin, ProblemGroupAdmin, ProblemTypeAdmin
 from judge.admin.ticket import TicketAdmin
 from judge.models import Badge, BlogPost, BlogPostTag, Comment, CommentLock, Contest, ContestParticipation, \
-    ContestTag, Judge, Language, License, MiscConfig, NavigationBar, Organization, \
+    ContestTag, Course, CourseLesson, BankQuestion, BankTag, Quiz, QuizAttempt, QuizProfileStat, QuizQuestion, Judge, Language, License, MiscConfig, NavigationBar, Organization, \
     OrganizationProblemTag, OrganizationRequest, Problem, ProblemGroup, ProblemType, Profile, Submission, Tag, \
     TagGroup, TagProblem, Ticket
 
@@ -25,6 +29,15 @@ admin.site.register(BlogPostTag, BlogPostTagAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(CommentLock)
 admin.site.register(Contest, ContestAdmin)
+admin.site.register(Course, CourseAdmin)
+if getattr(settings, 'QUIZ_ENABLED', False):   # switched off: see dmoj/urls.py
+    admin.site.register(Quiz, QuizAdmin)
+    admin.site.register(BankQuestion, BankQuestionAdmin)
+    admin.site.register(BankTag, BankTagAdmin)
+    admin.site.register(QuizQuestion, QuizQuestionAdmin)
+    admin.site.register(QuizAttempt, QuizAttemptAdmin)
+    admin.site.register(QuizProfileStat, QuizProfileStatAdmin)
+admin.site.register(CourseLesson, CourseLessonAdmin)
 admin.site.register(ContestParticipation, ContestParticipationAdmin)
 admin.site.register(ContestTag, ContestTagAdmin)
 admin.site.unregister(FlatPage)

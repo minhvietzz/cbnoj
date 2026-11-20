@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{{ quiz.title }}</h2>
+        <ul>
+            <li class="tab"><a href="{{ quiz.get_absolute_url() }}"><i class="tab-icon fa fa-arrow-left"></i> {{ _('Back to quiz') }}</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block body %}
+    {% if results_hidden %}
+    <section class="course-hero tone-sky">
+        <div class="course-hero-main">
+            <h3 class="course-section-title" style="margin: 0"><i class="fa fa-check-circle"></i> {{ _('Your exam has been submitted') }}</h3>
+            <p class="course-about">
+                {{ _('Submitted at') }} {{ attempt.finished|date('d/m/Y H:i:s') }}.
+                {% if attempt.auto_submitted %}{{ _('The exam was submitted automatically.') }}{% endif %}
+                {{ _('Your score and the answers will be shown once the results are released.') }}
+            </p>
+        </div>
+    </section>
+    {% else %}
+    <section class="course-hero tone-{{ 'mint' if attempt.percent >= 80 else ('butter' if attempt.percent >= 50 else 'peach') }}">
+        <div class="course-hero-main">
+            <h3 class="course-section-title" style="margin: 0">{{ _('Result') }}{% if owner.id != request.user.profile.id %} — {{ link_user(owner) }}{% endif %}</h3>
+            <div class="qz-score">{{ attempt.score|round(2) }}<small>/{{ attempt.max_score|round(2) }} {{ _('points') }}</small></div>
+            <div class="course-meta">
+                <span><i class="fa fa-check"></i> {{ attempt.correct_count }}/{{ attempt.question_count }} {{ _('correct') }}</span>
+                <span><i class="fa fa-clock-o"></i> {{ attempt.started|date('d/m/Y H:i') }}</span>
+            </div>
+        </div>
+        <div class="course-hero-side">
+            <div class="course-ring" style="--p: {{ attempt.percent }}"><b>{{ attempt.percent }}%</b></div>
+        </div>
+    </section>
+
+    {% if answers_pending %}
+        <div class="course-empty course-empty-small"><p><i class="fa fa-lock"></i> {{ _('The correct answers and explanations will be shown once the exam has closed for everyone.') }}</p></div>
+    {% elif not reveal %}
+        <div class="course-empty course-empty-small"><p>{{ _('The author has chosen not to show the correct answers.') }}</p></div>
+    {% endif %}
+
+    {% for r in review %}
+        {% set q = r.question %}
+        <section class="qz-question {{ 'qz-right' if r.correct else 'qz-wrong' }}">
+            <header>
+                <span class="qz-no">{{ r.number }}</span>
+                <span class="qz-kind">{% if r.correct %}<i class="fa fa-check"></i> {{ _('Correct') }}{% elif not r.answered %}<i class="fa fa-minus"></i> {{ _('Not answered') }}{% else %}<i class="fa fa-times"></i> {{ _('Wrong') }}{% endif %}</span>
+                <span class="qz-pts">{{ (r.earned if r.earned is not none else (q.points if r.correct else 0))|round(2) }}/{{ q.points|round(2) }}</span>
+            </header>
+            <div class="content-description qz-text">{{ q.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+            {% if q.kind == 'short' %}
+                <div class="qz-answer-line"><span>{{ _('Your answer') }}</span><b class="{{ 'ok' if r.correct else 'bad' }}">{{ r.text or '—' }}</b></div>
+                {% if not r.correct %}<div class="qz-answer-line"><span>{{ _('Accepted answers') }}</span><b class="ok">{{ q.accepted_list()|join(' | ') }}</b></div>{% endif %}
+            {% elif q.kind == 'tf4' %}
+                <div class="qz-options">
+                    {% for o in q.shown_options %}
+                        {% set verdict = r.tf.get(o.id) %}
+                        <div class="qz-option qz-review {{ 'is-correct' if verdict is not none and verdict == o.is_correct else '' }}{{ ' is-miss' if verdict is none or verdict != o.is_correct else '' }}">
+                            <span class="qz-letter">{{ 'abcd'[loop.index0] }}</span>
+                            <span class="qz-otext">{{ o.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span>
+                            <span class="qz-mark">
+                                {{ _('You') }}: <b>{{ '—' if verdict is none else (_('True') if verdict else _('False')) }}</b>
+                                · {{ _('Key') }}: <b>{{ _('True') if o.is_correct else _('False') }}</b>
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="qz-options">
+                    {% for o in q.shown_options %}
+                        <div class="qz-option qz-review {{ 'is-correct' if o.is_correct else '' }} {{ 'is-chosen' if o.id in r.chosen else '' }}{{ ' is-miss' if o.id in r.chosen and not o.is_correct else '' }}">
+                            <span class="qz-letter">{{ 'ABCDEFGHIJ'[loop.index0] }}</span>
+                            <span class="qz-otext">{{ o.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span>
+                            <span class="qz-mark">
+                                {% if o.is_correct %}<i class="fa fa-check"></i>{% elif o.id in r.chosen %}<i class="fa fa-times"></i>{% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if q.explanation %}
+                <div class="qz-explain"><b>{{ _('Explanation') }}</b>
+                    <div class="content-description">{{ q.explanation|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                </div>
+            {% endif %}
+        </section>
+    {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+{% endblock %}

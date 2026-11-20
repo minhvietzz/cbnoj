@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    <style>
+        .qm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .qm-tile { padding: 14px 18px; border-radius: 20px; background: rgba(128, 128, 128, 0.12); }
+        .qm-tile b { display: block; font-size: 1.8em; line-height: 1.2; }
+        .qm-tile small { opacity: 0.75; font-weight: 700; }
+        .qm-level { font-size: 1.4em; }
+        .qm-level-weak { color: #ef4444; }
+        .qm-level-average { color: #f59e0b; }
+        .qm-level-good { color: #3b82f6; }
+        .qm-level-excellent { color: #22c55e; }
+        .qm-topic { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
+        .qm-topic .name { flex: 0 0 38%; font-weight: 700; }
+        .qm-topic .bar { flex: 1; height: 10px; border-radius: 999px; background: rgba(128, 128, 128, 0.25); overflow: hidden; }
+        .qm-topic .bar i { display: block; height: 100%; background: #22c55e; }
+        .qm-topic .bar.low i { background: #ef4444; }
+        .qm-topic .bar.mid i { background: #f59e0b; }
+        .qm-topic .pct { flex: 0 0 90px; text-align: right; font-variant-numeric: tabular-nums; }
+        .qm-spark { display: flex; align-items: flex-end; gap: 8px; height: 110px; margin: 8px 0 18px; }
+        .qm-spark div { flex: 1; max-width: 56px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 12px; font-weight: 800; }
+        .qm-spark span { display: block; width: 100%; border-radius: 6px 6px 0 0; background: #3b82f6; min-height: 2px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% if not stat or (stat.practice_sessions + stat.exams_taken) == 0 %}
+        <div class="course-empty course-empty-small">
+            <p>{{ _('You have not finished any quiz yet. Your progress will appear here.') }}</p>
+            <p><a class="lesson-nav-btn" href="{{ url('quiz_list') }}">{{ _('Browse quizzes') }}</a></p>
+        </div>
+    {% else %}
+        <div class="qm-grid">
+            <div class="qm-tile"><small>{{ _('Level') }}</small>
+                {% if stat.level %}
+                    <b class="qm-level qm-level-{{ stat.level }}">{{ stat.get_level_display() }}</b>
+                    <small>{{ stat.level_score }}/10</small>
+                {% else %}
+                    <b class="qm-level">—</b>
+                    <small>{{ _('Needs at least') }} {{ min_questions }} {{ _('answered questions') }}</small>
+                {% endif %}
+            </div>
+            <div class="qm-tile"><small>{{ _('Practice sessions') }}</small><b>{{ stat.practice_sessions }}</b></div>
+            <div class="qm-tile"><small>{{ _('Mock exams taken') }}</small><b>{{ stat.exams_taken }}</b></div>
+            <div class="qm-tile"><small>{{ _('Average exam score') }}</small><b>{{ stat.avg_exam_score if stat.exams_taken else '—' }}</b><small>/10</small></div>
+            <div class="qm-tile"><small>{{ _('Best exam score') }}</small><b>{{ stat.best_exam_score if stat.exams_taken else '—' }}</b><small>/10</small></div>
+            <div class="qm-tile"><small>{{ _('Questions correct') }}</small><b>{{ stat.questions_correct }}</b><small>/ {{ stat.questions_answered }}</small></div>
+        </div>
+
+        {% if exam_history|length > 1 %}
+            <h3 class="course-section-title">{{ _('Mock exam scores') }}</h3>
+            <div class="qm-spark">
+                {% for a in exam_history %}
+                    <div title="{{ a.quiz.title }}">{{ a.score10 }}<span style="height: {{ (a.score10 * 10)|round|int }}%"></span></div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if topics %}
+            <h3 class="course-section-title">{{ _('Topics') }} <small>({{ _('weakest first') }})</small></h3>
+            {% for name, pct, count in topics %}
+                <div class="qm-topic">
+                    <span class="name">{{ name }}</span>
+                    <span class="bar {{ 'low' if pct < 50 else ('mid' if pct < 75 else '') }}"><i style="width: {{ pct }}%"></i></span>
+                    <span class="pct">{{ pct }}% · {{ count }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h3 class="course-section-title">{{ _('Recent attempts') }}</h3>
+        <div class="problem-rows">
+            {% for a in attempts %}
+                <a class="pr-row quiz-attempt-row" href="{{ url('quiz_result', a.quiz.slug, a.id) }}">
+                    <span class="pr-main">
+                        <span class="pr-line"><span class="pr-name">{{ a.quiz.title }}</span>{% if a.quiz.is_exam %} <span class="cbadge cbadge-open">{{ _('Mock exam') }}</span>{% endif %}</span>
+                        <span class="lesson-sub">{{ a.finished|date('d/m/Y H:i') }}{% if a.visible %} · {{ a.correct_count }}/{{ a.question_count }} {{ _('correct') }}{% endif %}</span>
+                    </span>
+                    <span class="pr-pts">{% if a.visible %}<span class="pr-pbubble {{ 'pb-a' if a.percent >= 80 else ('pb-b' if a.percent >= 50 else 'pb-d') }}">{{ a.score10 }}</span>{% else %}<span class="pr-pbubble pb-b"><i class="fa fa-check"></i></span>{% endif %}</span>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

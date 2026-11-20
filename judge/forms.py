@@ -26,6 +26,7 @@ from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticip
     LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, Tag, \
     WebAuthnCredential
 from judge.utils.subscription import newsletter_id
+from judge.utils.turnstile import TurnstileField, turnstile_enabled
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
@@ -58,13 +59,19 @@ class ProfileForm(ModelForm):
     class Meta:
         model = Profile
         fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme',
-                  'site_theme', 'user_script']
+                  'site_theme', 'problem_ui', 'template_cpp', 'template_c', 'template_py', 'template_pas',
+                  'user_script']
         widgets = {
             'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
             'site_theme': Select2Widget(attrs={'style': 'width:200px'}),
+            'problem_ui': Select2Widget(attrs={'style': 'width:260px'}),
+            'template_cpp': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
+            'template_c': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
+            'template_py': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
+            'template_pas': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
         }
 
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
@@ -572,8 +579,12 @@ class CustomAuthenticationForm(AuthenticationForm, SocialAuthMixin):
         super(CustomAuthenticationForm, self).__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({'placeholder': _('Username')})
         self.fields['password'].widget.attrs.update({'placeholder': _('Password')})
+        if turnstile_enabled():
+            self.fields['turnstile'] = TurnstileField(request=self.request)
 
     def clean(self):
+        if 'turnstile' in self.errors:
+            return self.cleaned_data     # failed the human check: do not even try the password
         username = self.cleaned_data.get('username')
         try:
             user = User.objects.get(username=username)

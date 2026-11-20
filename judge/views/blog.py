@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
-from django.db.models import Count, FilteredRelation, Max, Q
+from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
@@ -236,10 +236,10 @@ class PostList(PostListBase):
                                          .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
         context['page_titles'] = CacheDict(lambda page: Comment.get_page_title(page))
 
-        context['user_count'] = Profile.objects.count
+        context['user_count'] = Profile.objects.filter(user__is_active=True).count
         context['problem_count'] = Problem.get_public_problems().count
-        context['submission_count'] = lambda: Submission.objects.aggregate(max_id=Max('id'))['max_id'] or 0
-        context['language_count'] = Language.objects.count
+        context['submission_count'] = Submission.objects.count
+        context['language_count'] = Language.objects.filter(judges__isnull=False).distinct().count
 
         now = timezone.now()
 
@@ -271,7 +271,104 @@ class PostList(PostListBase):
         context['tab'] = self.tab
         context['left_align_tabs'] = True
 
+        if self.template_name == 'home.html':
+            context.update(self.get_dashboard_context(context))
+
         return context
+
+    def get_dashboard_context(self, context):
+        # Data for the dashboard-style home page. Everything here is small and cached or cheap.
+        from datetime import timedelta
+
+        from django.core.cache import cache
+        from django.db.models.functions import TruncDate
+
+        from judge.models import Course, CourseLesson, CourseRole
+        from judge.views.course import lesson_progress
+
+        user = self.request.user
+        profile = self.request.profile if user.is_authenticated else None
+        data = {}
+
+        featured = None
+        for group in (context['current_contests'], context['future_contests']):
+            featured = next(iter(group), None)
+            if featured:
+                data['home_featured_state'] = 'live' if group is context['current_contests'] else 'upcoming'
+                break
+        data['home_featured_contest'] = featured
+
+        if profile is not None:
+            data['home_rank'] = Profile.objects.filter(
+                is_unlisted=False, performance_points__gt=profile.performance_points,
+            ).count() + 1
+            data['home_points'] = profile.performance_points
+            data['home_solved'] = profile.problem_count
+
+        data['home_dashboard'] = True
+        if profile is not None:
+            from judge.utils.streak import streak_info
+            streak = streak_info(profile)
+            today = timezone.localdate()
+            goal = getattr(settings, 'VNOJ_DAILY_GOAL', 3)
+            done = (Submission.objects.filter(user=profile, result='AC', date__date=today)
+                    .values('problem_id').distinct().count())
+            data.update({
+                'home_streak': streak['current'],
+                'home_streak_today': streak['today'],
+                'home_goal': goal,
+                'home_goal_done': min(done, goal),
+                'home_goal_left': max(goal - done, 0),
+                'home_goal_pct': int(round(100.0 * min(done, goal) / goal)) if goal else 100,
+            })
+
+        data['home_top_users'] = list(
+            Profile.objects.filter(is_unlisted=False).order_by('-performance_points', '-problem_count')
+                   .select_related('user')[:5],
+        )
+
+        course = None
+        if profile is not None:
+            role = (CourseRole.objects.filter(user=profile).select_related('course')
+                    .order_by('-id').first())
+            course = role.course if role else None
+        if course is None:
+            course = (Course.objects.filter(is_public=True, is_open=True)
+                            .annotate(n_lessons=Count('lessons', filter=Q(lessons__is_visible=True)))
+                            .order_by('-n_lessons', '-created').first())
+        if course is not None:
+            lessons = list(CourseLesson.objects.filter(course=course, is_visible=True).order_by('order', 'id')
+                           .prefetch_related('lesson_problems__problem')[:12])
+            progress = lesson_progress(profile, lessons) if profile is not None else {}
+            data['home_course'] = course
+            data['home_lessons'] = [{
+                'lesson': lesson,
+                'percent': progress.get(lesson.id, {}).get('percent'),
+                'solved': progress.get(lesson.id, {}).get('solved'),
+                'total': progress.get(lesson.id, {}).get('total'),
+            } for lesson in lessons]
+
+        def week_activity():
+            today = timezone.localdate()
+            start = today - timedelta(days=6)
+            rows = (Submission.objects.filter(date__date__gte=start)
+                    .annotate(day=TruncDate('date'))
+                    .values('day').annotate(total=Count('id'), ok=Count('id', filter=Q(result='AC')))
+                    .order_by('day'))
+            by_day = {r['day']: r for r in rows}
+            out = []
+            for i in range(7):
+                day = start + timedelta(days=i)
+                r = by_day.get(day, {'total': 0, 'ok': 0})
+                out.append({'day': day, 'ok': r['ok'], 'bad': r['total'] - r['ok']})
+            peak = max([d['ok'] + d['bad'] for d in out] + [1])
+            for d in out:
+                d['ok_h'] = int(round(130.0 * d['ok'] / peak))
+                d['bad_h'] = int(round(130.0 * d['bad'] / peak))
+            return out
+
+        data['home_activity'] = cache.get_or_set('home_week_activity', week_activity, 300)
+        return data
 
     def get_top_rated_users(self):
         return (Profile.objects.filter(rating__isnull=False, is_unlisted=False)

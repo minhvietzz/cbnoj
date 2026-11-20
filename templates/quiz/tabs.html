@@ -1,0 +1,16 @@
+{% extends "tabs-base.html" %}
+
+{% block tabs %}
+    {{ make_tab('all', 'fa-list', url('quiz_list') + '?tab=all', _('All quizzes')) }}
+    {% if request.user.is_authenticated %}
+        {{ make_tab('mine', 'fa-check-square-o', url('quiz_list') + '?tab=mine', _('My attempts')) }}
+        {{ make_tab('practice', 'fa-graduation-cap', url('practice'), _('Practice')) }}
+        {{ make_tab('mistakes', 'fa-bookmark', url('practice_mistakes'), _('Mistake notebook')) }}
+        {{ make_tab('me', 'fa-line-chart', url('quiz_me'), _('My progress')) }}
+    {% endif %}
+    {% if can_upload %}
+        {{ make_tab('manage', 'fa-folder-open', url('quiz_list') + '?tab=manage', _('My quizzes')) }}
+        {{ make_tab('upload', 'fa-upload', url('quiz_upload'), _('Upload quiz')) }}
+        {{ make_tab('bank', 'fa-database', url('bank_list'), _('Question bank')) }}
+    {% endif %}
+{% endblock %}

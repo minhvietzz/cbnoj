@@ -10,3 +10,20 @@
 {% block users_table %}
     {% include "user/users-table.html" %}
 {% endblock %}
+
+{% block before_users_table %}
+    {% if users and (not page_obj or page_obj.number == 1) and users|length >= 3 %}
+        <div class="rk-podium">
+            {% for idx in [1, 0, 2] %}
+                {% set entry = users[idx] %}
+                <a class="rk-pod rk-pod-{{ idx + 1 }}" href="{{ url('user_page', entry[1].user.username) }}">
+                    <img class="rk-pod-av" src="{{ gravatar(entry[1], 88) }}" alt="" width="88" height="88">
+                    <b class="rk-pod-name">{{ entry[1].user.first_name or entry[1].user.username }}</b>
+                    <span class="rk-pod-user">{{ entry[1].user.username }}</span>
+                    <span class="rk-pod-pts">{{ entry[1].performance_points|floatformat(0) }}</span>
+                    <span class="rk-pod-block">{{ entry[0] }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

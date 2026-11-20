@@ -2,6 +2,9 @@ from reversion import revisions
 
 from judge.models.choices import ACE_THEMES, EFFECTIVE_MATH_ENGINES, MATH_ENGINES_CHOICES, TIMEZONE
 from judge.models.comment import Comment, CommentLock, CommentVote
+from judge.models.course import Course, CourseLesson, CourseLessonProblem, CourseRole, RoleInCourse
+from judge.models.quiz import BankQuestion, BankTag, Quiz, QuizAttempt, QuizOption, QuizProfileStat, QuizQuestion, \
+    QuizTopicStat, QuizViolation
 from judge.models.contest import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Rating
 from judge.models.interface import BlogPost, BlogPostTag, BlogVote, MiscConfig, NavigationBar, validate_regex

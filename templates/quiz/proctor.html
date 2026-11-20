@@ -1,0 +1,213 @@
+<script>
+    /*
+     * Exam lock. This only deters and records: the server decides what counts as a violation, when the
+     * attempt is auto-submitted and which tab owns the attempt (see judge/views/quiz_exam.py).
+     */
+    $(function () {
+        var api = window.qzApi;
+        var level = {{ quiz.proctoring|htmltojs }};          // 'off' | 'light' | 'strict'
+        var strict = level === 'strict', locking = level !== 'off';
+        var heartbeatUrl = {{ url('quiz_attempt_heartbeat', quiz.slug, attempt.id)|htmltojs }};
+        var eventUrl = {{ url('quiz_attempt_event', quiz.slug, attempt.id)|htmltojs }};
+        var token = {{ attempt.session_key|htmltojs }};
+        var csrf = $('#quiz-form [name=csrfmiddlewaretoken]').val();
+        var label = {{ (request.user.username ~ '  ' ~ attempt.exam_code)|htmltojs }};
+        var T = {
+            gateTitle: {{ _('Ready to start?')|htmltojs }},
+            gateText: {{ _('This exam runs in fullscreen. Leaving fullscreen, switching tabs or windows, copying and printing are blocked or recorded, and too many violations submit your exam automatically. The clock is already running.')|htmltojs }},
+            gateBtn: {{ _('Enter fullscreen and start')|htmltojs }},
+            exitTitle: {{ _('You left fullscreen')|htmltojs }},
+            exitText: {{ _('Return to fullscreen to continue. This was recorded as a violation.')|htmltojs }},
+            exitBtn: {{ _('Back to the exam')|htmltojs }},
+            unsupportedTitle: {{ _('This device cannot take the exam')|htmltojs }},
+            unsupportedText: {{ _('Your browser does not support fullscreen mode (iPhone and some tablets). Please use a computer.')|htmltojs }},
+            superTitle: {{ _('Exam opened elsewhere')|htmltojs }},
+            superText: {{ _('This exam was opened in another tab or device, so this page is locked. Close it and continue in the newest tab.')|htmltojs }},
+            warn: {{ _('Violation {0} of {1}')|htmltojs }},
+            warnLeft: {{ _('Violation {0} of {1}. One more and your exam is submitted automatically.')|htmltojs }},
+            blocked: {{ _('This action is not allowed during the exam.')|htmltojs }},
+            offline: {{ _('Connection lost. Your answers are kept in this page; reconnect soon.')|htmltojs }},
+            tabWarn: {{ _('Do not leave the exam page.')|htmltojs }}
+        };
+
+        var entered = !strict;       // strict exams start behind the fullscreen gate
+        var locked = false, ended = false, failures = 0, lastSent = {}, toastTimer = null;
+
+        // ---- helpers -------------------------------------------------------------------------------------
+        function toast(text, bad) {
+            var $t = $('#qz-toast').text(text).toggleClass('bad', !!bad).addClass('on');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () { $t.removeClass('on'); }, 4500);
+        }
+
+        function showLock(title, text, button, onClick) {
+            $('#qz-lock-title').text(title);
+            $('#qz-lock-text').text(text);
+            var $b = $('#qz-lock-btn');
+            if (button) $b.text(button).show().prop('disabled', false).off('click').on('click', onClick); else $b.hide();
+            $('#qz-lock').addClass('on');
+        }
+
+        function hideLock() { if (!locked) $('#qz-lock').removeClass('on'); }
+
+        function post(url, data) {
+            data.attempt_token = token;
+            data.csrfmiddlewaretoken = csrf;
+            return $.post(url, data);
+        }
+
+        function inFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+
+        function enterFullscreen() {
+            var el = document.documentElement;
+            var request = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (!request) return false;
+            var result = request.call(el);
+            if (result && result.catch) result.catch(function () {});
+            return true;
+        }
+
+        function supersede() {
+            locked = true;
+            api.freeze();
+            showLock(T.superTitle, T.superText, null);
+        }
+
+        function apply(state) {
+            if (!state) return;
+            if (state.seconds_left !== null && state.seconds_left !== undefined) api.setSeconds(state.seconds_left);
+            if (state.status === 'finished') {
+                ended = true;
+                api.leave();
+                window.location.href = state.redirect;
+                return;
+            }
+            if (state.status === 'superseded') { supersede(); return; }
+            if (state.violations !== undefined) $('#qz-violations').text(state.violations);
+        }
+        api.apply = apply;
+
+        function report(kind, detail, quiet) {
+            if (ended || locked || api.isSubmitting()) return;   // handing the paper in is not a violation
+            var now = Date.now();
+            if (lastSent[kind] && now - lastSent[kind] < 2000) return;
+            lastSent[kind] = now;
+            post(eventUrl, {kind: kind, detail: detail || ''}).done(function (state) {
+                apply(state);
+                if (state.counted && state.status !== 'finished') {
+                    var left = state.max_violations && state.violations === state.max_violations - 1;
+                    toast((left ? T.warnLeft : T.warn).replace('{0}', state.violations).replace('{1}', state.max_violations || '-'), true);
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 409 && xhr.responseJSON) apply(xhr.responseJSON);
+            });
+            if (!quiet && level === 'light' && (kind === 'tab_hidden' || kind === 'blur')) toast(T.tabWarn, false);
+        }
+
+        function block(e, kind, detail) {
+            e.preventDefault();
+            e.stopPropagation();
+            toast(T.blocked, false);
+            report(kind, detail, true);
+            return false;
+        }
+
+        // ---- blocking ------------------------------------------------------------------------------------
+        if (locking) {
+            $('body').addClass('qz-secure');
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="340" height="190"><text x="170" y="100" ' +
+                'text-anchor="middle" font-size="17" font-family="sans-serif" fill="#888" fill-opacity="0.22" ' +
+                'transform="rotate(-24 170 95)">' + $('<div>').text(label).html() + '</text></svg>';
+            $('<div class="qz-watermark" aria-hidden="true"></div>')
+                .css('background-image', 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")')
+                .appendTo('body');
+
+            ['copy', 'cut'].forEach(function (name) {
+                document.addEventListener(name, function (e) { return block(e, 'copy', name); }, true);
+            });
+            document.addEventListener('paste', function (e) { return block(e, 'paste', 'paste'); }, true);
+            document.addEventListener('contextmenu', function (e) { return block(e, 'contextmenu', ''); }, true);
+            document.addEventListener('dragstart', function (e) { e.preventDefault(); }, true);
+            document.addEventListener('drop', function (e) { e.preventDefault(); }, true);
+            document.addEventListener('selectstart', function (e) {
+                var node = e.target.nodeType === 3 ? e.target.parentNode : e.target;
+                if (!node || !/^(INPUT|TEXTAREA)$/.test(node.nodeName)) e.preventDefault();
+            }, true);
+            window.addEventListener('beforeprint', function () { report('print', 'beforeprint', true); });
+
+            document.addEventListener('keydown', function (e) {
+                var key = (e.key || '').toLowerCase(), mod = e.ctrlKey || e.metaKey;
+                if (key === 'printscreen') {
+                    try { navigator.clipboard.writeText(''); } catch (err) {}
+                    return block(e, 'print', 'PrintScreen');
+                }
+                if (mod && key === 'p') return block(e, 'print', 'Ctrl+P');
+                if (mod && ['c', 'x', 'v', 'a', 's', 'u'].indexOf(key) >= 0) return block(e, 'shortcut', 'Ctrl+' + key.toUpperCase());
+                if (strict && (key === 'f12' || (mod && e.shiftKey && ['i', 'j', 'c'].indexOf(key) >= 0))) {
+                    return block(e, 'shortcut', e.key);
+                }
+            }, true);
+
+            window.addEventListener('beforeunload', function (e) {
+                if (api.isSubmitting() || ended) return;
+                e.preventDefault();
+                e.returnValue = '';
+            });
+
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && entered) report('tab_hidden', 'visibilitychange');
+            });
+            window.addEventListener('blur', function () {
+                if (entered && !document.hidden) report('blur', 'window blur', true);
+            });
+        }
+
+        // ---- strict: fullscreen gate ---------------------------------------------------------------------
+        if (strict) {
+            var supported = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+            if (!supported) {
+                locked = true;
+                showLock(T.unsupportedTitle, T.unsupportedText, null);
+            } else {
+                showLock(T.gateTitle, T.gateText, T.gateBtn, enterFullscreen);
+            }
+            var onFullscreen = function () {
+                if (inFullscreen()) {
+                    entered = true;
+                    hideLock();
+                } else if (entered && !ended && !locked && !api.isSubmitting()) {
+                    report('fullscreen_exit', 'fullscreenchange');
+                    showLock(T.exitTitle, T.exitText, T.exitBtn, enterFullscreen);
+                }
+            };
+            document.addEventListener('fullscreenchange', onFullscreen);
+            document.addEventListener('webkitfullscreenchange', onFullscreen);
+
+            // A docked developer tools panel shrinks the viewport inside fullscreen: keep it as evidence only.
+            setInterval(function () {
+                if (entered && inFullscreen() && (window.outerWidth - window.innerWidth > 250 ||
+                                                  window.outerHeight - window.innerHeight > 250)) {
+                    report('devtools', window.innerWidth + 'x' + window.innerHeight, true);
+                }
+            }, 3000);
+        }
+
+        // ---- heartbeat: server clock, hand-over detection, auto-submit ----------------------------------
+        function beat() {
+            if (ended || locked) return;
+            post(heartbeatUrl, {}).done(function (state) {
+                failures = 0;
+                if (api.conn) api.conn(true);
+                apply(state);
+            }).fail(function (xhr) {
+                if (xhr.status === 429) return;     // too soon after the previous beat: not a connection problem
+                if (xhr.status === 409 && xhr.responseJSON) { apply(xhr.responseJSON); return; }
+                failures++;
+                if (api.conn) api.conn(false);
+                if (failures === 3) toast(T.offline, true);
+            });
+        }
+        setInterval(beat, 15000);
+        beat();
+    });
+</script>

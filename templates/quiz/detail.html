@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{{ quiz.title }}</h2>
+        <ul>
+            <li class="tab"><a href="{{ url('quiz_list') }}"><i class="tab-icon fa fa-list"></i> {{ _('All quizzes') }}</a></li>
+            {% if can_manage %}
+                <li class="tab"><a href="{{ url('quiz_manage', quiz.slug) }}"><i class="tab-icon fa fa-pencil"></i> {{ _('Manage') }}</a></li>
+                <li class="tab"><a href="{{ url('quiz_results', quiz.slug) }}"><i class="tab-icon fa fa-trophy"></i> {{ _('Results') }}</a></li>
+            {% endif %}
+        </ul>
+    </div>
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <section class="course-hero tone-sky">
+        <div class="course-hero-main">
+            <span class="course-badges">
+                {% if quiz.is_exam %}<span class="cbadge cbadge-open">{{ _('Mock exam') }}</span>{% endif %}
+                {% if quiz.proctoring == 'strict' %}<span class="cbadge cbadge-private"><i class="fa fa-lock"></i> {{ _('Fullscreen lock') }}</span>{% endif %}
+                {% if not quiz.is_public and not quiz.is_exam %}<span class="cbadge cbadge-private">{{ _('Private') }}</span>{% endif %}
+                {% if quiz.shuffle_questions or quiz.shuffle_options %}<span class="cbadge cbadge-open">{{ _('Shuffled') }}</span>{% endif %}
+            </span>
+            {% if quiz.description %}<p class="course-about">{{ quiz.description }}</p>{% endif %}
+            <div class="course-meta">
+                <span><i class="fa fa-question-circle"></i> {{ question_count }} {{ _('questions') }}</span>
+                <span><i class="fa fa-star"></i> {{ total_points }} {{ _('points') }}</span>
+                <span><i class="fa fa-clock-o"></i> {% if quiz.time_limit %}{{ quiz.time_limit }} {{ _('minutes') }}{% else %}{{ _('No time limit') }}{% endif %}</span>
+                <span><i class="fa fa-repeat"></i> {% if quiz.attempt_limit %}{{ quiz.attempt_limit }} {{ _('attempts') }}{% else %}{{ _('Unlimited attempts') }}{% endif %}</span>
+                {% if quiz.creator %}<span><i class="fa fa-user"></i> {{ link_user(quiz.creator) }}</span>{% endif %}
+            </div>
+            {% if quiz.is_exam %}
+                <div class="course-meta">
+                    {% if quiz.start_time %}<span><i class="fa fa-calendar"></i> {{ _('Opens') }}: {{ quiz.start_time|date('d/m/Y H:i') }}</span>{% endif %}
+                    {% if quiz.end_time %}<span><i class="fa fa-calendar-times-o"></i> {{ _('Closes') }}: {{ quiz.end_time|date('d/m/Y H:i') }}</span>{% endif %}
+                </div>
+            {% endif %}
+            {% if needs_seb %}
+                <div class="course-meta"><span><i class="fa fa-shield"></i> {{ _('This exam can only be taken in Safe Exam Browser.') }}</span></div>
+            {% endif %}
+            {% if quiz.is_exam and quiz.rules_text %}
+                <div class="course-about" style="white-space: pre-line">{{ quiz.rules_text }}</div>
+            {% endif %}
+        </div>
+        <div class="course-hero-side">
+            {% if not request.user.is_authenticated %}
+                <a class="course-join" href="{{ url('auth_login') }}?next={{ request.path|urlencode }}">{{ _('Log in to take this quiz') }}</a>
+            {% elif can_start %}
+                <form method="post" action="{{ url('quiz_start', quiz.slug) }}">
+                    {% csrf_token %}
+                    {% if quiz.proctoring != 'off' and not running %}
+                        <label style="display: block; margin-bottom: 10px; font-weight: 700">
+                            <input type="checkbox" name="agree" value="1" required>
+                            {{ _('I have read the exam rules and agree to be monitored.') }}
+                        </label>
+                    {% endif %}
+                    <button type="submit" class="course-join">{% if running %}{{ _('Continue attempt') }}{% elif quiz.is_exam %}{{ _('Start the exam') }}{% else %}{{ _('Start quiz') }}{% endif %}</button>
+                </form>
+                {% if remaining is not none %}<div class="course-ring-caption">{{ remaining }} {{ _('attempts left') }}</div>{% endif %}
+            {% elif phase == 'upcoming' %}
+                <div class="course-ring-caption"><i class="fa fa-hourglass-start"></i> {{ _('Starts in') }} <b id="qz-countdown" data-seconds="{{ seconds_to_start }}">--:--:--</b></div>
+            {% elif phase == 'ended' %}
+                <div class="course-ring-caption"><i class="fa fa-lock"></i> {{ _('This exam has ended.') }}</div>
+            {% elif question_count == 0 %}
+                <div class="course-ring-caption">{{ _('This quiz has no questions yet.') }}</div>
+            {% else %}
+                <div class="course-ring-caption"><i class="fa fa-lock"></i> {{ _('You have used all attempts.') }}</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="quiz-two-col">
+        <section>
+            <h3 class="course-section-title">{{ _('Your attempts') }}</h3>
+            {% if attempts %}
+                <div class="problem-rows">
+                    {% for a in attempts %}
+                        <a class="pr-row quiz-attempt-row" href="{{ url('quiz_result', quiz.slug, a.id) }}">
+                            <span class="pr-main">
+                                <span class="pr-line"><span class="pr-name">{{ _('Attempt') }} {{ attempts|length - loop.index0 }}</span></span>
+                                <span class="lesson-sub">{{ a.finished|date('d/m/Y H:i') }}{% if results_visible %} · {{ a.correct_count }}/{{ a.question_count }} {{ _('correct') }}{% endif %}</span>
+                            </span>
+                            <span class="pr-pts">{% if results_visible %}<span class="pr-pbubble {{ 'pb-a' if a.percent >= 80 else ('pb-b' if a.percent >= 50 else 'pb-d') }}">{{ a.percent }}%</span>{% else %}<span class="pr-pbubble pb-b"><i class="fa fa-check"></i></span>{% endif %}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="course-empty course-empty-small"><p>{{ _('You have not finished any attempt yet.') }}</p></div>
+            {% endif %}
+        </section>
+        <section>
+            <h3 class="course-section-title">{{ _('Top scores') }}</h3>
+            {% if leaderboard %}
+                <ol class="quiz-board">
+                    {% for row in leaderboard %}
+                        <li><span class="lesson-no">{{ loop.index }}</span><span class="quiz-board-name">{{ link_user(row.user) }}</span><b>{{ row.score|round(2) }}</b></li>
+                    {% endfor %}
+                </ol>
+            {% elif not results_visible %}
+                <div class="course-empty course-empty-small"><p>{{ _('The ranking will be shown when the results are released.') }}</p></div>
+            {% else %}
+                <div class="course-empty course-empty-small"><p>{{ _('No one has finished this quiz yet.') }}</p></div>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}
+
+{% block js_media %}
+    {% if phase == 'upcoming' and seconds_to_start is not none %}
+        <script>
+            $(function () {
+                var $c = $('#qz-countdown');
+                var end = Date.now() + parseInt($c.data('seconds'), 10) * 1000;
+                function pad(n) { return (n < 10 ? '0' : '') + n; }
+                (function tick() {
+                    var left = Math.max(0, Math.round((end - Date.now()) / 1000));
+                    $c.text(pad(Math.floor(left / 3600)) + ':' + pad(Math.floor(left / 60) % 60) + ':' + pad(left % 60));
+                    if (left <= 0) { window.location.reload(); return; }
+                    setTimeout(tick, 500);
+                })();
+            });
+        </script>
+    {% endif %}
+{% endblock %}

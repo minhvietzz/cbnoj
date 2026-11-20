@@ -259,6 +259,12 @@ class Profile(models.Model):
     problem_count = models.IntegerField(default=0)
     ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
+    template_cpp = models.TextField(verbose_name=_('C++ template'), blank=True, max_length=20000)
+    template_c = models.TextField(verbose_name=_('C template'), blank=True, max_length=20000)
+    template_py = models.TextField(verbose_name=_('Python template'), blank=True, max_length=20000)
+    template_pas = models.TextField(verbose_name=_('Pascal template'), blank=True, max_length=20000)
+    problem_ui = models.CharField(max_length=3, verbose_name=_('problem page layout'), default='old',
+                                  choices=(('old', _('Old layout')), ('new', _('New layout (editor and try-run)'))))
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
     ip_auth = models.GenericIPAddressField(verbose_name=_('IP-based authentication'),

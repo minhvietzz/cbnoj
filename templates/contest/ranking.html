@@ -332,6 +332,7 @@
                 if (counter > 0) {
                     localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
                 }
+                window.decorateRanks();
                 console.timeEnd('applyRankingFilter');
             };
 
@@ -417,6 +418,17 @@
                 window.applyFavoriteUsers();
             });
 
+            // medals for the top three, a round badge for everyone else
+            window.decorateRanks = function () {
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    var td = $(this).children('td').first();
+                    var text = $.trim(td.text());
+                    if (!/^[0-9]+$/.test(text) || td.find('.rk-num').length) return;
+                    var n = parseInt(text, 10);
+                    td.html('<span class="rk-num' + (n <= 3 ? ' rk-n' + n : '') + '">' + text + '</span>');
+                });
+            };
+
             window.onFinishRankingRender = function (isNewDataFromBackend = false) {
                 window.applyPersonalInfoVisibility();
                 window.enableAdminOperations();
@@ -427,6 +439,7 @@
                     }
                     window.applyRankingFilter();
                 {% endif %}
+                window.decorateRanks();
                 window.applyFavoriteUsers();
             };
             window.onFinishRankingRender(true);
@@ -518,10 +531,10 @@
 {% endblock %}
 
 {% block before_users_table %}
-    <div style="margin-bottom: 1.25em">
+    <div class="rk-toolbar">
         {% if tab == 'ranking' %}
             <div id="org-dropdown-check-list">
-                <button id="filter-by-organization-button" class="inline-button">
+                <button id="filter-by-organization-button" class="inline-button rk-filter">
                     <i class="tab-icon fa fa-filter"></i>
                     <b>{{ _('Filter') }}</b>
                 </button>
@@ -536,22 +549,19 @@
             </div>
         {% endif %}
         {% if tab != 'official_ranking' %}
-            <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
-            <label for="show-personal-info-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
+            <label class="rk-chip" for="show-personal-info-checkbox"><input id="show-personal-info-checkbox" type="checkbox"> {{ _('Show full name/organization') }}</label>
         {% endif %}
         {% if tab == 'ranking' %}
             {% if can_show_virtual %}
-                <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
-                <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+                <label class="rk-chip" for="show-virtual-participations-checkbox"><input id="show-virtual-participations-checkbox" type="checkbox"> {{ _('Show virtual participations') }}</label>
             {% endif %}
             {% if has_ghosts %}
-            <span id="show-ghosts-wrap">
-                <input id="show-ghosts-checkbox" type="checkbox" style="vertical-align: bottom">
-                <label for="show-ghosts-checkbox" style="vertical-align: bottom">{{ _('Show ghost participations') }}</label>
-            </span>
+                <span id="show-ghosts-wrap">
+                    <label class="rk-chip" for="show-ghosts-checkbox"><input id="show-ghosts-checkbox" type="checkbox"> {{ _('Show ghost participations') }}</label>
+                </span>
             {% endif %}
             {% if not is_ICPC_format %}
-            <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
+                <a href="#" onclick="download_table_as_csv(); return false;" class="rk-chip rk-csv"><i class="fa fa-download"></i> {{ _('Download as CSV') }}</a>
             {% endif %}
         {% endif %}
     </div>

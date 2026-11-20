@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{{ quiz.title }}</h2>
+        <ul>
+            <li class="tab"><a href="{{ quiz.get_absolute_url() }}"><i class="tab-icon fa fa-eye"></i> {{ _('View quiz') }}</a></li>
+            <li class="tab"><a href="{{ url('quiz_manage', quiz.slug) }}"><i class="tab-icon fa fa-pencil"></i> {{ _('Manage') }}</a></li>
+            <li class="tab active"><span><i class="tab-icon fa fa-trophy"></i> {{ _('Results') }}</span></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block media %}
+    <style>
+        .qr-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; margin: 10px 0 4px; }
+        .qr-bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 12px; font-weight: 700; }
+        .qr-bar span { display: block; width: 100%; min-height: 2px; border-radius: 6px 6px 0 0; background: #3b82f6; }
+        .qr-bar-labels { display: flex; gap: 6px; font-size: 11px; opacity: 0.7; }
+        .qr-bar-labels div { flex: 1; text-align: center; }
+        .qr-meter { display: inline-block; width: 90px; height: 8px; border-radius: 999px; background: rgba(128, 128, 128, 0.3); vertical-align: middle; overflow: hidden; }
+        .qr-meter i { display: block; height: 100%; background: #22c55e; }
+        .qr-meter.low i { background: #ef4444; }
+        .qr-warn { color: #ef4444; font-weight: 800; }
+        .qr-num { text-align: right; font-variant-numeric: tabular-nums; }
+        .qr-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0; padding: 12px 16px; border-radius: 18px; background: rgba(128, 128, 128, 0.12); }
+        .qr-actions input[type=number] { width: 80px; }
+        .qr-actions button { cursor: pointer; border: 0; border-radius: 999px; padding: 6px 16px; font-weight: 800; background: #3b82f6; color: #fff; }
+        .qr-actions button.danger { background: #ef4444; }
+        .qr-actions button.quiet { background: rgba(128, 128, 128, 0.35); color: inherit; }
+        .qr-live-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: #22c55e; }
+        .qr-live-dot.off { background: #ef4444; }
+        .qr-live-dot.idle { background: #f59e0b; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <section class="course-hero tone-sky">
+        <div class="course-hero-main">
+            <div class="course-meta">
+                <span><i class="fa fa-users"></i> {{ summary.taken }}{% if summary.enrolled is not none %}/{{ summary.enrolled }}{% endif %} {{ _('took the quiz') }}</span>
+                {% if summary.avg is not none %}
+                    <span><i class="fa fa-line-chart"></i> {{ _('Average') }}: <b>{{ summary.avg }}</b>/10</span>
+                    <span>{{ _('Median') }}: <b>{{ summary.median }}</b></span>
+                    <span>{{ _('Highest') }}: <b>{{ summary.best }}</b></span>
+                    <span>{{ _('Lowest') }}: <b>{{ summary.worst }}</b></span>
+                {% endif %}
+                {% if summary.auto_submitted %}<span class="qr-warn"><i class="fa fa-exclamation-triangle"></i> {{ summary.auto_submitted }} {{ _('auto-submitted') }}</span>{% endif %}
+                {% if quiz.extra_minutes %}<span><i class="fa fa-plus-circle"></i> +{{ quiz.extra_minutes }} {{ _('minutes for everyone') }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="course-hero-side">
+            <a class="course-join" href="?export=xlsx"><i class="fa fa-file-excel-o"></i> {{ _('Export Excel') }}</a>
+            <div class="course-ring-caption"><a href="?export=csv">{{ _('Export CSV') }}</a>
+                {% if request.user.is_staff %} · <a href="{{ url('admin:judge_quizattempt_changelist') }}?quiz__id__exact={{ quiz.id }}">{{ _('Admin') }}</a>{% endif %}</div>
+        </div>
+    </section>
+
+    <form method="post" action="{{ url('quiz_results_action', quiz.slug) }}" id="act-form">
+        {% csrf_token %}
+
+        {% if quiz.is_exam %}
+            <h3 class="course-section-title"><span class="qr-live-dot" id="live-dot"></span>{{ _('Live') }} <small id="live-summary"></small></h3>
+            <div id="live-box"></div>
+        {% endif %}
+
+        <div class="qr-actions">
+            <b>{{ _('Actions') }}</b>
+            <label>{{ _('Minutes') }} <input type="number" name="minutes" value="10" min="1" max="240"></label>
+            <button type="submit" name="action" value="extend">{{ _('Add time to selected') }}</button>
+            <button type="submit" name="action" value="extend_all">{{ _('Add time for everyone') }}</button>
+            <label><input type="checkbox" name="reopen" value="1" checked> {{ _('reopen automatic submissions') }}</label>
+            <span style="flex-basis: 100%"></span>
+            <button type="submit" name="action" value="submit" class="quiet">{{ _('Submit selected now') }}</button>
+            <button type="submit" name="action" value="invalidate" class="danger" data-confirm="{{ _('Cancel the selected attempts? They leave the ranking and the student may retake.') }}">{{ _('Cancel selected') }}</button>
+            <button type="submit" name="action" value="restore" class="quiet">{{ _('Restore selected') }}</button>
+            {% if quiz.is_exam and quiz.results_release == 'manual' %}
+                {% if quiz.results_published %}
+                    <button type="submit" name="action" value="unpublish" class="quiet">{{ _('Hide results') }}</button>
+                {% else %}
+                    <button type="submit" name="action" value="publish">{{ _('Publish results') }}</button>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        {% if not rows %}
+            <div class="course-empty course-empty-small"><p>{{ _('No one has finished this quiz yet.') }}</p></div>
+        {% else %}
+            <h3 class="course-section-title">{{ _('Score distribution') }}</h3>
+            <div class="qr-bars">
+                {% for lo, hi, count in distribution %}
+                    <div class="qr-bar" title="{{ lo }}–{{ hi }}: {{ count }}">{{ count if count else '' }}<span style="height: {{ (100 * count / distribution_max)|round|int }}%"></span></div>
+                {% endfor %}
+            </div>
+            <div class="qr-bar-labels">{% for lo, hi, count in distribution %}<div>{{ lo|int if lo == lo|int else lo }}–{{ hi|int if hi == hi|int else hi }}</div>{% endfor %}</div>
+
+            <h3 class="course-section-title">{{ _('Ranking') }}</h3>
+            <div class="h-scrollable-table">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th><input type="checkbox" class="pick-all" aria-label="{{ _('Select all') }}"></th>
+                        <th>#</th><th>{{ _('Student') }}</th><th class="qr-num">{{ _('Score') }}</th><th class="qr-num">/10</th>
+                        <th class="qr-num">{{ _('Correct') }}</th><th class="qr-num">{{ _('Time') }}</th><th>{{ _('Submitted') }}</th>
+                        <th class="qr-num">{{ _('Violations') }}</th><th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td><input type="checkbox" name="ids" value="{{ row.attempt.id }}" class="pick"></td>
+                            <td>{{ row.rank }}</td>
+                            <td>{{ link_user(row.user) }}</td>
+                            <td class="qr-num">{{ row.score|round(2) }}/{{ row.max|round(2) }}</td>
+                            <td class="qr-num"><b>{{ row.score10 }}</b></td>
+                            <td class="qr-num">{{ row.attempt.correct_count }}/{{ row.attempt.question_count }}</td>
+                            <td class="qr-num">{{ row.duration }}</td>
+                            <td>{{ row.attempt.finished|date('d/m H:i') }}{% if row.attempt.auto_submitted %} <i class="fa fa-bolt qr-warn" title="{{ _('Submitted automatically') }}"></i>{% endif %}</td>
+                            <td class="qr-num{% if row.attempt.violation_count %} qr-warn{% endif %}">{{ row.attempt.violation_count }}</td>
+                            <td><a href="{{ url('quiz_result', quiz.slug, row.attempt.id) }}">{{ _('View') }}</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="course-section-title">{{ _('Accuracy per question') }}</h3>
+            <div class="h-scrollable-table">
+                <table class="table">
+                    <thead><tr><th>#</th><th>{{ _('Question') }}</th><th>{{ _('Type') }}</th><th>{{ _('Fully correct') }}</th></tr></thead>
+                    <tbody>
+                    {% for question, percent, answered in accuracy %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ question.text|striptags|truncate(90) }}</td>
+                            <td>{{ question.get_kind_display() }}</td>
+                            <td><span class="qr-meter{% if percent < 40 %} low{% endif %}"><i style="width: {{ percent }}%"></i></span> {{ percent }}%</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </form>
+
+    {% if flagged %}
+        <h3 class="course-section-title">{{ _('Proctoring log') }}</h3>
+        <div class="h-scrollable-table">
+            <table class="table">
+                <thead><tr><th>{{ _('Student') }}</th><th class="qr-num">{{ _('Counted') }}</th><th>{{ _('Events') }}</th></tr></thead>
+                <tbody>
+                {% for attempt in flagged %}
+                    <tr>
+                        <td>{{ link_user(attempt.user) }}{% if attempt.auto_submitted %} <i class="fa fa-bolt qr-warn"></i>{% endif %}{% if attempt.invalidated %} <small>({{ _('invalidated') }})</small>{% endif %}</td>
+                        <td class="qr-num{% if attempt.violation_count %} qr-warn{% endif %}">{{ attempt.violation_count }}</td>
+                        <td>
+                            {% for v in attempt.violations.all()[:12] %}
+                                <span title="{{ v.created|date('H:i:s') }} {{ v.detail }}">{{ v.get_kind_display() }}{% if v.counted %}*{% endif %}</span>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                            {% if attempt.violations.all()|length > 12 %}…{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="qz-note">* {{ _('counts towards the automatic submission limit') }}</p>
+    {% endif %}
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            $('#act-form').on('click', '[data-confirm]', function (e) {
+                if (!window.confirm($(this).data('confirm'))) e.preventDefault();
+            });
+            $('#act-form').on('change', '.pick-all', function () {
+                $(this).closest('table').find('.pick').prop('checked', this.checked);
+            });
+
+            {% if quiz.is_exam %}
+            var liveUrl = {{ url('quiz_live', quiz.slug)|htmltojs }};
+            var T = {
+                candidate: {{ _('Student')|htmltojs }}, left: {{ _('Time left')|htmltojs }},
+                violations: {{ _('Violations')|htmltojs }}, extra: {{ _('Extra')|htmltojs }},
+                online: {{ _('online')|htmltojs }}, offline: {{ _('offline')|htmltojs }},
+                none: {{ _('Nobody is writing the exam right now.')|htmltojs }},
+                summary: {{ _('{0} writing · {1} finished · {2} not started')|htmltojs }},
+                lost: {{ _('Live data unavailable')|htmltojs }}
+            };
+
+            function clock(seconds) {
+                if (seconds === null || seconds === undefined) return '–';
+                var m = Math.floor(seconds / 60), s = seconds % 60;
+                return m + ':' + (s < 10 ? '0' : '') + s;
+            }
+
+            function cell(text, cls) { return $('<td>').addClass(cls || '').text(text); }
+
+            function render(data) {
+                $('#live-dot').removeClass('off');
+                $('#live-summary').text(T.summary.replace('{0}', data.in_progress.length)
+                    .replace('{1}', data.finished).replace('{2}', data.not_started));
+                var $box = $('#live-box').empty();
+                if (!data.in_progress.length) { $box.append($('<p class="qz-note">').text(T.none)); return; }
+                var $head = $('<tr>').append($('<th>'), $('<th>').text(T.candidate), $('<th>').text(T.left).addClass('qr-num'),
+                    $('<th>').text(T.violations).addClass('qr-num'), $('<th>').text(T.extra).addClass('qr-num'), $('<th>'));
+                var $body = $('<tbody>');
+                data.in_progress.forEach(function (row) {
+                    var $dot = $('<span class="qr-live-dot">').addClass(row.online ? '' : (row.idle === null ? 'off' : 'idle'));
+                    var $tr = $('<tr>').append(
+                        $('<td>').append($('<input type="checkbox" name="ids" class="pick">').val(row.id)),
+                        $('<td>').append($dot, document.createTextNode(row.user)),
+                        cell(clock(row.seconds_left), 'qr-num'),
+                        cell(row.violations, 'qr-num' + (row.violations ? ' qr-warn' : '')),
+                        cell(row.extra ? '+' + row.extra : '', 'qr-num'),
+                        cell(row.online ? T.online : T.offline));
+                    $body.append($tr);
+                });
+                $box.append($('<div class="h-scrollable-table">').append(
+                    $('<table class="table">').append($('<thead>').append($head), $body)));
+            }
+
+            // keep ticked rows ticked across refreshes
+            function poll() {
+                var ticked = $('#live-box .pick:checked').map(function () { return this.value; }).get();
+                $.getJSON(liveUrl).done(function (data) {
+                    render(data);
+                    ticked.forEach(function (id) { $('#live-box .pick[value=' + id + ']').prop('checked', true); });
+                }).fail(function () {
+                    $('#live-dot').addClass('off');
+                    $('#live-summary').text(T.lost);
+                });
+            }
+            poll();
+            setInterval(poll, 10000);
+            {% endif %}
+        });
+    </script>
+{% endblock %}

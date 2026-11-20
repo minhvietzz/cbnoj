@@ -1,5 +1,162 @@
 {% extends "blog/list.html" %}
-{% block before_posts %}
+{% block body %}
+    <div class="neo-flat hm">
+        {% set fc = home_featured_contest %}
+        {% if fc %}
+        <section class="hm-banner">
+            <div class="hm-banner-main">
+                {% if fc %}
+                    <span class="hm-tag">{% if home_featured_state == 'live' %}{{ _('Live now') }}{% else %}{{ _('Upcoming contests') }}{% endif %}</span>
+                    <h1>{{ fc.name }}</h1>
+                    <p>
+                        {{ fc.start_time|date(_("M j, Y, G:i")) }}
+                        {% if fc.end_time %} - {{ fc.end_time|date(_("M j, Y, G:i")) }}{% endif %}
+                    </p>
+                    <div class="hm-actions">
+                        <a class="hm-btn hm-btn-light" href="{{ url('contest_view', fc.key) }}">{% if home_featured_state == 'live' %}{{ _('Join') }}{% else %}{{ _('Details') }}{% endif %}</a>
+                        <a class="hm-btn hm-btn-ghost" href="{{ url('contest_list') }}">{{ _('Contests') }}</a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="hm-banner-art" aria-hidden="true"><span>&lt;/&gt;</span></div>
+        </section>
+        {% endif %}
+
+        <section class="hm-row">
+            {% if request.user.is_authenticated %}
+                <a class="hm-me" href="{{ url('user_page') }}">
+                    <img src="{{ gravatar(request.user, 72) }}" alt="" width="68" height="68">
+                    <span>
+                        <small>{{ _('Welcome back') }}</small>
+                        <b>{{ request.user.first_name or request.profile.display_name }}</b>
+                        <em><i class="hm-pill">#{{ home_rank }}</i> <i class="hm-mono">{{ home_points|floatformat(0) }} {{ _('points') }}</i></em>
+                    </span>
+                </a>
+            {% else %}
+                <div class="hm-me hm-me-cta">
+                    <span>
+                        <b>{{ _('Your first problem is one submission away.') }}</b>
+                        <small>{{ _('Create an account and submit a solution to see your first AC.') }}</small>
+                    </span>
+                    <a class="hm-btn hm-btn-gold" href="{{ url('registration_register') }}">{{ _('Sign up') }}</a>
+                </div>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <div class="hm-goal">
+                    <div class="hm-goal-head">
+                        <span><i class="hm-goal-ic"><i class="fa fa-arrow-up"></i></i>{{ _("TODAY'S GOAL") }}</span>
+                        <em>{{ home_goal_done }}/{{ home_goal }}</em>
+                    </div>
+                    <div class="hm-goal-bar"><i style="width: {{ home_goal_pct }}%"></i></div>
+                    <p>
+                        {% if home_goal_left %}{{ _('Solve %(n)s more problems to reach the daily goal.', n=home_goal_left) }}
+                        {% else %}{{ _('Daily goal complete. Nice work!') }}{% endif %}
+                    </p>
+                </div>
+                <div class="hm-streak{% if not home_streak_today %} hm-streak-cold{% endif %}">
+                    <span class="hm-streak-n"><i class="fa fa-fire"></i><b>{{ home_streak }}</b></span>
+                    <small>{{ _('day streak with an AC') }}</small>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="hm-row">
+            <dl class="hm-stats hm-stats-wide">
+                <div><dd>{{ user_count() }}</dd><dt>{{ _('Users') }}</dt></div>
+                <div><dd>{{ problem_count() }}</dd><dt>{{ _('Problems') }}</dt></div>
+                <div><dd>{{ submission_count() }}</dd><dt>{{ _('Submissions') }}</dt></div>
+                <div><dd>{{ language_count() }}</dd><dt>{{ _('Languages') }}</dt></div>
+            </dl>
+        </section>
+
+        <section class="hm-cols">
+            <div class="hm-col-main">
+                {% if home_course %}
+                    <div class="hm-head">
+                        <div>
+                            <small>{{ _('CURRENT COURSE') }}</small>
+                            <h2>{{ home_course.name }}</h2>
+                        </div>
+                        <a class="hm-btn hm-btn-blue" href="{{ home_course.get_absolute_url() }}">{{ _('Continue') }}</a>
+                    </div>
+                    <div class="hm-path">
+                        {% for item in home_lessons %}
+                            <a class="hm-step hm-step-{{ loop.index0 % 4 }}" href="{{ item.lesson.get_absolute_url() }}">
+                                <span class="hm-node{% if loop.last %} hm-node-last{% elif item.percent == 100 %} hm-node-done{% endif %}">{% if item.percent == 100 and not loop.last %}<i class="fa fa-check"></i>{% else %}{{ loop.index }}{% endif %}</span>
+                                <span class="hm-step-text">
+                                    <b>{{ item.lesson.title }}</b>
+                                    {% if item.total %}<small>{{ item.solved }}/{{ item.total }} {{ _('problems solved') }}</small>{% endif %}
+                                </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {{ self.posts_box() }}
+            </div>
+
+            <aside class="hm-col-side">
+                <div class="hm-card">
+                    <h3>{{ _('Activity, last 7 days') }}</h3>
+                    <div class="hm-bars">
+                        {% for d in home_activity %}
+                            <div class="hm-bar">
+                                <div class="hm-bar-stack">
+                                    <i class="hm-bar-bad" style="height: {{ d.bad_h }}px"></i>
+                                    <i class="hm-bar-ok" style="height: {{ d.ok_h }}px"></i>
+                                </div>
+                                <span>{{ d.day.strftime('%d/%m') }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="hm-legend"><span><i class="hm-bar-ok"></i>{{ _('Correct') }}</span><span><i class="hm-bar-bad"></i>{{ _('Not accepted') }}</span></div>
+                </div>
+
+                <div class="hm-card">
+                    <div class="hm-card-head"><h3>{{ _('Leaderboard') }}</h3><a href="{{ url('user_list') }}">{{ _('See all') }} &rarr;</a></div>
+                    {% for p in home_top_users %}
+                        <a class="hm-rank" href="{{ url('user_page', p.user.username) }}">
+                            <span class="hm-rank-n hm-rank-{{ loop.index }}">{{ loop.index }}</span>
+                            <b>{{ p.user.first_name or p.user.username }}</b>
+                            <span class="hm-mono">{{ p.performance_points|floatformat(0) }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <div class="hm-card">
+                    <div class="hm-card-head"><h3>{{ _('Contests') }}</h3><a href="{{ url('contest_list') }}">{{ _('See all') }} &rarr;</a></div>
+                    <div class="hm-list">
+                        {% for c in current_contests[:2] %}
+                            <a class="hm-item" href="{{ url('contest_view', c.key) }}"><span class="hm-date hm-date-live"><b>{{ c.start_time|date('d') }}</b>{{ c.start_time|date('m/Y') }}</span><span class="hm-item-t"><b>{{ c.name }}</b><small>{{ _('Live now') }}</small></span></a>
+                        {% endfor %}
+                        {% for c in future_contests[:3] %}
+                            <a class="hm-item" href="{{ url('contest_view', c.key) }}"><span class="hm-date"><b>{{ c.start_time|date('d') }}</b>{{ c.start_time|date('m/Y') }}</span><span class="hm-item-t"><b>{{ c.name }}</b><small>{{ _('Upcoming contests') }}</small></span></a>
+                        {% endfor %}
+                        {% if not current_contests and not future_contests %}
+                            <p class="hm-empty">{{ _('There are no scheduled contests at this time.') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="hm-card">
+                    <div class="hm-card-head"><h3>{{ _('New problems') }}</h3><a href="{{ url('problem_list') }}">{{ _('See all') }} &rarr;</a></div>
+                    <div class="hm-card-list">
+                        {% for problem in new_problems[:6] %}
+                            <a class="hm-prob" href="{{ url('problem_detail', problem.code) }}">
+                                <span class="hm-prob-t"><b>{{ problem.name }}</b><small>{{ problem.code }}</small></span>
+                                <span class="hm-mono">{{ problem.points|floatformat(0) }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="hm-sideboxes">
+                    {{ self.sidebar_boxes() }}
+                </div>
+            </aside>
+        </section>
+
+
+    </div>
     {% if misc_config.home_page_top %}
         {{ render_django(misc_config.home_page_top, request=request, user_count=user_count, problem_count=problem_count, submission_count=submission_count, language_count=language_count, perms=perms) }}
     {% endif %}

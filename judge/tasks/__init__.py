@@ -5,3 +5,4 @@ from judge.tasks.problem import *
 from judge.tasks.submission import *
 from judge.tasks.user import *
 from judge.tasks.webhook import *
+from judge.tasks.email import *

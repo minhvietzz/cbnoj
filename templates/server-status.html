@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{{ _('Server status') }}</h2>
+        <ul>
+            <li class="tab active"><span><i class="tab-icon fa fa-tachometer"></i> {{ _('Resources') }}</span></li>
+            <li class="tab"><a href="{{ url('status_all') }}"><i class="tab-icon fa fa-server"></i> {{ _('Judges') }}</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block body %}
+    {% macro level(p) %}{{ 'lv-bad' if p >= 85 else ('lv-warn' if p >= 60 else 'lv-ok') }}{% endmacro %}
+    <div class="ss-live"><span class="ss-dot" id="ss-dot"></span> <span id="ss-updated">{{ _('Live updates') }}</span> · {{ _('refreshes every 4 seconds') }}</div>
+
+    <div class="ss-gauges">
+        <section class="ss-card">
+            <div class="ss-ring {{ level(status.cpu.percent) }}" data-gauge="cpu" style="--p: {{ status.cpu.percent }}"><b>{{ status.cpu.percent }}%</b></div>
+            <div class="ss-info">
+                <h3><i class="fa fa-microchip"></i> CPU</h3>
+                <p><b id="cpu-cores">{{ status.cpu.cores }}</b> {{ _('cores') }}</p>
+                <p>{{ _('Load average') }}: <b id="cpu-load">{{ status.cpu.load|join(' · ') }}</b></p>
+            </div>
+        </section>
+        <section class="ss-card">
+            <div class="ss-ring {{ level(status.memory.percent) }}" data-gauge="mem" style="--p: {{ status.memory.percent }}"><b>{{ status.memory.percent }}%</b></div>
+            <div class="ss-info">
+                <h3><i class="fa fa-th"></i> RAM</h3>
+                <p><b id="mem-used">{{ status.memory.used|filesizeformat }}</b> / <span id="mem-total">{{ status.memory.total|filesizeformat }}</span></p>
+                <p>{{ _('Available') }}: <b id="mem-free">{{ status.memory.available|filesizeformat }}</b> · {{ _('Cache') }}: <span id="mem-cache">{{ status.memory.cache|filesizeformat }}</span></p>
+            </div>
+        </section>
+        <section class="ss-card">
+            <div class="ss-ring {{ level(status.disk.percent) }}" data-gauge="disk" style="--p: {{ status.disk.percent }}"><b>{{ status.disk.percent }}%</b></div>
+            <div class="ss-info">
+                <h3><i class="fa fa-hdd-o"></i> {{ _('Disk') }} <small>{{ status.disk.path }}</small></h3>
+                <p><b id="disk-used">{{ status.disk.used|filesizeformat }}</b> / <span id="disk-total">{{ status.disk.total|filesizeformat }}</span></p>
+                <p>{{ _('Free') }}: <b id="disk-free">{{ status.disk.free|filesizeformat }}</b></p>
+            </div>
+        </section>
+    </div>
+
+    <div class="ss-tiles">
+        <div class="ss-tile"><span>{{ _('Uptime') }}</span><b id="ss-uptime">{{ status.uptime // 86400 }} {{ _('days') }} {{ (status.uptime % 86400) // 3600 }} {{ _('hours') }}</b></div>
+        <div class="ss-tile"><span>{{ _('Swap') }}</span><b id="ss-swap">{% if status.memory.swap_total %}{{ status.memory.swap_used|filesizeformat }} / {{ status.memory.swap_total|filesizeformat }}{% else %}{{ _('Not used') }}{% endif %}</b></div>
+        <div class="ss-tile"><span>{{ _('Judges online') }}</span><b id="ss-judges-online">{{ status.judges|selectattr('online')|list|length }} / {{ status.judges|length }}</b></div>
+    </div>
+
+    <div class="quiz-two-col">
+        <section>
+            <h3 class="course-section-title">{{ _('Judges') }}</h3>
+            <div class="problem-rows" id="ss-judges">
+                {% for j in status.judges %}
+                    <div class="pr-row">
+                        <span class="ss-light {{ 'on' if j.online else 'off' }}"></span>
+                        <span class="pr-main"><span class="pr-line"><span class="pr-name">{{ j.name }}</span>{% if j.blocked %}<span class="cbadge cbadge-private">{{ _('Disabled') }}</span>{% endif %}</span></span>
+                        <span class="lesson-sub">{% if j.online and j.ping is not none %}{{ j.ping }} ms{% elif j.online %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        <section>
+            <h3 class="course-section-title">{{ _('Top processes by memory') }}</h3>
+            <div class="problem-rows" id="ss-procs">
+                {% for p in status.processes %}
+                    <div class="pr-row">
+                        <span class="pr-main"><span class="pr-line"><span class="pr-name">{{ p.name }}</span><span class="pr-code">{{ p.user }}</span></span></span>
+                        <span class="lesson-sub">{{ p.cpu }}% · {{ p.memory|filesizeformat }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            var url = {{ url('server_status_data')|htmltojs }};
+            function fmt(b) {
+                var u = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0;
+                while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+                return (i === 0 ? b : b.toFixed(1)).toString().replace('.', ',') + ' ' + u[i];
+            }
+            function level(p) { return p >= 85 ? 'lv-bad' : (p >= 60 ? 'lv-warn' : 'lv-ok'); }
+            function gauge(name, p) {
+                $('[data-gauge=' + name + ']').css('--p', p).removeClass('lv-ok lv-warn lv-bad').addClass(level(p)).find('b').text(p + '%');
+            }
+            function esc(s) { return $('<div>').text(s).html(); }
+            function refresh() {
+                $.getJSON(url).done(function (d) {
+                    gauge('cpu', d.cpu.percent); gauge('mem', d.memory.percent); gauge('disk', d.disk.percent);
+                    $('#cpu-load').text(d.cpu.load.join(' · '));
+                    $('#mem-used').text(fmt(d.memory.used)); $('#mem-free').text(fmt(d.memory.available)); $('#mem-cache').text(fmt(d.memory.cache));
+                    $('#disk-used').text(fmt(d.disk.used)); $('#disk-free').text(fmt(d.disk.free));
+                    var days = Math.floor(d.uptime / 86400), hours = Math.floor((d.uptime % 86400) / 3600);
+                    $('#ss-uptime').text(days + ' {{ _('days') }} ' + hours + ' {{ _('hours') }}');
+                    $('#ss-swap').text(d.memory.swap_total ? fmt(d.memory.swap_used) + ' / ' + fmt(d.memory.swap_total) : {{ _('Not used')|htmltojs }});
+                    var on = 0, rows = '';
+                    d.judges.forEach(function (j) {
+                        if (j.online) on++;
+                        rows += '<div class="pr-row"><span class="ss-light ' + (j.online ? 'on' : 'off') + '"></span><span class="pr-main"><span class="pr-line"><span class="pr-name">' + esc(j.name) + '</span></span></span><span class="lesson-sub">' + (j.online ? (j.ping != null ? j.ping + ' ms' : {{ _('Online')|htmltojs }}) : {{ _('Offline')|htmltojs }}) + '</span></div>';
+                    });
+                    $('#ss-judges').html(rows); $('#ss-judges-online').text(on + ' / ' + d.judges.length);
+                    var procs = '';
+                    d.processes.forEach(function (p) {
+                        procs += '<div class="pr-row"><span class="pr-main"><span class="pr-line"><span class="pr-name">' + esc(p.name) + '</span><span class="pr-code">' + esc(p.user) + '</span></span></span><span class="lesson-sub">' + p.cpu + '% · ' + fmt(p.memory) + '</span></div>';
+                    });
+                    $('#ss-procs').html(procs);
+                    $('#ss-dot').removeClass('stale');
+                    $('#ss-updated').text(new Date().toLocaleTimeString());
+                }).fail(function () { $('#ss-dot').addClass('stale'); $('#ss-updated').text({{ _('Connection lost')|htmltojs }}); });
+            }
+            setInterval(refresh, 4000);
+        });
+    </script>
+{% endblock %}

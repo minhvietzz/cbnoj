@@ -126,6 +126,42 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         return super().get_paginator(queryset, per_page, orphans, allow_empty_first_page,
                                      count=self.get_queryset().values('id').count(), **kwargs)
 
+    def _exam_queryset(self):
+        """Mock exams that are not part of a course are listed beside the contests, as exams of a contest are."""
+        from judge.models import Quiz
+        exams = Quiz.objects.filter(mode='exam', course__isnull=True)
+        open_to_all = Q(is_public=True, organizations__isnull=True)
+        if self.request.user.is_authenticated:
+            return exams.filter(open_to_all | Q(organizations__member=self.request.profile))
+        return exams.filter(open_to_all)
+
+    def quiz_exam_context(self):
+        if not getattr(settings, 'QUIZ_ENABLED', False):
+            return {}
+        from judge.models import Quiz
+        ids = list(self._exam_queryset().values_list('id', flat=True).distinct())
+        search = self.search_query
+        exams = Quiz.objects.filter(id__in=ids).annotate(taken=Count('attempts__user', distinct=True))
+        if search:
+            exams = exams.filter(title__icontains=search)
+        live, upcoming, past = [], [], []
+        now = self._now
+        for quiz in exams.order_by('-start_time', '-created')[:100]:
+            phase = quiz.phase(now)
+            if phase == 'upcoming':
+                quiz.left = quiz.start_time - now
+                quiz.secs = quiz.left.total_seconds()
+                upcoming.append(quiz)
+            elif phase == 'ended':
+                past.append(quiz)
+            else:
+                end = quiz.effective_end
+                quiz.left = end - now if end else None
+                quiz.secs = quiz.left.total_seconds() if end else None
+                live.append(quiz)
+        upcoming.sort(key=lambda q: q.start_time)
+        return {'quiz_live': live, 'quiz_upcoming': upcoming, 'quiz_past': past[:30]}
+
     def get_context_data(self, **kwargs):
         context = super(ContestList, self).get_context_data(**kwargs)
         present, active, future = [], [], []
@@ -151,6 +187,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         active.sort(key=attrgetter('end_time', 'key'))
         present.sort(key=attrgetter('end_time', 'key'))
         future.sort(key=attrgetter('start_time'))
+        context.update(self.quiz_exam_context())
         context['active_participations'] = active
         context['current_contests'] = present
         context['future_contests'] = future

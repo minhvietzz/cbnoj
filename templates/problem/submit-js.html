@@ -10,6 +10,10 @@
 
             window.previous_template = '';
 
+            // code templates the user wrote in the profile; they win over the default template of the language
+            var userTemplates = {};
+            try { userTemplates = JSON.parse($('#user-templates').text() || '{}') || {}; } catch (e) { userTemplates = {}; }
+
             function update_language_template() {
                 var source = $('textarea#id_source');
                 if (source.val() == window.previous_template.replace(/\r/g, '') || source.val() == '') {
@@ -24,6 +28,8 @@
 
                     if (code != null) {
                         update_submit_area(code);
+                    } else if (userTemplates[lang_id]) {
+                        update_submit_area(userTemplates[lang_id]);
                     } else {
                         $.get('{{ url('language_template_ajax') }}', {
                             id: lang_id

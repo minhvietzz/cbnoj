@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default('vi') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ SITE_NAME }}</title>
+</head>
+<body style="margin:0;padding:0;background:#FBF6EC;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FBF6EC;">
+    <tr>
+        <td align="center" style="padding:28px 12px;">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+                <tr>
+                    <td style="background:#0003D4;border-radius:36px 36px 0 0;padding:26px 36px;font-family:'Segoe UI',Arial,Helvetica,sans-serif;">
+                        <span style="display:inline-block;background:#FFE27A;color:#14143A;font-weight:900;font-size:13px;letter-spacing:1px;padding:4px 14px;border-radius:999px;text-transform:uppercase;">Online Judge</span>
+                        <div style="color:#ffffff;font-size:34px;font-weight:900;letter-spacing:-1px;line-height:1.1;padding-top:10px;">{{ SITE_NAME }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#ffffff;padding:34px 36px 12px;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#14143A;font-size:16px;line-height:1.6;">
+                        {% block content %}{% endblock %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#ffffff;padding:6px 36px 30px;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#5A5A80;font-size:13px;line-height:1.6;">
+                        <div style="border-top:2px dashed #EFE9DB;padding-top:16px;">
+                            {% block footer %}{% endblock %}
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:#FFE27A;border-radius:0 0 36px 36px;padding:14px 36px;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#14143A;font-size:12px;font-weight:700;text-align:center;">
+                        {{ SITE_LONG_NAME }}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

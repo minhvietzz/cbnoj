@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs"><h2>{{ _('Preview') }}</h2></div>
+{% endblock %}
+
+{% block body %}
+    <section class="course-hero tone-mint">
+        <div class="course-hero-main">
+            <h3 class="course-section-title" style="margin: 0">{{ draft.title }}</h3>
+            <div class="course-meta">
+                <span><i class="fa fa-question-circle"></i> {{ draft.questions|length }} {{ _('questions') }}</span>
+                <span><i class="fa fa-star"></i> {{ total_points }} {{ _('points') }}</span>
+                <span><i class="fa fa-clock-o"></i> {% if draft.time_limit %}{{ draft.time_limit }} {{ _('minutes') }}{% else %}{{ _('No time limit') }}{% endif %}</span>
+            </div>
+            {% if replacing %}<p class="qz-note">{{ _('The existing questions of this quiz will be replaced. Old attempts keep their scores but their answer review will no longer match.') }}</p>{% endif %}
+        </div>
+        <div class="course-hero-side">
+            <form method="post" action="{{ url('quiz_upload_confirm') }}">
+                {% csrf_token %}
+                <button type="submit" class="course-join">{{ _('Save quiz') }}</button>
+            </form>
+            <a href="{{ url('quiz_upload') }}{% if replacing %}?replace={{ replacing.slug }}{% elif org %}?org={{ org.id }}{% endif %}" class="course-ring-caption">{{ _('Back to edit') }}</a>
+        </div>
+    </section>
+
+    {% if parsed.warnings %}
+        <div class="qz-problems qz-warn">
+            <h4><i class="fa fa-info-circle"></i> {{ _('Notes') }}</h4>
+            <ul>{% for w in parsed.warnings %}<li>{% if w.question %}<b>{{ _('Question') }} {{ w.question }}</b> {% endif %}<small>({{ _('line') }} {{ w.line }})</small>: {{ _(w.message) }}</li>{% endfor %}</ul>
+        </div>
+    {% endif %}
+
+    {% for q in draft.questions %}
+        <section class="qz-question">
+            <header>
+                <span class="qz-no">{{ loop.index }}</span>
+                <span class="qz-kind">{% if q.kind == 'multi' %}{{ _('Multiple choice') }}{% elif q.kind == 'short' %}{{ _('Short answer') }}{% else %}{{ _('Single choice') }}{% endif %}</span>
+                <span class="qz-pts">{{ q.points }} {{ _('points') }}</span>
+            </header>
+            <div class="content-description qz-text">{{ q.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+            {% if q.kind == 'short' %}
+                <div class="qz-answer-line"><span>{{ _('Accepted answers') }}</span><b class="ok">{{ q.answers|join(' | ') }}</b></div>
+            {% else %}
+                <div class="qz-options">
+                    {% for o in q.options %}
+                        <div class="qz-option qz-review {{ 'is-correct' if o.correct else '' }}">
+                            <span class="qz-letter">{{ 'ABCDEFGHIJ'[loop.index0] }}</span>
+                            <span class="qz-otext">{{ o.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span>
+                            <span class="qz-mark">{% if o.correct %}<i class="fa fa-check"></i>{% endif %}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if q.explanation %}<div class="qz-explain"><b>{{ _('Explanation') }}</b><div>{{ q.explanation }}</div></div>{% endif %}
+        </section>
+    {% endfor %}
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+{% endblock %}

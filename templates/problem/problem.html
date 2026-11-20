@@ -83,6 +83,11 @@
     {% endif %}
     <script type="text/javascript">
         $(function() {
+            $('#ui-new').click(function(e) {
+                e.preventDefault();
+                $.post({{ url('set_problem_ui')|htmltojs }}, {ui: 'new'}).always(function () { location.reload(); });
+            });
+
             $('#pdf_button').click(async function(e) {
                 e.preventDefault();
                 if (!$('#raw_problem').attr("src"))
@@ -174,6 +179,7 @@
             </span>
         {% endif %}
         <span class="spacer"></span>
+        <a href="#" id="ui-new" class="button" style="vertical-align: middle; margin-right: 0.5em" title="Giao diện mới có chạy thử">Giao diện mới</a>
         {% if has_pdf_render %}
             <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
         {% else %}

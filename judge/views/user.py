@@ -138,6 +138,10 @@ class UserPage(TitleMixin, UserMixin, DetailView):
             is_unlisted=False, performance_points__gt=self.object.performance_points,
         ).exclude(id=self.object.id).count() + 1
 
+        from judge.utils.streak import streak_info
+        context['streak'] = streak_info(self.object)
+        context['submission_count'] = Submission.objects.filter(user=self.object).count()
+
         if rating:
             context['rating_rank'] = Profile.objects.filter(
                 is_unlisted=False, rating__gt=self.object.rating,
@@ -556,6 +560,19 @@ def set_theme(request):
 
 
 @require_POST
+def set_problem_ui(request):
+    """Remember the layout of the problem page: on the profile of a user, in a cookie for a guest."""
+    ui = 'new' if request.POST.get('ui') == 'new' else 'old'
+    response = JsonResponse({'ui': ui})
+    if request.user.is_authenticated:
+        request.profile.problem_ui = ui
+        request.profile.save(update_fields=['problem_ui'])
+    else:
+        response.set_cookie('cbnoj_ui', ui, max_age=31536000, samesite='Lax')
+    return response
+
+
+@require_POST
 @login_required
 def remove_api_token(request):
     profile = request.profile
@@ -585,10 +602,11 @@ class UserList(QueryStringSortMixin, InfinitePaginationMixin, DiggPaginatorMixin
     paginate_by = 100
     all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
     default_desc = all_sorts
-    default_sort = '-rating'
+    default_sort = '-performance_points'
 
     def get_queryset(self):
-        return (Profile.objects.filter(is_unlisted=False).order_by(self.order, self.id_tiebreak)
+        tiebreak = ('-problem_count',) if self.order.lstrip('-') == 'performance_points' else ()
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order, *tiebreak, self.id_tiebreak)
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
@@ -598,11 +616,11 @@ class UserList(QueryStringSortMixin, InfinitePaginationMixin, DiggPaginatorMixin
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
-        context['users'] = ranker(
+        context['users'] = list(ranker(
             context['users'],
             key=attrgetter('performance_points', 'problem_count'),
             rank=self.paginate_by * (context['page_obj'].number - 1),
-        )
+        ))
         context['first_page_href'] = '.'
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())

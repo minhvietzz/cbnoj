@@ -88,6 +88,56 @@
             font-size: 12px;
         }
     </style>
+
+    <style>
+        /* ---- new layout of the profile page: table of contents + cards + save bar ---- */
+        .ep { --ep-box: #f4f5f7; --ep-chip: #e6e9ff; --ep-line: #e3e6ee; --ep-muted: #5b6785; --ep-text: #1a2b4c; --ep-title: #0003d4; --ep-field: #ffffff; --ep-bar: #f7f8fa; --ep-shadow: #e5e7eb; --ep-warn: #946000; --ep-ok: #12804a; }
+        body[data-theme="dark"] .ep { --ep-box: #0d0d1a; --ep-chip: #23254f; --ep-line: #2a2c52; --ep-muted: #a6a9d6; --ep-text: #e8e8f5; --ep-title: #8a8cff; --ep-field: #0d0d1a; --ep-bar: #1a1a38; --ep-shadow: #06061a; --ep-warn: #ffd479; --ep-ok: #6fe3a0; }
+        .ep-layout { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+        .ep-toc { flex: 0 0 230px; display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 2px solid var(--ep-line); border-radius: 22px; background: var(--ep-bar); box-shadow: 0 3px 0 var(--ep-shadow); position: sticky; top: 16px; }
+        .ep-toc a { padding: 10px 14px; border-radius: 14px; font-weight: 700; font-size: 15px; color: var(--ep-text); text-decoration: none; }
+        .ep-toc a:hover { background: var(--ep-box); }
+        .ep-toc a.on { background: var(--ep-chip); color: var(--ep-title); font-weight: 800; }
+        .ep-main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        .ep-main > section { scroll-margin-top: 16px; }
+        .ep-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+        @media (max-width: 900px) { .ep-pair { grid-template-columns: minmax(0, 1fr); } .ep-toc { position: static; flex-direction: row; flex: 1 1 100%; overflow-x: auto; } .ep-toc a { white-space: nowrap; } }
+        .ep-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+        @media (max-width: 700px) { .ep-grid2 { grid-template-columns: minmax(0, 1fr); } }
+        .ep-hidden { display: none !important; }
+        .ep-seg { display: flex; padding: 4px; gap: 2px; background: var(--ep-box); border: 2px solid var(--ep-line); border-radius: 14px; height: 46px; box-sizing: border-box; }
+        .ep-seg button { all: unset; box-sizing: border-box; flex: 1 1 0; text-align: center; border-radius: 10px; font-weight: 800; font-size: 14px; line-height: 34px; cursor: pointer; color: var(--ep-muted) !important; }
+        .ep-seg button[aria-checked="true"] { background: #0003d4; color: #fff !important; box-shadow: 0 2px 0 #00027f; }
+        .ep-ui { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        @media (max-width: 700px) { .ep-ui { grid-template-columns: minmax(0, 1fr); } }
+        .ep-ui button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; border: 2px solid var(--ep-line); color: var(--ep-text) !important; }
+        .ep-ui button[aria-checked="true"] { border-color: #0003d4; background: var(--ep-chip); }
+        .ep-ui .pv { height: 84px; border-radius: 12px; background: var(--ep-box); border: 1px solid var(--ep-line); padding: 8px; display: flex; gap: 6px; box-sizing: border-box; }
+        .ep-ui .pv i { display: block; border-radius: 8px; background: var(--ep-field); border: 1px solid var(--ep-line); }
+        .ep-ui .pv .dk { background: #14142a; }
+        .ep-ui b { font-size: 16px; font-weight: 900; }
+        .ep-ui .tg { margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: var(--ep-box); color: var(--ep-muted); font-weight: 800; font-size: 12px; }
+        .ep-ui button[aria-checked="true"] .tg { background: #0003d4; color: #fff; }
+        .ep-ui small { font-size: 13.5px; color: var(--ep-muted); line-height: 1.5; font-weight: 600; }
+        .ep-label { font-weight: 800; font-size: 14px; color: var(--ep-text); margin: 0 0 6px; display: block; }
+        .ep-tpl-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .ep-tpl-top .ep-seg { height: 44px; }
+        .ep-tpl-top .info { font-size: 13px; font-weight: 700; color: var(--ep-muted); }
+        .ep-tpl-top .sp { flex: 1 1 0; }
+        .ep-btn { all: unset; box-sizing: border-box; cursor: pointer; height: 38px; padding: 0 14px; border: 2px solid var(--ep-line); border-radius: 12px; font-weight: 800; font-size: 13.5px; line-height: 34px; color: var(--ep-text) !important; }
+        .ep-btn:hover { background: var(--ep-box); }
+        .ep-editor { display: flex; border: 2px solid var(--ep-line); border-radius: 16px; overflow: hidden; background: var(--ep-field); }
+        .ep-gutter { padding: 14px 12px 14px 18px; background: var(--ep-bar); color: var(--ep-muted); text-align: right; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.75; white-space: pre; user-select: none; overflow: hidden; height: 330px; box-sizing: border-box; }
+        .ep-editor textarea.ep-code { flex: 1 1 0; height: 330px; border: 0 !important; outline: 0; resize: vertical; padding: 14px 16px; background: transparent !important; box-shadow: none !important; border-radius: 0 !important; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.75; tab-size: 4; color: var(--ep-text); margin: 0; width: auto; box-sizing: border-box; display: none; }
+        .ep-editor textarea.ep-code.on { display: block; }
+        .ep-hint { margin: 0 0 14px; color: var(--ep-muted); font-weight: 600; font-size: 14px; }
+        .ep-savebar { position: sticky; bottom: 12px; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px 12px 24px; border: 2px solid var(--ep-line); border-radius: 22px; background: var(--ep-bar); box-shadow: 0 6px 0 var(--ep-shadow), 0 14px 30px rgba(0, 0, 0, 0.12); margin-top: 6px; }
+        .ep-savebar .dot { width: 10px; height: 10px; border-radius: 50%; background: #8a8cff; flex: none; }
+        .ep-savebar.dirty .dot { background: #ffc928; }
+        .ep-savebar .msg { flex: 1 1 200px; font-weight: 800; font-size: 15px; color: var(--ep-text); }
+        .ep-savebar .cancel { all: unset; box-sizing: border-box; cursor: pointer; height: 46px; padding: 0 22px; border: 2px solid var(--ep-line); border-radius: 14px; font-weight: 800; font-size: 15px; line-height: 42px; color: var(--ep-text) !important; }
+        .ep-savebar input[type=submit] { height: 46px; padding: 0 28px; border-radius: 14px; font-weight: 900; font-size: 15px; width: auto; float: none; margin: 0; }
+    </style>
 {% endblock %}
 
 {% block js_media %}
@@ -257,6 +307,70 @@
             });
         });
     </script>
+
+    <script type="text/javascript">
+        $(function () {
+            var $form = $('#edit-form');
+
+            // table of contents highlights the section being read
+            var $links = $('.ep-toc a');
+            function spy() {
+                var cur = null;
+                $('.ep-main > section[id]').each(function () { if (this.getBoundingClientRect().top < 140) cur = this.id; });
+                $links.removeClass('on').filter('[href="#' + (cur || 'ep-profile') + '"]').addClass('on');
+            }
+            $(window).on('scroll', spy); spy();
+
+            // select -> segmented control / cards (the select stays in the form and is what gets saved)
+            function bind($select, $group, buttons) {
+                function paint() { var v = $select.val(); $group.find('button').attr('aria-checked', function () { return String($(this).data('v') === v); }); }
+                $group.find('button').on('click', function () { $select.val($(this).data('v')).trigger('change'); paint(); dirty(); });
+                $select.on('change', paint); paint();
+            }
+            bind($('#id_site_theme'), $('#ep-theme'));
+            bind($('#id_problem_ui'), $('#ep-ui'));
+
+            // code templates: one editor, four tabs
+            var SAMPLES = {
+                cpp: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    return 0;\n}\n',
+                c: '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n',
+                py: 'import sys\ninput = sys.stdin.readline\n\n\ndef main():\n    pass\n\n\nmain()\n',
+                pas: 'program Main;\nvar\n    n: longint;\nbegin\n    readln(n);\nend.\n'
+            };
+            var tab = 'cpp';
+            var $gut = $('#ep-gutter');
+            function cur() { return $('#id_template_' + tab); }
+            function gutter() {
+                var n = Math.max(12, cur().val().split('\n').length), out = [];
+                for (var i = 1; i <= n; i++) out.push(i);
+                $gut.text(out.join('\n')).scrollTop(cur().scrollTop());
+                var v = $.trim(cur().val());
+                $('#ep-tpl-info').text(v ? cur().val().split('\n').length + ' dòng' : 'Đang dùng mẫu mặc định');
+            }
+            function showTab(t) {
+                tab = t;
+                $('#ep-tpl-tabs button').attr('aria-checked', function () { return String($(this).data('v') === t); });
+                $('textarea.ep-code').removeClass('on'); cur().addClass('on'); gutter();
+            }
+            $('#ep-tpl-tabs button').on('click', function () { showTab($(this).data('v')); });
+            $('textarea.ep-code').on('input', function () { gutter(); }).on('scroll', function () { $gut.scrollTop(this.scrollTop); }).on('keydown', function (e) {
+                if (e.key === 'Tab') { e.preventDefault(); var s = this.selectionStart; this.value = this.value.slice(0, s) + '    ' + this.value.slice(this.selectionEnd); this.selectionStart = this.selectionEnd = s + 4; $(this).trigger('input'); }
+            });
+            $('#ep-tpl-sample').on('click', function () { cur().val(SAMPLES[tab]).trigger('input'); });
+            $('#ep-tpl-clear').on('click', function () { cur().val('').trigger('input'); });
+            showTab('cpp');
+
+            // save bar
+            var changed = false;
+            function dirty() {
+                if (changed) return;
+                changed = true;
+                $('.ep-savebar').addClass('dirty').find('.msg').text('Bạn có thay đổi chưa lưu');
+            }
+            $form.on('input change', 'input, select, textarea', dirty);
+            $('#ep-cancel').on('click', function () { window.location.href = window.location.pathname; });
+        });
+    </script>
 {% endblock %}
 
 {% block title_ruler %}{% endblock %}
@@ -266,10 +380,9 @@
     {% set user = request.profile %}
     {% include "user/user-tabs.html" %}
 {% endblock %}
-
 {% block body %}
-    <div class="centered-form">
-        <form id="edit-form" action="" method="post" class="form-area">
+    <div class="ep">
+        <form id="edit-form" action="" method="post" class="ep-form">
             {% if form.errors or form_user.errors %}
                 <div class="alert alert-danger alert-dismissable">
                     <a href="#" class="close">x</a>
@@ -283,126 +396,171 @@
                 </div>
             {% endif %}
             {% csrf_token %}
-            {% if form_user.first_name %}
-                <table>
-                    <tr>
-                        <td><div class="block-header grayed">{{ _('Full name') }}:</div></td>
-                        {% if form.display_badge %}
-                            <td><div class="block-header grayed">{{ _('Display badge') }}:</div></td>
-                        {% endif %}
-                    </tr>
-                    <tr>
-                        <td>{{ form_user.first_name }}</td>
-                        {% if form.display_badge %}
-                            <td>{{ form.display_badge }}</td>
-                        {% endif %}
-                    </tr>
-                </table>
-                <hr>
-            {% endif %}
 
-            {% if form.about %}
-                <div style="padding-top:0.5em" class="block-header grayed">{{ _('Self-description:') }}</div>
-                    {{ form.about }}
-                <hr>
-            {% endif %}
+            <div class="ep-layout">
+                <nav class="ep-toc" aria-label="{{ _('Sections') }}">
+                    <a href="#ep-profile" class="on">{{ _('PERSONAL INFO')|capitalize }}</a>
+                    {% if form.about %}<a href="#ep-about">{{ _('Self-description:')|replace(':', '') }}</a>{% endif %}
+                    <a href="#ep-prefs">{{ _('PREFERENCES')|capitalize }}</a>
+                    <a href="#ep-templates">{{ _('CODE TEMPLATES')|capitalize }}</a>
+                    {% if form.organizations %}<a href="#ep-org">{{ _('Affiliated organizations') }}</a>{% endif %}
+                    <a href="#ep-security">{{ _('SECURITY')|capitalize }}</a>
+                </nav>
 
-            <div class="settings" style="padding-top:0.7em">
-                <div class="pane" style="vertical-align:top">
-                    <table style="padding-right:0.8em">
-                        <tr title="{{ _('Select your closest major city') }}">
-                            <td><label class="inline-header grayed">{{ _('Time zone:') }}</label></td>
-                            <td><span class="fullwidth">{{ form.timezone }}</span></td>
-                        </tr>
-                        <tr>
-                            <td><label class="inline-header grayed">{{ _('Language:') }}</label></td>
-                            <td><span class="fullwidth">{{ form.language }}</span></td>
-                        </tr>
-                        <tr>
-                            <td><label class="inline-header grayed">{{ _('Site theme:') }}</label></td>
-                            <td><span class="fullwidth">{{ form.site_theme }}</span></td>
-                        </tr>
-                        <tr>
-                            <td><label class="inline-header grayed">{{ _('Editor theme:') }}</label></td>
-                            <td><span class="fullwidth">{{ form.ace_theme }}</span></td>
-                        </tr>
-                        {% if has_math_config %}
-                            <tr>
-                                <td><label class="inline-header grayed">{{ _('Math engine:') }}</label></td>
-                                <td><span class="fullwidth">{{ form.math_engine }}</span></td>
-                            </tr>
-                        {% endif %}
-                    </table>
-                </div>
-                {% if form.organizations %}
-                    <div class="pane">
-                        <div style="padding-bottom:0.3em; margin-top:0.3em" class="block-header grayed">
-                            {{ _('Affiliated organizations') }}:
-                        </div>
-                        {{ form.organizations }}
-                    </div>
-                {% endif %}
-            </div>
-            <hr>
-            <div class="settings" style="padding-top:0.7em">
-                <div class="pane">
-                    <table border="0">
-                        {% if form.newsletter %}
-                            <tr><td>
-                                {{ form.newsletter }}
-                                <label for="id_newsletter" style="float: unset" class="inline-header grayed">
-                                        {{- _('Notify me about upcoming contests') -}}
-                                </label>
-                            </td></tr>
-                        {% endif %}
-                        <tr><td>
-                            {{ form.test_site }}
-                            <label for="id_test_site" style="float: unset" class="inline-header grayed">
-                                {{- form.test_site.label -}}
-                            </label>
-                        </td></tr>
-                        <tr><td>
-                            <a href="https://www.gravatar.com/" target="_blank" class="inline-header" rel="noopener">
-                                {{ _('Change your avatar') }}
-                            </a>
-                        </td></tr>
-                        <tr><td>
-                            <a href="{{ url('password_change') }}" class="inline-header">
-                                {{ _('Change your password') }}
-                            </a>
-                        </td></tr>
-                        {% if can_download_data %}
-                            <tr><td>
-                                <a href="{{ url('user_prepare_data') }}" class="inline-header">
-                                    {{ _('Download your data') }}
-                                </a>
-                            </td></tr>
-                        {% endif %}
-                    </table>
-                </div>
-                <div class="pane">
-                    <div>
-                        {% if profile.is_totp_enabled %}
-                            <div class="block-header grayed">{{ _('Two-factor authentication is enabled:') }}</div>
-                            <div class="block-buttons">
-                                {% if require_staff_2fa and request.user.is_staff and not profile.is_webauthn_enabled %}
-                                    <a id="disable-2fa-button" class="button inline-button">{{ _('Disable') }}</a>
-                                {% else %}
-                                    <a href="{{ url('disable_2fa') }}"
-                                       class="button inline-button">{{ _('Disable') }}</a>
+                <div class="ep-main">
+                    <section class="ep-card ep-me" id="ep-profile">
+                        <img src="{{ gravatar(profile, 192) }}" class="ep-avatar" alt="">
+                        <div class="ep-me-body">
+                            <div class="ep-eyebrow">{{ _('PERSONAL INFO') }}</div>
+                            <div class="ep-grid">
+                                {% if form_user.first_name %}
+                                    <label class="ep-field">
+                                        <span>{{ _('Full name') }}</span>
+                                        {{ form_user.first_name }}
+                                    </label>
                                 {% endif %}
-                                <a href="{{ url('refresh_2fa') }}" class="button inline-button">{{ _('Refresh') }}</a>
+                                {% if form.display_badge %}
+                                    <label class="ep-field">
+                                        <span>{{ _('Display badge') }}</span>
+                                        {{ form.display_badge }}
+                                    </label>
+                                {% endif %}
                             </div>
-                            <div class="block-header grayed">
-                                {{ _('Scratch codes:') }}
-                                {% if profile.scratch_codes %}
-                                    <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
-                                       class="button inline-button">{{ _('Regenerate') }}</a>
-                                    <div id="hidden-word">{{ _('Hidden') }}</div>
-                                {% else %}
-                                    <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
-                                       class="button inline-button">{{ _('Generate') }}</a>
+                            <div class="ep-links">
+                                <a href="https://www.gravatar.com/" target="_blank" rel="noopener"><i class="fa fa-picture-o"></i> {{ _('Change your avatar') }}</a>
+                                <a href="{{ url('password_change') }}"><i class="fa fa-key"></i> {{ _('Change your password') }}</a>
+                                {% if can_download_data %}
+                                    <a href="{{ url('user_prepare_data') }}"><i class="fa fa-download"></i> {{ _('Download your data') }}</a>
                                 {% endif %}
+                            </div>
+                        </div>
+                    </section>
+
+                    {% if form.about %}
+                        <section class="ep-card" id="ep-about">
+                            <div class="ep-eyebrow">{{ _('Self-description:')|replace(':', '') }}</div>
+                            {{ form.about }}
+                        </section>
+                    {% endif %}
+
+                    <section class="ep-card" id="ep-prefs">
+                        <div class="ep-eyebrow">{{ _('PREFERENCES') }}</div>
+                        <div class="ep-grid2">
+                            <label class="ep-field" title="{{ _('Select your closest major city') }}">
+                                <span>{{ _('Time zone:') }}</span>
+                                {{ form.timezone }}
+                            </label>
+                            <label class="ep-field">
+                                <span>{{ _('Language:') }}</span>
+                                {{ form.language }}
+                            </label>
+                            <label class="ep-field">
+                                <span>{{ _('Editor theme:') }}</span>
+                                {{ form.ace_theme }}
+                            </label>
+                            {% if has_math_config %}
+                                <label class="ep-field">
+                                    <span>{{ _('Math engine:') }}</span>
+                                    {{ form.math_engine }}
+                                </label>
+                            {% endif %}
+                            <div class="ep-field">
+                                <span>{{ _('Site theme:') }}</span>
+                                <div class="ep-hidden">{{ form.site_theme }}</div>
+                                <div class="ep-seg" id="ep-theme" role="radiogroup" aria-label="{{ _('Site theme:') }}">
+                                    {% for value, label in form.site_theme.field.choices %}
+                                        <button type="button" role="radio" data-v="{{ value }}" aria-checked="false">{{ 'Tự động' if value == 'auto' else label }}</button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ep-field" style="margin-top: 20px">
+                            <span>{{ _('Problem page:') }}</span>
+                            <div class="ep-hidden">{{ form.problem_ui }}</div>
+                            <div class="ep-ui" id="ep-ui" role="radiogroup" aria-label="{{ _('Problem page:') }}">
+                                <button type="button" role="radio" data-v="old" aria-checked="false">
+                                    <span class="pv" aria-hidden="true"><i style="flex: 1 1 0"></i><i style="flex: 0 0 26%"></i></span>
+                                    <span><b>Giao diện cũ</b><span class="tg">Mặc định</span></span>
+                                    <small>Đề bài bên trái, thông tin bài bên phải. Nộp bài ở tab bên dưới.</small>
+                                </button>
+                                <button type="button" role="radio" data-v="new" aria-checked="false">
+                                    <span class="pv" aria-hidden="true"><i style="flex: 0 0 34%"></i><span style="flex: 1 1 0; display: flex; flex-direction: column; gap: 6px"><i class="dk" style="flex: 1 1 0"></i><i style="flex: 0 0 24%"></i></span></span>
+                                    <span><b>Giao diện mới</b><span class="tg">Có chạy thử</span></span>
+                                    <small>Đề bài và khung code chia đôi màn hình, kéo để đổi kích thước, chạy thử ngay trên trang.</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        {% if form.newsletter %}
+                            <div class="ep-check">
+                                {{ form.newsletter }}
+                                <label for="id_newsletter">{{ _('Notify me about upcoming contests') }}</label>
+                            </div>
+                        {% endif %}
+                        <div class="ep-check">
+                            {{ form.test_site }}
+                            <label for="id_test_site">{{ form.test_site.label }}</label>
+                        </div>
+                    </section>
+
+                    <section class="ep-card" id="ep-templates">
+                        <div class="ep-eyebrow">{{ _('CODE TEMPLATES') }}</div>
+                        <p class="ep-hint">{{ _('The template is put in the editor when you open a problem and have not saved code for it. Leave a box empty to use the default template of the site.') }}</p>
+                        <div class="ep-tpl-top">
+                            <div class="ep-seg" id="ep-tpl-tabs" role="tablist" aria-label="Template">
+                                <button type="button" role="tab" data-v="cpp" aria-checked="true" style="padding: 0 16px">C++</button>
+                                <button type="button" role="tab" data-v="c" aria-checked="false" style="padding: 0 16px">C</button>
+                                <button type="button" role="tab" data-v="py" aria-checked="false" style="padding: 0 16px">Python</button>
+                                <button type="button" role="tab" data-v="pas" aria-checked="false" style="padding: 0 16px">Pascal</button>
+                            </div>
+                            <span class="info" id="ep-tpl-info"></span>
+                            <span class="sp"></span>
+                            <button type="button" class="ep-btn" id="ep-tpl-sample">Chèn mẫu gợi ý</button>
+                            <button type="button" class="ep-btn" id="ep-tpl-clear">Xóa</button>
+                        </div>
+                        <div class="ep-editor">
+                            <div class="ep-gutter" id="ep-gutter" aria-hidden="true"></div>
+                            {{ form.template_cpp }}{{ form.template_c }}{{ form.template_py }}{{ form.template_pas }}
+                        </div>
+                    </section>
+
+                    <div class="ep-pair">
+                        {% if form.organizations %}
+                            <section class="ep-card" id="ep-org">
+                                <div class="ep-eyebrow">{{ _('Affiliated organizations') }}</div>
+                                {{ form.organizations }}
+                            </section>
+                        {% endif %}
+
+                        <section class="ep-card" id="ep-security">
+                            <div class="ep-eyebrow">{{ _('SECURITY') }}</div>
+                        <div>
+                            {% if profile.is_totp_enabled %}
+                                <div class="ep-row">
+                                    <b>{{ _('Two-factor authentication is enabled:') }}</b>
+                                    <span class="ep-actions">
+                                        {% if require_staff_2fa and request.user.is_staff and not profile.is_webauthn_enabled %}
+                                            <a id="disable-2fa-button" class="button inline-button">{{ _('Disable') }}</a>
+                                        {% else %}
+                                            <a href="{{ url('disable_2fa') }}" class="button inline-button">{{ _('Disable') }}</a>
+                                        {% endif %}
+                                        <a href="{{ url('refresh_2fa') }}" class="button inline-button">{{ _('Refresh') }}</a>
+                                    </span>
+                                </div>
+                                <div class="ep-row">
+                                    <b>{{ _('Scratch codes:') }}</b>
+                                    <span class="ep-actions">
+                                        {% if profile.scratch_codes %}
+                                            <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
+                                               class="button inline-button">{{ _('Regenerate') }}</a>
+                                        {% else %}
+                                            <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
+                                               class="button inline-button">{{ _('Generate') }}</a>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% if profile.scratch_codes %}<div id="hidden-word">{{ _('Hidden') }}</div>{% endif %}
                                 <div style="display: none" id="scratch-codes-regen">
                                     <div id="scratch-codes-text">
                                         {{ _('Below is a list of one-time use scratch codes.') }}
@@ -413,45 +571,46 @@
                                         {{ _('You will not be able to view your scratch codes after you leave this page!') }}</div>
                                     <pre><code id="scratch-codes"></code></pre>
                                 </div>
-                            </div>
-                        {% else %}
-                            <span class="inline-header grayed">
-                                {{ _('Two-factor Authentication is disabled:') }}
-                                <a href="{{ url('enable_2fa') }}" class="button inline-button">{{ _('Enable') }}</a>
-                            </span>
-                        {% endif %}
-                    </div>
-                    <span class="grayed">
-                    {% if HAS_WEBAUTHN %}
-                        <div style="padding-bottom:0.4em" class="block-header grayed">
-                            {{- _('Security keys:') -}}
-                        </div>
-                        <table class="table">
-                            {% if profile.is_webauthn_enabled %}
-                                {% for credential in profile.webauthn_credentials.all() %}
-                                    <tr>
-                                        <td>{{ credential.name }}</td>
-                                        <td>
-                                            <button class="webauthn-delete inline-button"
-                                                    data-delete-url="{{ url('webauthn_delete', credential.id) }}">
-                                                {{ _('Delete') }}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
+                            {% else %}
+                                <div class="ep-row">
+                                    <b>{{ _('Two-factor Authentication is disabled:') }}</b>
+                                    <span class="ep-actions"><a href="{{ url('enable_2fa') }}" class="button inline-button">{{ _('Enable') }}</a></span>
+                                </div>
                             {% endif %}
-                            <tr>
-                                <td><input id="new-webauthn-name" type="text" placeholder="{{ _('Enter a name for this key') }}"></td>
-                                <td><button id="new-webauthn" class="inline-button">{{ _('Add') }}</button></td>
-                            </tr>
-                        </table>
-                    {% endif %}
-                    </span>
+                        </div>
+                        {% if HAS_WEBAUTHN %}
+                            <div class="ep-sub">{{ _('Security keys:') }}</div>
+                            <table class="table">
+                                {% if profile.is_webauthn_enabled %}
+                                    {% for credential in profile.webauthn_credentials.all() %}
+                                        <tr>
+                                            <td>{{ credential.name }}</td>
+                                            <td>
+                                                <button class="webauthn-delete inline-button"
+                                                        data-delete-url="{{ url('webauthn_delete', credential.id) }}">
+                                                    {{ _('Delete') }}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                                <tr>
+                                    <td><input id="new-webauthn-name" type="text" placeholder="{{ _('Enter a name for this key') }}"></td>
+                                    <td><button id="new-webauthn" class="inline-button">{{ _('Add') }}</button></td>
+                                </tr>
+                            </table>
+                        {% endif %}
+                        </section>
+                    </div>
+
+                    <div class="ep-savebar" role="region" aria-label="{{ _('Update profile') }}">
+                        <span class="dot" aria-hidden="true"></span>
+                        <span class="msg">Chưa có thay đổi</span>
+                        <button type="button" class="cancel" id="ep-cancel">Hủy thay đổi</button>
+                        <input type="submit" class="submit-bar" value="{{ _('Update profile') }}">
+                    </div>
                 </div>
             </div>
-            <hr>
-
-            <input type="submit" class="submit-bar" value="{{ _('Update profile') }}">
         </form>
     </div>
 {% endblock %}

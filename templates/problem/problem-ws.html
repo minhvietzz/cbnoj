@@ -1,0 +1,750 @@
+{% extends "common-content.html" %}
+{# Problem workspace: statement on the left, editor and try-run on the right. problem.html is the old page. #}
+
+{% block content_media %}
+    {% if not comment_lock %}
+        {% include "comments/media-css.html" %}
+    {% endif %}
+    {% if request.user.is_authenticated and form %}
+        {{ form.media.css }}
+    {% endif %}
+    <style>
+        /* the workspace uses the whole window: hide what only belongs to normal pages */
+        #page-container { background: transparent !important; box-shadow: none !important; border: 0 !important; }
+        #content { padding: 0 !important; margin-top: 0 !important; background: transparent !important; box-shadow: none !important; border: 0 !important; }
+        #content-body { background: transparent !important; box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+        :where(#ws) button, :where(button.ws-btn) { all: unset; box-sizing: border-box; cursor: pointer; }
+        #page-container > br { display: none; }
+        #ws a { color: var(--ws-link); }
+        footer, #announcement { display: none !important; }
+        html { overflow: hidden; }
+
+        body {
+            --ws-panel: #ffffff; --ws-bar: #f7f8fa; --ws-line: #e3e6ee; --ws-box: #f4f5f7; --ws-chip: #eceef5;
+            --ws-strong: #10112e; --ws-text: #1a2b4c; --ws-muted: #5b6785; --ws-soft: #34405f; --ws-field: #ffffff;
+            --ws-title: #0003d4; --ws-link: #0003d4; --ws-shadow: #e5e7eb;
+            --ws-ok: #12804a; --ws-bad: #c62828; --ws-warn: #946000; --ws-focus: #0003d4;
+        }
+        body[data-theme="dark"] {
+            --ws-panel: #14142a; --ws-bar: #1a1a38; --ws-line: #2a2c52; --ws-box: #0d0d1a; --ws-chip: #23254f;
+            --ws-strong: #ffffff; --ws-text: #e8e8f5; --ws-muted: #a6a9d6; --ws-soft: #cdd0f0; --ws-field: #0d0d1a;
+            --ws-title: #8a8cff; --ws-link: #8a8cff; --ws-shadow: #06061a;
+            --ws-ok: #6fe3a0; --ws-bad: #ff8f8f; --ws-warn: #ffd479; --ws-focus: #8a8cff;
+        }
+        #ws {
+            width: calc(100vw - 28px); margin-left: calc(50% - 50vw + 14px);
+            height: calc(100vh - 90px); min-height: 560px; box-sizing: border-box; display: flex; flex-direction: column;
+            gap: 0; color: var(--ws-text);
+        }
+        #ws * { box-sizing: border-box; }
+        .ws-actions { display: flex; align-items: center; gap: 8px; }
+        .ws-actions.in-bar { margin-left: auto; }
+        .ws-title { margin: 0 0 10px; font-size: 26px; font-weight: 900; color: var(--ws-title); letter-spacing: -0.3px; }
+        .ws-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ws-chip { padding: 4px 10px; border-radius: 999px; background: var(--ws-chip); font-weight: 800; font-size: 12.5px; color: var(--ws-soft); white-space: nowrap; }
+        .ws-spacer { flex: 1 1 0; }
+        body .ws-btn { display: inline-block; border: 0; border-radius: 12px; padding: 8px 18px; font: inherit; font-weight: 800; font-size: 14px; min-height: 36px; line-height: 20px; cursor: pointer; background: var(--ws-chip); color: var(--ws-strong) !important; text-align: center; }
+        body .ws-btn:disabled { opacity: .55; cursor: not-allowed; }
+        body .ws-btn.go { background: #0003d4; color: #fff !important; box-shadow: 0 3px 0 #00027f; }
+        body .ws-btn.run { background: #ffc928; color: #2a1d00 !important; box-shadow: 0 3px 0 #c99a00; }
+        body .ws-btn.ghost { box-shadow: none; background: transparent; border: 1px solid var(--ws-line); color: var(--ws-soft) !important; padding: 6px 12px; min-height: 32px; font-size: 13px; }
+        .ws-main { flex: 1 1 0; min-height: 0; display: flex; gap: 0; }
+        .ws-card { background: var(--ws-panel); border-radius: 18px; border: 2px solid var(--ws-line); box-shadow: 0 3px 0 var(--ws-shadow); display: flex; flex-direction: column; overflow: hidden; min-height: 0; min-width: 0; }
+        .ws-left { flex: 0 0 var(--ws-left, 38%); min-width: 240px; }
+        .ws-right { flex: 1 1 0; display: flex; flex-direction: column; gap: 0; min-width: 0; min-height: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+        .ws-tabs { flex: 0 0 auto; display: flex; gap: 2px; padding: 0 8px; background: var(--ws-bar); border-bottom: 1px solid var(--ws-line); overflow-x: auto; align-items: center; }
+        #ws .ws-tabs a, #ws .ws-tabs button { display: inline-block; border: 0; background: transparent; padding: 10px 12px; font: inherit; font-weight: 700; font-size: 14px; line-height: 20px; color: var(--ws-muted) !important; border-bottom: 2px solid transparent; white-space: nowrap; text-decoration: none; cursor: pointer; }
+        #ws .ws-tabs .active { color: var(--ws-strong) !important; font-weight: 800; border-bottom-color: #ffc928; }
+        .ws-pane { flex: 1 1 0; min-height: 0; overflow: auto; padding: 16px 20px 24px; display: none; }
+        .ws-pane.active { display: block; }
+        .ws-foot { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 16px; border-top: 1px solid var(--ws-line); background: var(--ws-bar); font-size: 13px; font-weight: 700; }
+        .ws-foot a { text-decoration: none; }
+        .ws-manage { position: relative; }
+        .ws-manage summary { cursor: pointer; list-style: none; }
+        .ws-manage summary::-webkit-details-marker { display: none; }
+        .ws-manage div { position: absolute; bottom: 24px; left: 0; background: var(--ws-panel); border: 1px solid var(--ws-line); border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 180px; z-index: 5; }
+
+        /* editor: the existing submit form, restyled */
+        .ws-editor { flex: 1 1 0; min-height: 0; }
+        .ws-editor .ws-card-body { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+        .ws-editor form#problem_submit { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; margin: 0; padding: 0; }
+        .ws-editor #submit-wrapper { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+        .ws-editor #problem_submit hr, .ws-editor .submit-bar { display: none !important; }
+        .ws-editor #language { order: -1; padding: 8px 14px; background: var(--ws-bar); border-bottom: 1px solid var(--ws-line); }
+        .ws-editor #language-select { max-width: 360px; }
+        .ws-editor #editor { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+        .ws-editor #editor.hidden, .ws-editor #file-submit.hidden { display: none; }
+        .ws-editor #editor > div:first-child { display: none !important; }
+        .ws-editor #language { display: flex; align-items: center; gap: 10px; }
+        #ws .select2-container { min-width: 220px; }
+        #ws .select2-container .select2-selection--single { height: 34px !important; background: var(--ws-field) !important; border: 1px solid var(--ws-line) !important; border-radius: 8px !important; }
+        #ws .select2-container .select2-selection__rendered { color: var(--ws-text) !important; line-height: 32px !important; padding-left: 10px !important; }
+        #ws .select2-container .select2-selection__arrow { height: 32px !important; }
+        #ws #language-select, #ws #language .select2-container, #ws #language .select2 { display: none !important; }
+        .ws-langs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .ws-seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--ws-box); border: 1px solid var(--ws-line); border-radius: 12px; }
+        #ws .ws-seg button { display: inline-block; padding: 5px 13px; border-radius: 9px; font: inherit; font-weight: 800; font-size: 13.5px; line-height: 20px; color: var(--ws-muted) !important; }
+        #ws .ws-seg button[aria-checked="true"] { background: #0003d4; color: #fff !important; box-shadow: 0 2px 0 #00027f; }
+        #ws .ws-seg button:hover:not([aria-checked="true"]) { color: var(--ws-strong) !important; }
+        #ws select.ws-ver { appearance: auto; height: 32px; padding: 0 8px; border-radius: 9px; border: 1px solid var(--ws-line); background: var(--ws-field); color: var(--ws-text); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .ws-editor .ace_editor { background: var(--ws-panel) !important; color: var(--ws-text) !important; }
+        .ws-editor .ace_cursor { color: var(--ws-strong) !important; }
+        .ws-editor .ace_gutter { background: var(--ws-bar) !important; color: var(--ws-muted) !important; }
+        .ws-editor .ace_gutter-active-line, .ws-editor .ace_marker-layer .ace_active-line { background: var(--ws-box) !important; }
+        .ws-editor .ace_print-margin { display: none; }
+        .ws-editor .django-ace-editor::before, .ws-editor .django-ace-editor::after, .ws-editor .django-ace-widget::after { display: none !important; }
+        .ws-editor .django-ace-editor, .ws-editor .django-ace-widget { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
+        .ws-editor #editor > div:first-child label { display: none; }
+        .ws-editor .django-ace-editor { flex: 1 1 0; min-height: 0; border: 0; }
+        .ws-editor .django-ace-toolbar { display: none; }
+        .ws-editor .alert { margin: 8px 14px 0; }
+
+        /* run console */
+        .ws-console { flex: 0 0 var(--ws-console, 300px); min-height: 110px; }
+        .ws-gutter { flex: 0 0 12px; position: relative; touch-action: none; z-index: 3; }
+        .ws-gutter.v { cursor: col-resize; }
+        .ws-gutter.h { cursor: row-resize; }
+        .ws-gutter::after { content: ''; position: absolute; border-radius: 4px; background: var(--ws-line); transition: background .15s; }
+        .ws-gutter.v::after { left: 3px; top: calc(50% - 22px); width: 4px; height: 44px; }
+        .ws-gutter.h::after { top: 3px; left: calc(50% - 22px); height: 4px; width: 44px; }
+        .ws-gutter:hover::after, #ws.dragging .ws-gutter.on::after { background: var(--ws-focus); }
+        #ws.dragging { user-select: none; }
+        #ws.dragging.dv { cursor: col-resize; } #ws.dragging.dh { cursor: row-resize; }
+        #ws.dragging iframe, #ws.dragging .ace_editor { pointer-events: none; }
+        #ws .ws-pane, #ws .ace_scrollbar { scrollbar-width: thin; scrollbar-color: var(--ws-line) transparent; }
+        .ws-console .ws-pane { padding: 12px 16px 14px; }
+        .ws-tests { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+        #ws .ws-tests button.t { display: inline-block; border: 0; padding: 6px 14px; border-radius: 8px; font: inherit; line-height: 20px; font-weight: 800; font-size: 13px; background: var(--ws-chip); color: var(--ws-soft) !important; cursor: pointer; }
+        #ws .ws-tests button.t.active { background: #0003d4; color: #fff !important; box-shadow: 0 2px 0 #00027f; }
+        .ws-tests button.t .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--ws-muted); }
+        .ws-tests button.t .dot.ok { background: var(--ws-ok); }
+        .ws-tests button.t .dot.bad { background: var(--ws-bad); }
+        .ws-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+        .ws-grid > div { flex: 1 1 200px; min-width: 0; }
+        .ws-label { font-size: 12.5px; font-weight: 800; color: var(--ws-muted); margin-bottom: 5px; }
+        .ws-box, #ws textarea.ws-box { margin: 0; min-height: 76px; padding: 9px 12px; border-radius: 10px; background: var(--ws-box); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; white-space: pre-wrap; word-break: break-all; color: var(--ws-text); border: 1px solid transparent; width: 100%; display: block; }
+        #ws textarea.ws-box { background: var(--ws-field); border: 2px solid var(--ws-focus); resize: vertical; }
+        .ws-verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 10px; }
+        .ws-verdict b { font-size: 19px; font-weight: 900; }
+        .ws-verdict b.ok { color: var(--ws-ok); } .ws-verdict b.bad { color: var(--ws-bad); } .ws-verdict b.warn { color: var(--ws-warn); }
+        .ws-verdict span { font-size: 13px; font-weight: 700; color: var(--ws-muted); }
+        .ws-empty { height: 160px; display: flex; align-items: center; justify-content: center; color: var(--ws-muted); font-weight: 700; font-size: 14px; text-align: center; }
+        .ws-err { white-space: pre-wrap; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; color: var(--ws-bad); }
+        .ws-login { padding: 40px 24px; text-align: center; font-weight: 700; }
+        .ws-pane .comments-loading { color: var(--ws-muted); }
+
+        @media (max-width: 980px) {
+            html { overflow: auto; }
+            #ws { height: auto; width: auto; margin-left: 0; }
+            .ws-main { flex-direction: column; gap: 8px; }
+            .ws-gutter { display: none; }
+            .ws-top { display: flex; flex-wrap: wrap; }
+            .ws-left { flex: 0 0 auto; max-height: 70vh; }
+            .ws-right { flex: 0 0 auto; }
+            .ws-editor { height: 480px; flex: 0 0 auto; }
+            .ws-console { flex: 0 0 auto; }
+        }
+    </style>
+{% endblock %}
+
+{% block content_js_media %}
+    {% if comment_form and comment_form.errors %}
+        {% include "comments/media-js.html" %}
+    {% endif %}
+    {% include "comments/lazy-load-js.html" %}
+    {% if request.user.is_authenticated and form %}
+        {% include "problem/submit-js.html" %}
+    {% endif %}
+    <script type="text/javascript">
+        $(function () {
+            var $ws = $('#ws');
+            var code = {{ problem.code|htmltojs }};
+
+            // ---- layout: fill the window below the site header -----------------------------------------
+            function fit() {
+                if (window.innerWidth > 980) {
+                    $ws.css('height', Math.max(560, window.innerHeight - $ws.offset().top - 12) + 'px');
+                } else {
+                    $ws.css('height', 'auto');
+                }
+                var $ace = $('#ace_source');
+                if ($ace.length && $('#editor').is(':visible')) {
+                    if (window.innerWidth > 980) {
+                        var $card = $('.ws-editor');
+                        var avail = $card.innerHeight() - $('#language').outerHeight(true) - 2;
+                        $card.find('.alert:visible').each(function () { avail -= $(this).outerHeight(true); });
+                        $ace.css('height', Math.max(120, avail) + 'px');
+                    } else {
+                        $ace.css('height', '420px');
+                    }
+                    if (window.ace_source && typeof window.ace_source.resize === 'function') window.ace_source.resize();
+                }
+            }
+            $(window).on('resize', fit);
+            setTimeout(fit, 0);
+            setTimeout(fit, 400);
+            setTimeout(fit, 1200);
+            $('#ace_source').on('ace_load', function () { setTimeout(fit, 0); });
+
+            // ---- resizable panes: drag the gutters, sizes are remembered ---------------------------------
+            var layoutKey = 'ws:layout';
+            var layout = {};
+            try { layout = JSON.parse(localStorage.getItem(layoutKey) || '{}') || {}; } catch (e) { layout = {}; }
+            function applyLayout() {
+                if (layout.left) $ws[0].style.setProperty('--ws-left', layout.left + 'px'); else $ws[0].style.removeProperty('--ws-left');
+                if (layout.console) $ws[0].style.setProperty('--ws-console', layout.console + 'px'); else $ws[0].style.removeProperty('--ws-console');
+            }
+            function saveLayout() { try { localStorage.setItem(layoutKey, JSON.stringify(layout)); } catch (e) {} }
+            applyLayout();
+            var raf = 0;
+            function drag(kind, e) {
+                if (window.innerWidth <= 980) return;
+                e.preventDefault();
+                var $g = $(e.currentTarget).addClass('on');
+                $ws.addClass('dragging ' + (kind === 'v' ? 'dv' : 'dh'));
+                var main = $('.ws-main')[0].getBoundingClientRect();
+                var right = $('.ws-right')[0].getBoundingClientRect();
+                function move(ev) {
+                    var x = ev.clientX, y = ev.clientY;
+                    if (kind === 'v') layout.left = Math.round(Math.min(Math.max(x - main.left - 5, 240), main.width - 360));
+                    else layout.console = Math.round(Math.min(Math.max(right.bottom - y - 5, 110), right.height - 160));
+                    applyLayout();
+                    if (!raf) raf = requestAnimationFrame(function () { raf = 0; fit(); });
+                }
+                function up() {
+                    $(document).off('pointermove.wsdrag pointerup.wsdrag pointercancel.wsdrag');
+                    $ws.removeClass('dragging dv dh'); $g.removeClass('on');
+                    saveLayout(); fit();
+                }
+                $(document).on('pointermove.wsdrag', move).on('pointerup.wsdrag pointercancel.wsdrag', up);
+            }
+            $('#ws-gv').on('pointerdown', function (e) { drag('v', e); }).on('dblclick', function () { delete layout.left; applyLayout(); saveLayout(); fit(); });
+            $('#ws-gh').on('pointerdown', function (e) { drag('h', e); }).on('dblclick', function () { delete layout.console; applyLayout(); saveLayout(); fit(); });
+            $('#ws-reset-layout').on('click', function () { layout = {}; applyLayout(); saveLayout(); fit(); });
+            $('#ws-gv, #ws-gh').attr('tabindex', '0').on('keydown', function (e) {
+                var step = e.shiftKey ? 60 : 20, isV = this.id === 'ws-gv';
+                var left = $('.ws-left')[0].getBoundingClientRect().width, cons = $('.ws-console').length ? $('.ws-console')[0].getBoundingClientRect().height : 300;
+                if (isV && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) layout.left = Math.max(240, left + (e.key === 'ArrowRight' ? step : -step));
+                else if (!isV && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) layout.console = Math.max(110, cons + (e.key === 'ArrowUp' ? step : -step));
+                else return;
+                e.preventDefault(); applyLayout(); saveLayout(); fit();
+            });
+
+            // the file picker of the form becomes a small button in the language bar
+            $('#language').append($('<button type="button" class="ws-btn ghost" id="ws-upload">Tải file lên</button>').on('click', function () { $('#file_select').click(); }));
+
+            // ---- left tabs ----------------------------------------------------------------------------
+            $('.ws-tabs [data-pane]').on('click', function () {
+                var name = $(this).data('pane');
+                $('.ws-tabs [data-pane]').removeClass('active');
+                $(this).addClass('active');
+                $('.ws-left .ws-pane').removeClass('active');
+                $('#pane-' + name).addClass('active');
+                if (name === 'comments') {
+                    var load = $('#comments').data('load-comments');
+                    if (load) load();
+                }
+            });
+
+            // ---- old / new page ------------------------------------------------------------------------
+            $('#ws-old').on('click', function () {
+                $.post({{ url('set_problem_ui')|htmltojs }}, {ui: 'old'}).always(function () { location.reload(); });
+            });
+
+            // Chạy thử / Nộp bài sit at the right end of the editor bar, next to the language
+            var $actions = $('#ws-actions');
+            if ($actions.length && $('#language').length) {
+                $('#language').append($('<span class="ws-spacer"></span>')).append($actions.addClass('in-bar'));
+            }
+
+            $('#pdf_button').click(async function (e) {
+                e.preventDefault();
+                if (!$('#raw_problem').attr('src')) $('#raw_problem').attr('src', '{{ problem.code }}/raw');
+                while (!$('.math-loaded', frames['raw_problem'].document).length) {
+                    await new Promise(function (r) { setTimeout(r, 200); });
+                }
+                frames['raw_problem'].print();
+            });
+
+            {% if request.user.is_authenticated and form %}
+            // ---- submit ---------------------------------------------------------------------------------
+            $('#ws-submit').on('click', function () {
+                $('#problem_submit .submit-bar input[type=submit]').click();
+            });
+
+            // ---- try-run ---------------------------------------------------------------------------------
+            var runUrl = {{ url('problem_run', problem.code)|htmltojs }};
+            var runKeys = {{ run_language_keys|htmltojs }}.split(',');
+            var storeKey = 'ws:tests:' + code;
+            var MAX_CUSTOM = 5, MAX_SAMPLES = 3;
+            var csrf = $('#problem_submit [name=csrfmiddlewaretoken]').val();
+
+            function sampleTests() {
+                var found = [], cur = null, kinds = [];
+                $('#pane-statement pre').each(function () {
+                    var $pre = $(this), label = '';
+                    var $p = $pre.prev();
+                    while ($p.length && ($p.hasClass('copy-clipboard') || !$.trim($p.text()))) $p = $p.prev();
+                    if ($p.length) label = $.trim($p.text()).toLowerCase();
+                    var text = $pre.text().replace(/\s+$/, '');
+                    var kind = null;
+                    if (/(output|dữ liệu ra|đầu ra|kết quả|xuất|stdout)/.test(label)) kind = 'out';
+                    else if (/(input|dữ liệu vào|đầu vào|nhập|stdin)/.test(label)) kind = 'in';
+                    kinds.push({kind: kind, text: text});
+                });
+                var known = kinds.some(function (k) { return k.kind; });
+                kinds.forEach(function (k, i) {
+                    var kind = known ? k.kind : (i % 2 === 0 ? 'in' : 'out');
+                    if (kind === 'in') { cur = {input: k.text, expected: ''}; }
+                    else if (kind === 'out' && cur) { cur.expected = k.text; found.push(cur); cur = null; }
+                });
+                if (cur) found.push(cur);
+                return found.slice(0, MAX_SAMPLES).map(function (s, i, all) {
+                    return {id: 's' + i, name: all.length > 1 ? 'Test đề ' + (i + 1) : 'Test đề', input: s.input + '\n',
+                            expected: s.expected, locked: true};
+                });
+            }
+
+            var samples = sampleTests();
+            var custom = [];
+            try { custom = JSON.parse(localStorage.getItem(storeKey) || '[]').slice(0, MAX_CUSTOM); } catch (e) { custom = []; }
+            var seq = custom.reduce(function (m, t) { return Math.max(m, t.n || 0); }, 0);
+            var active = samples.length ? samples[0].id : (custom.length ? custom[0].id : null);
+            var results = {}, runInfo = null, view = 'case', busy = false;
+
+            function allTests() { return samples.concat(custom); }
+            function saveCustom() { try { localStorage.setItem(storeKey, JSON.stringify(custom)); } catch (e) {} }
+            function byId(id) { return allTests().filter(function (t) { return t.id === id; })[0]; }
+            function norm(s) { return $.trim(s || '').split(/\s+/).join(' '); }
+            function langKey() { return $('#id_language option:selected').data('key'); }
+            function source() { return window.ace_source && typeof window.ace_source.getSession === 'function' ? window.ace_source.getSession().getValue() : $('#id_source').val(); }
+
+            function verdict(t, r) {
+                if (!r) return null;
+                if (r.status === 'SKIP') return {cls: 'warn', text: 'Bỏ qua (quá giờ chung)'};
+                if (r.status === 'TLE') return {cls: 'bad', text: 'Quá thời gian'};
+                if (r.status === 'MLE') return {cls: 'bad', text: 'Quá bộ nhớ'};
+                if (r.status === 'OLE') return {cls: 'bad', text: 'In ra quá nhiều'};
+                if (r.status === 'RTE' || r.status === 'IR') return {cls: 'bad', text: 'Lỗi khi chạy'};
+                if (!$.trim(t.expected)) return {cls: 'ok', text: 'Chạy xong'};
+                return norm(r.stdout) === norm(t.expected) ? {cls: 'ok', text: 'Khớp kết quả mong đợi'}
+                                                          : {cls: 'bad', text: 'Khác kết quả mong đợi'};
+            }
+
+            function render() {
+                var tests = allTests();
+                if (!byId(active)) active = tests.length ? tests[0].id : null;
+                var $tests = $('#ws-tests').empty();
+                tests.forEach(function (t) {
+                    var v = verdict(t, results[t.id]);
+                    var $b = $('<button type="button" class="t">').text(t.name).toggleClass('active', t.id === active);
+                    if (v) $b.append($('<span class="dot">').addClass(v.cls));
+                    $b.on('click', function () { active = t.id; render(); });
+                    $tests.append($b);
+                });
+                if (custom.length < MAX_CUSTOM) {
+                    $tests.append($('<button type="button" class="ws-btn ghost">+ Thêm test</button>').on('click', function () {
+                        seq += 1;
+                        var t = {id: 'c' + seq, n: seq, name: 'Test ' + seq, input: '', expected: '', locked: false};
+                        custom.push(t); saveCustom(); active = t.id; view = 'case'; render();
+                    }));
+                }
+                $tests.append($('<span class="ws-spacer">'));
+                var cur = byId(active);
+                if (cur && !cur.locked) {
+                    $tests.append($('<button type="button" class="ws-btn ghost">Xóa test này</button>').on('click', function () {
+                        custom = custom.filter(function (t) { return t.id !== cur.id; });
+                        saveCustom(); delete results[cur.id]; render();
+                    }));
+                }
+                $('#ws-count').text('Test của bạn: ' + custom.length + '/' + MAX_CUSTOM);
+                $('#ws-tab-case').toggleClass('active', view === 'case');
+                $('#ws-tab-result').toggleClass('active', view === 'result');
+
+                var $body = $('#ws-console-body').empty();
+                if (!cur) { $body.append($('<div class="ws-empty">').text('Bài này chưa có ví dụ. Hãy thêm test của bạn.')); return; }
+                if (view === 'case') {
+                    var $grid = $('<div class="ws-grid">');
+                    var $in = $('<div>').append($('<div class="ws-label">').text('Input (stdin hoặc file input)'));
+                    var $ex = $('<div>').append($('<div class="ws-label">').text('Kết quả mong đợi (không bắt buộc)'));
+                    if (cur.locked) {
+                        $in.append($('<pre class="ws-box">').text(cur.input));
+                        $ex.append($('<pre class="ws-box">').text(cur.expected));
+                    } else {
+                        $in.append($('<textarea class="ws-box" aria-label="Input của test">').val(cur.input).on('input', function () { cur.input = this.value; saveCustom(); }));
+                        $ex.append($('<textarea class="ws-box" aria-label="Kết quả mong đợi">').val(cur.expected).on('input', function () { cur.expected = this.value; saveCustom(); }));
+                    }
+                    $body.append($grid.append($in, $ex));
+                } else {
+                    var r = results[cur.id];
+                    if (runInfo && runInfo.error) {
+                        $body.append($('<div class="ws-verdict">').append($('<b class="bad">').text('Không chạy được')));
+                        $body.append($('<div class="ws-err">').text(runInfo.error));
+                    } else if (runInfo && runInfo.compile_error) {
+                        $body.append($('<div class="ws-verdict">').append($('<b class="bad">').text('Lỗi biên dịch')));
+                        $body.append($('<div class="ws-err">').text(runInfo.compile_error));
+                    } else if (!r) {
+                        $body.append($('<div class="ws-empty">').text('Bạn cần chạy code trước.'));
+                    } else {
+                        var v = verdict(cur, r);
+                        var $v = $('<div class="ws-verdict">').append($('<b>').addClass(v.cls).text(v.text));
+                        if (r.status !== 'SKIP') $v.append($('<span>').text(Math.round(r.time * 1000) + ' ms · ' + (r.memory / 1024).toFixed(1) + ' MB'));
+                        if (runInfo.mode === 'file') {
+                            var parts = [];
+                            if (runInfo.input_file) parts.push('đọc ' + runInfo.input_file);
+                            if (runInfo.output_file) parts.push('ghi ' + runInfo.output_file);
+                            $v.append($('<span>').text('Đã nhận file: ' + parts.join(', ')));
+                        } else {
+                            $v.append($('<span>').text('Nhập xuất chuẩn (stdin/stdout)'));
+                        }
+                        $body.append($v);
+                        var $grid = $('<div class="ws-grid">');
+                        $grid.append($('<div>').append($('<div class="ws-label">').text('Input'), $('<pre class="ws-box">').text(cur.input)));
+                        $grid.append($('<div>').append($('<div class="ws-label">').text('Kết quả của bạn' + (r.truncated ? ' (đã cắt bớt)' : '')), $('<pre class="ws-box">').text(r.stdout)));
+                        $grid.append($('<div>').append($('<div class="ws-label">').text('Mong đợi'), $('<pre class="ws-box">').text($.trim(cur.expected) ? cur.expected : '(không đặt)')));
+                        $body.append($grid);
+                        if (r.stderr) $body.append($('<div class="ws-label" style="margin-top:10px">').text('Thông báo lỗi'), $('<div class="ws-err">').text(r.stderr));
+                    }
+                }
+            }
+
+            $('#ws-tab-case').on('click', function () { view = 'case'; render(); });
+            $('#ws-tab-result').on('click', function () { view = 'result'; render(); });
+
+            function fail(message) {
+                runInfo = {error: message}; results = {}; view = 'result'; render();
+            }
+
+            $('#ws-run').on('click', function () {
+                if (busy) return;
+                var key = langKey();
+                if (runKeys.indexOf(key) < 0) { fail('Ngôn ngữ này chưa hỗ trợ chạy thử, bạn vẫn nộp bài bình thường.'); return; }
+                var tests = allTests().filter(function (t) { return t.locked || $.trim(t.input) !== ''; });
+                if (!tests.length) { fail('Chưa có test nào có dữ liệu để chạy.'); return; }
+                var src = source();
+                if (!$.trim(src)) { fail('Chưa có code để chạy.'); return; }
+                busy = true;
+                var $btn = $(this).prop('disabled', true).text('Đang chạy...');
+                $.ajax({
+                    url: runUrl, type: 'POST', contentType: 'application/json', timeout: 60000,
+                    headers: {'X-CSRFToken': csrf},
+                    data: JSON.stringify({language: $('#id_language').val(), source: src,
+                                          tests: tests.map(function (t) { return {input: t.input}; })})
+                }).done(function (reply) {
+                    runInfo = reply; results = {};
+                    (reply.results || []).forEach(function (r, i) { results[tests[i].id] = r; });
+                    view = 'result';
+                    if (!byId(active) || !results[active]) active = tests[0].id;
+                    render();
+                }).fail(function (xhr) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message;
+                    fail(msg || 'Không chạy thử được lúc này, thử lại sau.');
+                }).always(function () {
+                    busy = false;
+                    $btn.prop('disabled', false).html('&#9654; Chạy thử');
+                });
+            });
+
+            // ---- language picker: C++, C, Python, Pascal (+ "Khác" for the rest) --------------------------
+            var FAMILIES = [
+                {id: 'cpp', label: 'C++', test: /^CPP/, prefer: ['CPP17', 'CPP20', 'CPP14', 'CPP11', 'CPP03']},
+                {id: 'c', label: 'C', test: /^C(11)?$/, prefer: ['C11', 'C']},
+                {id: 'py', label: 'Python', test: /^PY/, prefer: ['PY3', 'PYPY3', 'PYPY', 'PY2']},
+                {id: 'pas', label: 'Pascal', test: /^PAS$/, prefer: ['PAS']}
+            ];
+            var $sel = $('#id_language');
+            var langs = $sel.find('option').map(function () {
+                return {id: String(this.value), key: String($(this).data('key')), name: $(this).data('name') || $(this).text()};
+            }).get();
+            function familyOf(l) {
+                for (var i = 0; i < FAMILIES.length; i++) if (FAMILIES[i].test.test(l.key)) return FAMILIES[i].id;
+                return 'other';
+            }
+            var $picker = $('<div class="ws-langs">');
+            function setLang(id) { $sel.val(id).trigger('change'); }
+            function renderPicker() {
+                var cur = langs.filter(function (l) { return l.id === String($sel.val()); })[0] || langs[0];
+                var curFam = cur ? familyOf(cur) : 'cpp';
+                $picker.empty();
+                var $seg = $('<div class="ws-seg" role="radiogroup" aria-label="Ngôn ngữ">');
+                FAMILIES.forEach(function (f) {
+                    var members = langs.filter(function (l) { return familyOf(l) === f.id; });
+                    if (!members.length) return;
+                    var $b = $('<button type="button" role="radio">').text(f.label).attr('aria-checked', curFam === f.id ? 'true' : 'false');
+                    $b.on('click', function () {
+                        if (curFam === f.id) return;
+                        var pick = null;
+                        for (var i = 0; i < f.prefer.length && !pick; i++) pick = members.filter(function (m) { return m.key === f.prefer[i]; })[0];
+                        setLang((pick || members[0]).id);
+                    });
+                    $seg.append($b);
+                });
+                $picker.append($seg);
+                var group = langs.filter(function (l) { return familyOf(l) === curFam; });
+                if (curFam !== 'other' && group.length > 1) {
+                    var $v = $('<select class="ws-ver" aria-label="Phiên bản">');
+                    group.forEach(function (l) { $v.append($('<option>').val(l.id).text(l.name)); });
+                    $v.val(cur.id).on('change', function () { setLang(this.value); });
+                    $picker.append($v);
+                }
+                var others = langs.filter(function (l) { return familyOf(l) === 'other'; });
+                if (others.length) {
+                    var $o = $('<select class="ws-ver" aria-label="Ngôn ngữ khác">').append($('<option value="">Khác...</option>'));
+                    others.forEach(function (l) { $o.append($('<option>').val(l.id).text(l.name)); });
+                    if (curFam === 'other') $o.val(cur.id);
+                    $o.on('change', function () { if (this.value) setLang(this.value); });
+                    $picker.append($o);
+                }
+            }
+            $('#language').prepend($picker);
+            $sel.on('change', renderPicker);
+            renderPicker();
+
+            // ---- code hints like VS Code: live autocomplete, snippets, STL names -----------------------
+            var HINTS = {
+                cpp: {
+                    words: 'vector string map set multiset unordered_map unordered_set queue priority_queue stack deque pair make_pair tuple array bitset list push_back pop_back emplace_back push_front pop_front front back size empty begin end rbegin rend clear resize assign insert erase find count lower_bound upper_bound binary_search sort stable_sort reverse unique min max min_element max_element swap abs sqrt pow floor ceil round log log2 memset memcpy strlen strcmp scanf printf puts getchar cin cout cerr endl getline to_string stoi stoll stod accumulate iota fill nth_element next_permutation __gcd gcd lcm numeric_limits INT_MAX INT_MIN LLONG_MAX LLONG_MIN first second substr c_str iterator const_iterator auto const static nullptr true false struct class template typename namespace using include define return break continue while for do if else switch case default int long short unsigned signed char bool float double void sizeof typedef'.split(' '),
+                    snippets: [
+                        ['main', 'int main() {\n\tios::sync_with_stdio(false);\n\tcin.tie(nullptr);\n\t$0\n\treturn 0;\n}'],
+                        ['for', 'for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n\t$0\n}'],
+                        ['forr', 'for (int ${1:i} = ${2:n} - 1; $1 >= 0; $1--) {\n\t$0\n}'],
+                        ['fore', 'for (auto &${1:x} : ${2:v}) {\n\t$0\n}'],
+                        ['while', 'while (${1:cond}) {\n\t$0\n}'],
+                        ['if', 'if (${1:cond}) {\n\t$0\n}'],
+                        ['ifelse', 'if (${1:cond}) {\n\t$2\n} else {\n\t$0\n}'],
+                        ['vec', 'vector<${1:int}> ${2:v}(${3:n});'],
+                        ['readn', 'int ${1:n};\ncin >> $1;'],
+                        ['readv', 'vector<${1:int}> ${2:a}(${3:n});\nfor (auto &x : $2) cin >> x;'],
+                        ['sortv', 'sort(${1:v}.begin(), $1.end());'],
+                        ['struct', 'struct ${1:Name} {\n\t$0\n};'],
+                        ['lambda', 'auto ${1:f} = [&](${2:int x}) {\n\t$0\n};'],
+                        ['inc', '#include <bits/stdc++.h>\nusing namespace std;\n']
+                    ]
+                },
+                c: {
+                    words: 'int long short unsigned signed char float double void const static struct typedef enum union sizeof return break continue while for do if else switch case default include define scanf printf puts gets getchar putchar fgets fprintf fscanf sprintf sscanf malloc calloc realloc free memset memcpy memcmp strlen strcmp strcpy strcat strchr abs sqrt pow floor ceil NULL stdin stdout stderr INT_MAX INT_MIN LLONG_MAX EOF qsort fopen fclose'.split(' '),
+                    snippets: [
+                        ['main', 'int main() {\n\t$0\n\treturn 0;\n}'],
+                        ['for', 'for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n\t$0\n}'],
+                        ['while', 'while (${1:cond}) {\n\t$0\n}'],
+                        ['if', 'if (${1:cond}) {\n\t$0\n}'],
+                        ['ifelse', 'if (${1:cond}) {\n\t$2\n} else {\n\t$0\n}'],
+                        ['scanf', 'scanf("${1:%d}", &${2:x});'],
+                        ['printf', 'printf("${1:%d}\\n", ${2:x});'],
+                        ['inc', '#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n']
+                    ]
+                },
+                py: {
+                    words: 'print input range len int str float list dict set tuple sorted sum min max map filter enumerate zip abs open sys stdin stdout readline readlines split strip join format append extend pop insert remove index count reverse sort items keys values get add update lower upper replace startswith endswith isdigit isalpha def class return yield lambda import from as if elif else for while break continue pass try except finally raise with in is not and or None True False global nonlocal del assert math sqrt gcd floor ceil factorial heapq heappush heappop deque defaultdict Counter bisect_left bisect_right itertools permutations combinations product'.split(' '),
+                    snippets: [
+                        ['for', 'for ${1:i} in range(${2:n}):\n\t$0'],
+                        ['fore', 'for ${1:x} in ${2:arr}:\n\t$0'],
+                        ['while', 'while ${1:cond}:\n\t$0'],
+                        ['if', 'if ${1:cond}:\n\t$0'],
+                        ['ifelse', 'if ${1:cond}:\n\t$2\nelse:\n\t$0'],
+                        ['def', 'def ${1:name}(${2:args}):\n\t$0'],
+                        ['readints', '${1:a} = list(map(int, input().split()))'],
+                        ['readn', '${1:n} = int(input())'],
+                        ['fastio', 'import sys\ninput = sys.stdin.readline\n'],
+                        ['main', 'def main():\n\t$0\n\n\nif __name__ == "__main__":\n\tmain()'],
+                        ['try', 'try:\n\t$1\nexcept ${2:Exception}:\n\t$0']
+                    ]
+                },
+                pas: {
+                    words: 'program uses var const type begin end procedure function if then else for to downto do while repeat until case of record array string integer int64 longint word byte real double extended boolean char readln read writeln write assign reset rewrite close eof eoln length copy pos delete insert inc dec abs sqr sqrt trunc round odd chr ord div mod and or not xor shl shr true false exit break continue sort'.split(' '),
+                    snippets: [
+                        ['program', 'program ${1:Main};\nvar\n\t${2:n}: longint;\nbegin\n\t$0\nend.'],
+                        ['for', 'for ${1:i} := ${2:1} to ${3:n} do\nbegin\n\t$0\nend;'],
+                        ['fordown', 'for ${1:i} := ${2:n} downto ${3:1} do\nbegin\n\t$0\nend;'],
+                        ['while', 'while ${1:cond} do\nbegin\n\t$0\nend;'],
+                        ['repeat', 'repeat\n\t$0\nuntil ${1:cond};'],
+                        ['if', 'if ${1:cond} then\nbegin\n\t$0\nend;'],
+                        ['ifelse', 'if ${1:cond} then\nbegin\n\t$2\nend\nelse\nbegin\n\t$0\nend;'],
+                        ['procedure', 'procedure ${1:Name}(${2:args});\nbegin\n\t$0\nend;'],
+                        ['function', 'function ${1:Name}(${2:args}): ${3:longint};\nbegin\n\t$0\nend;']
+                    ]
+                }
+            };
+            function hintItems() {
+                var key = String($('#id_language option:selected').data('key'));
+                var fam = 'none';
+                FAMILIES.forEach(function (f) { if (f.test.test(key)) fam = f.id; });
+                var h = HINTS[fam];
+                if (!h) return [];
+                var items = h.snippets.map(function (sn) {
+                    return {caption: sn[0], snippet: sn[1], meta: 'snippet', score: 1100};
+                });
+                h.words.forEach(function (w) { items.push({caption: w, value: w, meta: fam === 'py' ? 'python' : (fam === 'pas' ? 'pascal' : 'c++'), score: 900}); });
+                return items;
+            }
+            function setupHints(editor) {
+                if (!editor || editor.__wsHints || typeof editor.setOptions !== 'function' || !window.ace) return;
+                editor.__wsHints = true;
+                function go() {
+                    var lt = ace.require('ace/ext/language_tools');
+                    editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true, enableSnippets: true,
+                                       tabSize: 4, useSoftTabs: true, showPrintMargin: false});
+                    var mine = {getCompletions: function (ed, session, pos, prefix, cb) { cb(null, hintItems()); }};
+                    editor.completers = [mine, lt.keyWordCompleter, lt.textCompleter];
+                    editor.setFontSize(15);
+                }
+                if (ace.config && ace.config.loadModule) ace.config.loadModule('ace/ext/language_tools', go);
+                else go();
+            }
+            $('#ace_source').on('ace_load', function (e, editor) { setupHints(editor); });
+            if (window.ace_source) setupHints(window.ace_source);
+
+            render();
+            {% endif %}
+        });
+    </script>
+{% endblock %}
+
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    {% set comments_open = comment_form and comment_form.errors %}
+    <div id="ws">
+        <div class="ws-actions" id="ws-actions">
+            {% if request.user.is_authenticated and form and not no_judges and has_test_data %}
+                <button type="button" id="ws-run" class="ws-btn run">&#9654; Chạy thử</button>
+                {% if request.in_contest and submission_limit and not submissions_left %}
+                    <button type="button" class="ws-btn go" disabled>{{ _('Submit solution') }}</button>
+                {% else %}
+                    <button type="button" id="ws-submit" class="ws-btn go">{{ _('Submit solution') }}</button>
+                {% endif %}
+                {% if request.in_contest and submission_limit %}
+                    <span class="ws-chip">{{ submissions_left }} {{ _('submissions left') }}</span>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="ws-main">
+            <section class="ws-card ws-left" aria-label="Đề bài">
+                <div class="ws-tabs" role="tablist">
+                    <button type="button" role="tab" data-pane="statement" class="{{ '' if comments_open else 'active' }}">Đề bài</button>
+                    <button type="button" role="tab" data-pane="comments" class="{{ 'active' if comments_open else '' }}">Thảo luận</button>
+                    {% if request.user.is_authenticated and has_submissions and not (request.in_contest and contest_problem) %}
+                        <a href="{{ url('user_submissions', problem.code, request.user.username) }}">{{ _('My submissions') }}</a>
+                    {% endif %}
+                    {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
+                        <a href="{{ url('problem_editorial', problem.code) }}">Lời giải</a>
+                    {% endif %}
+                    <span class="ws-spacer"></span>
+                    <button type="button" id="ws-reset-layout" class="ws-btn ghost" title="Đưa các khung về kích thước mặc định">Đặt lại khung</button>
+                    <button type="button" id="ws-old" class="ws-btn ghost" title="Quay lại giao diện cũ">Giao diện cũ</button>
+                </div>
+                <div id="pane-statement" class="ws-pane {{ '' if comments_open else 'active' }} content-description screen">
+                    <h1 class="ws-title">{% if request.user.is_authenticated and problem.id in completed_problem_ids %}<i class="fa fa-check-circle" style="color: var(--ws-ok)"></i> {% endif %}{{ title }}</h1>
+                    <div class="ws-chips" style="margin-bottom: 16px">
+                        {% if problem.is_organization_private and problem.organization %}
+                            <span class="ws-chip"><a href="{{ problem.organization.get_absolute_url() }}"><i class="fa fa-lock"></i> {{ problem.organization.name }}</a></span>
+                        {% endif %}
+                        <span class="ws-chip">{{ _('Points:') }} {% if contest_problem %}{{ contest_problem.points }}{% else %}{{ problem.points|floatformat(2) }}{% endif %}{% if (contest_problem and contest_problem.partial) or (not contest_problem and problem.partial) %} {{ _('(partial)') }}{% endif %}</span>
+                        <span class="ws-chip">{{ _('Time limit:') }} {{ problem.time_limit }}s</span>
+                        <span class="ws-chip">{{ _('Memory limit:') }} {{ problem.memory_limit|kbsimpleformat }}</span>
+                        {% if problem.io_method.method == 'file' %}
+                            <span class="ws-chip">{{ problem.io_method.input }} / {{ problem.io_method.output }}</span>
+                        {% else %}
+                            <span class="ws-chip">stdin / stdout</span>
+                        {% endif %}
+                    </div>
+                    <iframe name="raw_problem" id="raw_problem" style="visibility: hidden; width: 0; height: 0; position: absolute; left: -999em"></iframe>
+                    {% include "problem/problem-detail.html" %}
+                    {% if request.user.is_authenticated and not request.profile.mute %}
+                        <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify" style="background: orange; margin-top: 12px; display: inline-block">{{ _('Request clarification') }}</a>
+                    {% endif %}
+                </div>
+                <div id="pane-comments" class="ws-pane {{ 'active' if comments_open else '' }}">
+                    <div id="comments" data-comments-url="{{ url('problem_comments', problem.code) }}" data-comments-trigger="tab"
+                         data-comments-preloaded="{{ 'true' if comments_open else 'false' }}">
+                        {% if comments_open %}
+                            {% with comment_warn_code=true %}{% include "comments/list.html" %}{% endwith %}
+                        {% else %}
+                            <div class="comments-loading">{{ _('Loading...') }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="ws-foot">
+                    {% if request.in_contest and contest_problem %}
+                        {% set contest = contest_problem.contest %}
+                        <a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a>
+                        {% if contest.can_see_full_submission_list(request.user) %}
+                            <a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a>
+                        {% if problem.is_public %}<a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a>{% endif %}
+                    {% endif %}
+                    {% if request.user.is_authenticated and has_tickets %}
+                        <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('My tickets') }}</a>
+                    {% endif %}
+                    {% if has_pdf_render %}
+                        <a href="{{ url('problem_pdf', problem.code) }}">{{ _('View as PDF') }}</a>
+                    {% else %}
+                        <a id="pdf_button" href="#">{{ _('View as PDF') }}</a>
+                    {% endif %}
+                    {% if can_edit_problem or problem.is_subs_manageable_by(request.user) %}
+                        <details class="ws-manage">
+                            <summary><a href="#" onclick="return false">Quản lý &#9662;</a></summary>
+                            <div>
+                                {% if can_edit_problem %}
+                                    <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('Manage tickets') }}{% if num_open_tickets %} ({{ num_open_tickets }}){% endif %}</a>
+                                    <a href="{{ url('problem_edit', problem.code) }}">{{ _('Edit problem') }}</a>
+                                    {% if not problem.is_manually_managed %}<a href="{{ url('problem_data', problem.code) }}">{{ _('Edit test data') }}</a>{% endif %}
+                                    <a href="{{ url('problem_delete', problem.code) }}?next={{ request.get_full_path()|urlencode }}">{{ _('Delete problem') }}</a>
+                                {% endif %}
+                                {% if problem.is_subs_manageable_by(request.user) %}
+                                    <a href="{{ url('problem_manage_submissions', problem.code) }}">{{ _('Manage submissions') }}</a>
+                                {% endif %}
+                                {% if perms.judge.clone_problem and can_edit_problem %}
+                                    <a href="{{ url('problem_clone', problem.code) }}">{{ _('Clone problem') }}</a>
+                                {% endif %}
+                            </div>
+                        </details>
+                    {% endif %}
+                    <span class="ws-spacer"></span>
+                    {% if not contest_problem or not contest_problem.contest.hide_problem_authors %}
+                        {% with authors=problem.authors.all() %}
+                            {% if authors %}<span style="color: var(--ws-muted)">{{ _('Author:') }} {{ link_users(authors) }}</span>{% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </div>
+            </section>
+
+            <div class="ws-gutter v" id="ws-gv" role="separator" aria-orientation="vertical" aria-label="Kéo để đổi độ rộng" title="Kéo để đổi độ rộng, bấm đúp để đặt lại"></div>
+            <div class="ws-right">
+                {% if request.user.is_authenticated and form %}
+                    <section class="ws-card ws-editor" aria-label="Soạn code">
+                        <div class="ws-card-body">
+                            {% include "problem/submit-form.html" %}
+                        </div>
+                    </section>
+                    {% if not no_judges and has_test_data %}
+                        <div class="ws-gutter h" id="ws-gh" role="separator" aria-orientation="horizontal" aria-label="Kéo để đổi độ cao" title="Kéo để đổi độ cao, bấm đúp để đặt lại"></div>
+                        <section class="ws-card ws-console" aria-label="Chạy thử">
+                            <div class="ws-tabs" role="tablist">
+                                <button type="button" role="tab" id="ws-tab-case" class="active">Test</button>
+                                <button type="button" role="tab" id="ws-tab-result">Kết quả</button>
+                                <span class="ws-spacer"></span>
+                                <span id="ws-count" style="font-size: 12.5px; font-weight: 700; color: var(--ws-muted); padding-right: 8px"></span>
+                            </div>
+                            <div class="ws-pane active">
+                                <div id="ws-tests" class="ws-tests"></div>
+                                <div id="ws-console-body"></div>
+                            </div>
+                        </section>
+                    {% endif %}
+                {% else %}
+                    <section class="ws-card" style="flex: 1 1 0" aria-label="Đăng nhập">
+                        <div class="ws-login">
+                            <p>Đăng nhập để chạy thử và nộp bài.</p>
+                            <a class="ws-btn go" style="display: inline-block; text-decoration: none; line-height: 20px" href="{{ url('auth_login') }}?next={{ request.path|urlencode }}">{{ _('Log in') }}</a>
+                        </div>
+                    </section>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

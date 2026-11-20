@@ -1,38 +1,37 @@
-# VNOJ: VNOI Online Judge [![Build Status](https://github.com/VNOI-Admin/OJ/workflows/build/badge.svg)](https://github.com/VNOI-Admin/OJ/actions/) [![AGPL License](https://img.shields.io/badge/license-AGPLv3.0-blue.svg)](http://www.gnu.org/licenses/agpl-3.0) [![Discord link](https://img.shields.io/discord/660930260405190688?color=%237289DA&label=Discord&logo=Discord)](https://discord.com/invite/TDyYVyd)
+# CBNoj: Chuyên Bắc Ninh Online Judge
 
-As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as [VNOI](https://team.vnoi.info/)'s official online judge and hosts its programming contests.
+Trang chấm bài lập trình và thi trắc nghiệm của trường THPT chuyên Bắc Ninh, chạy tại <https://chuyenbacninh.io.vn>.
 
-See it live at [oj.vnoi.info](https://oj.vnoi.info/)!
+CBNoj là fork của [VNOJ](https://github.com/VNOI-Admin/OJ) (bản thân VNOJ là fork của [DMOJ](https://github.com/DMOJ/online-judge)), dựa trên commit upstream `bc50e417b`. Mã nguồn theo giấy phép [AGPL-3.0](LICENSE).
 
-## Features
+## Có gì khác so với VNOJ
 
-Check out its features [here](https://github.com/DMOJ/online-judge#features).
+- **Quiz / thi trắc nghiệm**: 4 loại câu (một đáp án, nhiều đáp án, trả lời ngắn, đúng/sai 4 ý), rút ngẫu nhiên N câu mỗi bài, giám sát khi thi (toàn màn hình, đếm vi phạm, tự nộp), công bố điểm theo thời điểm, xuất Excel.
+- **Ngân hàng câu hỏi, luyện tập, khóa học**.
+- **Chạy thử** ngay trên trang bài tập (không chấm điểm).
+- **Giao diện "neo"** có chế độ sáng/tối, trang `/edit/profile/` thiết kế lại.
+- **Cloudflare Turnstile** ở trang đăng nhập, **email gửi nền** qua celery, trang trạng thái máy chủ `/server-status/`.
+- Bản dịch tiếng Việt bổ sung.
 
-## Installation
+## Tài liệu
 
-Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
+- `docs/HE-THONG.md`: tài liệu vận hành nội bộ (đường dẫn, dịch vụ, nhật ký). Không đưa lên repo công khai; nằm trên máy chủ.
+- [`CLAUDE.md`](CLAUDE.md) và [`.claude/skills/`](.claude/skills): hướng dẫn và quy trình vận hành cho Claude (đăng quiz, đăng bài tập, tạo kỳ thi, sao lưu, deploy...).
 
-### Additional installation steps
+## Cài đặt
 
-- You **have to** define `DMOJ_PROBLEM_DATA_ROOT` in `local_settings.py`, which should be the path to the directory that contains your problems' tests.
+Làm theo [tài liệu cài đặt VNOJ](https://vnoi-admin.github.io/vnoj-docs/#/site/installation), nhưng clone repo này thay vì repo của DMOJ. Một số điểm cần nhớ:
 
-- Regarding disabling full-text search, please read [this issue](https://github.com/VNOI-Admin/OJ/issues/4) for more information.
+- Phải đặt `DMOJ_PROBLEM_DATA_ROOT` trong `dmoj/local_settings.py` (thư mục chứa dữ liệu test của các bài).
+- Dùng cache `redis` hoặc `memcached` thay cho cache trong bộ nhớ mặc định, để judge và site đồng bộ cache.
+- Bật quiz bằng `QUIZ_ENABLED = True`. Sau khi cập nhật code, chạy `manage.py migrate` (migration của CBNoj là `0244`–`0256`).
+- Hỗ trợ `testlib.h`: chép [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h) vào đường dẫn include của `g++` trên máy judge.
+- Cấu hình riêng của site (`dmoj/local_settings.py`, `uwsgi.ini`) chứa bí mật và **không** nằm trong repo.
 
-- To sync the judge server and the site's cache, change the cache framework (`CACHES`) to `memcached` or `redis` instead of the default (local-memory caching).
+## Đóng góp
 
-- If you use `python3 manage.py loaddata demo`, the home button in the admin dashboard (/admin) links you to `localhost:8081`, there are 2 ways to change that:
+Xem [contributing.md](contributing.md). Trước khi gửi thay đổi, kiểm tra code Python bằng [flake8](https://flake8.pycqa.org/en/latest/); code JS trong `websocket/` dùng `prettier`.
 
-  1. You can change that in [demo.json](/judge/fixtures/demo.json)
-  2. You can go to the admin page, scroll down to find the `Sites` setting and change `localhost:8081` to your domain.
+## Ghi công
 
-- To support `testlib.h`, you need to copy [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h) to `g++`'s include path in the judge server. To speed up compile time, you can also create a precompiled header for `testlib.h`.
-
-## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
-
-Take a look at [our contribution guideline](contributing.md).
-
-If you find any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688?color=%237289DA&label=Discord&logo=Discord)](https://discord.gg/TDyYVyd) or open an issue.
-
-Pull requests are welcome as well. Before you submit your PR, please check your code with [flake8](https://flake8.pycqa.org/en/latest/) and format it if needed. There's also `prettier` if you need to format JS code (in `websocket/`).
-
-Translation contributions are also welcome.
+Dựa trên công sức của đội ngũ [DMOJ](https://dmoj.ca) và [VNOJ](https://oj.vnoi.info).

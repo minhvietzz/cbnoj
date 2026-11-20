@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    <form class="course-search" method="get" action="{{ url('quiz_list') }}">
+        <input type="hidden" name="tab" value="{{ tab }}">
+        <input type="search" name="search" value="{{ search }}" placeholder="{{ _('Search quizzes...') }}">
+        <button type="submit">{{ _('Search') }}</button>
+    </form>
+
+    {% if quizzes %}
+        <div class="course-grid">
+            {% for q in quizzes %}
+                <article class="course-card tone-{{ ['mint', 'sky', 'lilac', 'peach', 'butter', 'pink'][q.id % 6] }}">
+                    <a class="course-thumb" href="{{ q.get_absolute_url() }}" tabindex="-1" aria-hidden="true">
+                        <span class="course-initial">?</span>
+                    </a>
+                    <div class="course-body">
+                        <div class="course-head">
+                            <a class="course-title" href="{{ q.get_absolute_url() }}">{{ q.title }}</a>
+                            <span class="course-badges">
+                                {% if not q.is_public %}<span class="cbadge cbadge-private">{{ _('Private') }}</span>{% endif %}
+                                {% if q.my_best %}<span class="cbadge cbadge-joined">{{ q.my_best.percent }}%</span>{% endif %}
+                            </span>
+                        </div>
+                        {% if q.description %}<p class="course-desc">{{ q.description|striptags|truncate(130) }}</p>{% endif %}
+                        <div class="course-meta">
+                            <span><i class="fa fa-question-circle"></i> {{ q.qcount }} {{ _('questions') }}</span>
+                            <span><i class="fa fa-clock-o"></i> {% if q.time_limit %}{{ q.time_limit }} {{ _('minutes') }}{% else %}{{ _('No time limit') }}{% endif %}</span>
+                            {% if q.creator %}<span><i class="fa fa-user"></i> {{ link_user(q.creator) }}</span>{% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+        {% if page_obj.has_other_pages() %}
+            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+    {% else %}
+        <div class="course-empty">
+            <div class="course-empty-blob"><i class="fa fa-question"></i></div>
+            <h3>{{ _('No quizzes yet') }}</h3>
+            <p>{% if tab == 'mine' %}{{ _('You have not taken any quiz.') }}{% elif tab == 'manage' %}{{ _('You have not uploaded any quiz.') }}{% else %}{{ _('Quizzes will appear here once they are published.') }}{% endif %}</p>
+            {% if can_upload %}<p style="margin-top: 16px"><a class="course-join" href="{{ url('quiz_upload') }}">{{ _('Upload quiz') }}</a></p>{% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

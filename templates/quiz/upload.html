@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{% if replacing %}{{ _('Replace questions') }}{% else %}{{ _('Upload quiz') }}{% endif %}</h2>
+        <ul>
+            <li class="tab"><a href="{{ url('quiz_list') }}?tab=manage"><i class="tab-icon fa fa-folder-open"></i> {{ _('My quizzes') }}</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="qz-upload">
+        <section class="qz-guide">
+            <h3 class="course-section-title" style="margin-top: 0">{{ _('Quiz file format') }}</h3>
+            <p>{{ _('Write the quiz in Word (.docx), or in a .txt/.md file. Put a marker at the start of each line:') }}</p>
+            <ul class="qz-markers">
+                <li><code>[qus]</code> {{ _('starts a question') }}</li>
+                <li><code>A.</code> <code>B.</code> <code>C.</code> {{ _('the options, typed by hand') }}</li>
+                <li><code>[ans]</code> {{ _('correct letter, e.g. B. Several letters (B, D) make a multiple-answer question') }}</li>
+                <li><code>[exp]</code> {{ _('explanation (optional)') }}</li>
+                <li><code>[pts]</code> {{ _('points of the question (optional, default 1)') }}</li>
+                <li><code>[tag]</code> {{ _('topics separated by commas, used to filter the bank (optional)') }}</li>
+                <li><code>[lvl]</code> {{ _('difficulty 1 easy, 2 medium, 3 hard (optional)') }}</li>
+            </ul>
+            <pre class="qz-sample">[qus] Thủ đô của Việt Nam là thành phố nào?
+A. Hà Nội
+B. Huế
+C. Đà Nẵng
+[ans] A
+[exp] Hà Nội là thủ đô.
+
+[qus] 3 + 4 = ?
+[ans] 7 | bảy</pre>
+            <p class="qz-note">{{ _('A question without options is a short-answer question; [ans] lists the accepted answers separated by |.') }}</p>
+            <p class="qz-note">{{ _('Do not use Word automatic numbering for A. B. C. — type the letters. Old .doc files must be saved as .docx.') }}</p>
+            <a class="lesson-nav-btn" href="{{ url('quiz_template') }}"><i class="fa fa-download"></i> {{ _('Download the sample .docx') }}</a>
+        </section>
+
+        <section class="qz-form-card">
+            {% if parsed and parsed.errors %}
+                <div class="qz-problems">
+                    <h4><i class="fa fa-exclamation-triangle"></i> {{ _('The quiz has errors, fix them and upload again') }}</h4>
+                    <ul>
+                        {% for e in parsed.errors %}
+                            <li>{% if e.question %}<b>{{ _('Question') }} {{ e.question }}</b>{% endif %}{% if e.line %} <small>({{ _('line') }} {{ e.line }})</small>{% endif %}: {{ _(e.message) }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if replacing %}<input type="hidden" name="replace" value="{{ replacing.slug }}">{% endif %}
+                {% if org %}<input type="hidden" name="org" value="{{ org.id }}">{% endif %}
+                {% if form.non_field_errors() %}<div class="qz-problems"><ul>{% for e in form.non_field_errors() %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+                {% for field in form %}
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                        <div class="qf-check">{{ field }} <label for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+                    {% else %}
+                        <div class="qf-field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for e in field.errors %}<div class="qf-error">{{ e }}</div>{% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <button type="submit" class="course-join">{{ _('Check and preview') }}</button>
+            </form>
+        </section>
+    </div>
+{% endblock %}

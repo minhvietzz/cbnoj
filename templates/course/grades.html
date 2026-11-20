@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'grades' %}
+    {% include "course/tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    {% if rows and lessons %}
+        {% if can_edit %}
+            <div class="gr-stats">
+                <div class="gr-stat gr-stat-blue"><b>{{ rows|length }}</b><span>{{ _('students') }}</span></div>
+                <div class="gr-stat gr-stat-mint"><b>{{ class_started }}</b><span>{{ _('have started') }}</span></div>
+                <div class="gr-stat gr-stat-yellow"><b>{{ class_half }}</b><span>{{ _('halfway or more') }}</span></div>
+                <div class="gr-stat gr-stat-pink"><b>{{ class_average|round(1)|string|replace('.', ',') }}%</b><span>{{ _('class average') }}</span></div>
+            </div>
+        {% endif %}
+
+        <div class="gr-card">
+            <div class="gr-toolbar">
+                {% if rows|length > 1 %}
+                    <label class="gr-search"><i class="fa fa-search"></i>
+                        <input type="search" id="gr-filter" placeholder="{{ _('Search students...') }}" autocomplete="off">
+                    </label>
+                {% else %}
+                    <span class="gr-title">{{ _('Your progress') }}</span>
+                {% endif %}
+                <span class="gr-legend">
+                    <span class="gc gc-0">0</span> {{ _('not started') }}
+                    <span class="gc gc-mid">&nbsp;</span> {{ _('in progress') }}
+                    <span class="gc gc-full"><i class="fa fa-check"></i></span> {{ _('complete') }}
+                </span>
+            </div>
+
+            <div class="gr-scroll">
+                <table class="gr-table" id="gr-table">
+                    <thead>
+                    <tr>
+                        <th class="gr-rank">#</th>
+                        <th class="gr-user" data-sort="user">{{ _('Student') }}</th>
+                        {% for lesson in lessons %}
+                            <th class="gr-lesson" data-sort="{{ loop.index0 }}">
+                                <a href="{{ lesson.get_absolute_url() }}" title="{{ lesson.title }}">{{ loop.index }}</a>
+                                <small>{{ lesson_max[loop.index0] }}</small>
+                            </th>
+                        {% endfor %}
+                        <th class="gr-total" data-sort="total">{{ _('Total') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rows %}
+                        <tr class="{% if row.user.id == request.profile.id %}gr-me{% endif %}" data-name="{{ row.user.user.username|lower }}" data-total="{{ row.score }}"
+                            data-cells="{% for cell in row.cells %}{{ cell.score }}{% if not loop.last %},{% endif %}{% endfor %}">
+                            <td class="gr-rank">
+                                {% if can_edit and row.score and row.rank <= 3 %}<span class="gr-medal gr-medal-{{ row.rank }}">{{ row.rank }}</span>{% else %}{{ row.rank }}{% endif %}
+                            </td>
+                            <td class="gr-user">{{ link_user(row.user) }}</td>
+                            {% for cell in row.cells %}
+                                <td class="gr-cell">
+                                    {% if not cell.max %}
+                                        <span class="gc gc-none">–</span>
+                                    {% elif cell.score >= cell.max %}
+                                        <span class="gc gc-full" title="{{ cell.score|round|int }}/{{ cell.max }}"><i class="fa fa-check"></i> {{ cell.score|round|int }}</span>
+                                    {% elif cell.score %}
+                                        <span class="gc gc-mid" style="--p: {{ cell.cell_percent|round|int }}" title="{{ cell.score|round|int }}/{{ cell.max }}">{{ cell.score|round|int }}<small>/{{ cell.max }}</small></span>
+                                    {% else %}
+                                        <span class="gc gc-0" title="0/{{ cell.max }}">0</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            <td class="gr-total">
+                                <div class="gr-total-top"><b>{{ row.score|round|int }}</b><small>/{{ row.max }}</small></div>
+                                <div class="gr-meter"><i style="width: {{ row.percent|round|int }}%"></i></div>
+                                <span class="gr-pct">{{ row.percent|round(1)|string|replace('.', ',') }}%</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <details class="gr-key">
+            <summary>{{ _('Lesson key') }}</summary>
+            <ol>
+                {% for lesson in lessons %}
+                    <li><span>{{ loop.index }}</span><a href="{{ lesson.get_absolute_url() }}">{{ lesson.title }}</a><small>{{ lesson_max[loop.index0] }} {{ _('points') }}</small></li>
+                {% endfor %}
+            </ol>
+        </details>
+    {% else %}
+        <div class="course-empty course-empty-small">
+            <p>{% if not lessons %}{{ _('This course has no lessons yet.') }}{% else %}{{ _('No students have joined yet.') }}{% endif %}</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block bodyend %}
+    <script>
+        $(function () {
+            var $table = $('#gr-table'), $body = $table.children('tbody');
+            // live filter by username
+            $('#gr-filter').on('input', function () {
+                var q = $.trim(this.value).toLowerCase();
+                $body.children('tr').each(function () {
+                    $(this).toggle(!q || String($(this).data('name')).indexOf(q) !== -1);
+                });
+            });
+            // click a column header to sort (click again to reverse)
+            var state = {key: null, dir: -1};
+            function value(tr, key) {
+                if (key === 'user') return String($(tr).data('name'));
+                if (key === 'total') return parseFloat($(tr).data('total'));
+                return parseFloat(String($(tr).data('cells')).split(',')[key]);
+            }
+            $table.find('th[data-sort]').css('cursor', 'pointer').attr('title', function () { return $(this).attr('title') || ''; }).on('click', function () {
+                var key = $(this).data('sort');
+                state.dir = state.key === key ? -state.dir : (key === 'user' ? 1 : -1);
+                state.key = key;
+                var rows = $body.children('tr').get().sort(function (a, b) {
+                    var x = value(a, key), y = value(b, key);
+                    if (x === y) return 0;
+                    return (x < y ? -1 : 1) * state.dir;
+                });
+                $table.find('th').removeClass('gr-sorted gr-asc gr-desc');
+                $(this).addClass('gr-sorted ' + (state.dir > 0 ? 'gr-asc' : 'gr-desc'));
+                $.each(rows, function (i, tr) { $body.append(tr); });
+            });
+        });
+    </script>
+{% endblock %}

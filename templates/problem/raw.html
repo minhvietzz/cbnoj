@@ -11,7 +11,6 @@
 
         body {
             overflow: hidden;
-            page-break-after: always;
             background: white;
         }
 
@@ -51,13 +50,175 @@
             display: inline-block;
             text-align: left;
         }
+
+        /* margin 0 makes the browser drop its own date / title / URL header and footer;
+           the empty header/footer rows of .page-wrap repeat on every page and act as the margins. */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        table.page-wrap, table.page-wrap > thead, table.page-wrap > tbody, table.page-wrap > tfoot,
+        table.page-wrap > thead > tr, table.page-wrap > tbody > tr, table.page-wrap > tfoot > tr,
+        table.page-wrap > thead > tr > td, table.page-wrap > tbody > tr > td, table.page-wrap > tfoot > tr > td {
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: none !important;
+            padding: 0;
+        }
+
+        table.page-wrap {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.page-wrap > thead > tr > td, table.page-wrap > tfoot > tr > td {
+            height: 10mm;
+        }
+
+        table.page-wrap > tbody > tr > td {
+            padding: 0 15mm !important;
+            vertical-align: top;
+        }
+
+        tr {
+            page-break-inside: auto;
+        }
+
+        table.exam-samples tr {
+            page-break-inside: avoid;
+        }
+
+        body {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #111;
+        }
+
+        .exam-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1a2b4c;
+        }
+
+        .exam-chip {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: #0003d4;
+            color: #ffc107;
+            font-weight: 900;
+            font-size: 16px;
+            line-height: 34px;
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .exam-brand {
+            font-size: 18px;
+            font-weight: 900;
+            color: #0003d4;
+            line-height: 1.1;
+        }
+
+        .exam-brand small {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .exam-title {
+            margin: 12px 0 4px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+        }
+
+        .exam-limits {
+            margin: 0 0 14px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .exam-limits .problem-info-entry {
+            padding: 0.2em 1.2em;
+        }
+
+        .exam-limits b {
+            font-weight: 800;
+        }
+
+        .exam-rule {
+            border: 0;
+            border-top: 1px solid #999;
+            margin: 0 0 14px;
+        }
+
+        .content-description.printing h2,
+        .content-description.printing h3,
+        .content-description.printing h4 {
+            margin: 1.1em 0 0.4em;
+            font-weight: 800;
+            page-break-after: avoid;
+        }
+
+        body .content-description table.exam-samples {
+            width: 100%;
+            margin: 0.3em 0 1.1em;
+            border: 1px solid #333 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border-collapse: collapse !important;
+            table-layout: fixed;
+            page-break-inside: avoid;
+            background: none;
+        }
+
+        body .content-description table.exam-samples th,
+        body .content-description table.exam-samples td {
+            border: 1px solid #333 !important;
+            border-radius: 0 !important;
+            padding: 6px 10px;
+            vertical-align: top;
+            text-align: left;
+            background: none;
+        }
+
+        body .content-description table.exam-samples th {
+            background: #eef0f6 !important;
+            color: #111;
+            text-align: center;
+            font-weight: 800;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body .content-description table.exam-samples pre {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: none;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 13px;
+        }
     </style>
 </head>
 
 <body>
-<h2 style="display: inline-block;">{{ problem_name }}</h2>
-<hr>
-<div align="center" style="position: relative;">
+<table class="page-wrap"><thead><tr><td></td></tr></thead><tbody><tr><td>
+<div class="exam-head">
+    <span class="exam-chip">{{ (SITE_NAME or 'CBNoj')[:2]|upper }}</span>
+    <span class="exam-brand">{{ SITE_NAME or 'CBNoj' }}<small>Chuyên Bắc Ninh Online Judge</small></span>
+</div>
+<h1 class="exam-title">{{ problem_name }}</h1>
+<div class="exam-limits">
     <div class="problem-info-entry">
         <b>{{ _('Time limit:') }}</b> {{ problem.time_limit }}s
         {% for name, limit in problem.language_time_limit %}
@@ -77,10 +238,44 @@
         {% endfor %}
     </div>
 </div>
-<hr style="clear: both;">
+<hr class="exam-rule">
 <div class="content-description printing">
     {{ description|markdown(problem.markdown_style, 'tex')|reference|absolutify(url)|str|safe }}
 </div>
+</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>
+<script type="text/javascript">
+    // Put each "Input:" / "Output:" pair of examples side by side in a two-column table.
+    (function () {
+        var root = document.querySelector('.content-description.printing');
+        if (!root) return;
+        var IN = /^(input|đầu vào|dữ liệu vào)\s*:?$/i, OUT = /^(output|đầu ra|kết quả)\s*:?$/i;
+        function label(el) { return el && el.tagName === 'P' ? el.textContent.trim() : ''; }
+        function block(el) {
+            if (!el) return false;
+            return el.tagName === 'PRE' || (el.classList && el.classList.contains('highlight')) ||
+                (el.children.length === 1 && el.children[0].tagName === 'PRE');
+        }
+        var labels = Array.prototype.slice.call(root.querySelectorAll('p')).filter(function (el) { return IN.test(label(el)); });
+        labels.forEach(function (inLabel) {
+            var inBlock = inLabel.nextElementSibling, outLabel = inBlock && inBlock.nextElementSibling,
+                outBlock = outLabel && outLabel.nextElementSibling;
+            if (!(block(inBlock) && OUT.test(label(outLabel)) && block(outBlock))) return;
+            var table = document.createElement('table');
+            table.className = 'exam-samples';
+            var head = table.createTHead().insertRow();
+            [inLabel, outLabel].forEach(function (l) {
+                var th = document.createElement('th');
+                th.textContent = l.textContent.trim().replace(/:$/, '');
+                head.appendChild(th);
+            });
+            var row = table.createTBody().insertRow();
+            [inBlock, outBlock].forEach(function (b) { row.insertCell().appendChild(b); });
+            inLabel.parentNode.insertBefore(table, inLabel);
+            inLabel.remove();
+            outLabel.remove();
+        });
+    })();
+</script>
 <script type="text/javascript" src="{{ urljoin(url, static('mathjax_config.js')) }}"></script>
 <script type="text/javascript" src="{{ urljoin(url, static('vnoj/mathjax/3.2.0/es5/tex-chtml.min.js')) }}"></script>
 <script type="text/javascript">

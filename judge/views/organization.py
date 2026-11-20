@@ -928,8 +928,14 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
         query_set = query_set.filter(is_organization_private=True, organization=self.organization)
         return query_set
 
+    def _exam_queryset(self):
+        from judge.models import Quiz
+        return Quiz.objects.filter(mode='exam', organizations=self.organization)
+
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
+        context['can_create_exam'] = getattr(settings, 'QUIZ_ENABLED', False) and (
+            self.request.user.is_superuser or self.request.profile in self.organization.admins.all())
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
         return context

@@ -6,7 +6,12 @@
             {% csrf_token %}
             {% if form.errors %}
                 <div id="form-errors" style="max-width: fit-content;">
+                    {% if form.turnstile and form.turnstile.errors %}
+                        {% for error in form.turnstile.errors %}<p class="error">{{ error }}</p>{% endfor %}
+                    {% endif %}
+                    {% if not (form.turnstile and form.turnstile.errors and form.errors|length == 1) %}
                     <p class="error">{{ _('Invalid username or password.') }}</p>
+                    {% endif %}
                     {% for error in form.non_field_errors() %}
                         <p class="error">{{error}}</p>
                     {% endfor %}
@@ -37,6 +42,9 @@
                     </td>
                 </tr>
             </table>
+            {% if form.turnstile %}
+                <div style="margin: 0.6em 0 0.2em">{{ form.turnstile }}</div>
+            {% endif %}
             <hr>
             <button style="float:right;" type="submit">{{ _('Login!') }}</button>
             <input type="hidden" name="next" value="{{ next }}">

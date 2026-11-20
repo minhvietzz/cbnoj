@@ -39,6 +39,7 @@
     {% endif %}
 {% endif %}
 
+<script type="application/json" id="user-templates">{{ user_templates|tojson }}</script>
 <form id="problem_submit" action="" method="post" class="form-area" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.non_field_errors() }}
@@ -67,7 +68,7 @@
                 <div id="language-select">
                     <select id="id_language" name="language">
                         {% for lang in form.fields.language.queryset %}
-                            <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-name="{{ lang.name }}"
+                            <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-key="{{ lang.key }}" data-name="{{ lang.name }}"
                                     data-info="{{ lang.info }}" data-ace="{{ lang.ace }}" data-fileonly="{{ lang.file_only }}"
                                     data-ext="{{ lang.extension }}" data-file-size="{{ lang.file_size_limit }}"
                                     data-judge-info="{{ runtime_versions(lang.runtime_versions()) }}"

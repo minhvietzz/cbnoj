@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    <style>
+        .pr-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+        .pr-chip { position: relative; cursor: pointer; }
+        .pr-chip input { position: absolute; opacity: 0; pointer-events: none; }
+        .pr-chip span { display: inline-block; padding: 6px 16px; border-radius: 999px; border: 2px solid rgba(128, 128, 128, 0.4); font-weight: 700; user-select: none; }
+        .pr-chip small { opacity: 0.7; margin-left: 4px; }
+        .pr-chip:has(input:checked) span { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+        .pr-chip:has(input:focus-visible) span { outline: 3px solid #f59e0b; }
+        .pr-row-inline { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-bottom: 14px; }
+        .pr-row-inline input[type=number] { width: 90px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <section class="qz-form-card">
+        <h3 class="course-section-title" style="margin-top: 0">{{ _('Build a practice set') }}</h3>
+        <p class="qz-note">{{ _('Pick what you want to revise. You get instant feedback after each question, and wrong answers go to your mistake notebook.') }}</p>
+        {% if not topics and not tracks %}
+            <div class="course-empty course-empty-small"><p>{{ _('The question bank has no tagged questions yet.') }}</p></div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {% if tracks %}
+                <b>{{ _('Track') }}</b>
+                <div class="pr-chips">
+                    {% for t in tracks %}<label class="pr-chip"><input type="checkbox" name="tracks" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+                </div>
+            {% endif %}
+            {% if topics %}
+                <b>{{ _('Topics') }}</b> <small>({{ _('none selected = all topics') }})</small>
+                <div class="pr-chips">
+                    {% for t in topics %}<label class="pr-chip"><input type="checkbox" name="tags" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+                </div>
+            {% endif %}
+
+            <b>{{ _('Difficulty') }}</b>
+            <div class="pr-chips">
+                <label class="pr-chip"><input type="radio" name="level" value="0" checked><span>{{ _('Any') }}</span></label>
+                <label class="pr-chip"><input type="radio" name="level" value="1"><span>{{ _('Easy') }}</span></label>
+                <label class="pr-chip"><input type="radio" name="level" value="2"><span>{{ _('Medium') }}</span></label>
+                <label class="pr-chip"><input type="radio" name="level" value="3"><span>{{ _('Hard') }}</span></label>
+            </div>
+
+            <b>{{ _('Question type') }}</b>
+            <div class="pr-chips">
+                <label class="pr-chip"><input type="radio" name="kinds" value="" checked><span>{{ _('All') }}</span></label>
+                <label class="pr-chip"><input type="radio" name="kinds" value="choice"><span>{{ _('Multiple choice') }}</span></label>
+                <label class="pr-chip"><input type="radio" name="kinds" value="tf"><span>{{ _('True/False') }}</span></label>
+            </div>
+
+            <div class="pr-row-inline">
+                <label>{{ _('Questions') }} <input type="number" name="count" value="{{ default_count }}" min="{{ min_count }}" max="{{ max_count }}"></label>
+                <label>{{ _('Time limit (minutes, 0 = none)') }} <input type="number" name="minutes" value="0" min="0" max="180"></label>
+                <label><input type="checkbox" name="prefer_new" checked> {{ _('Prefer questions I have not mastered yet') }}</label>
+            </div>
+            <button type="submit" class="course-join">{{ _('Start practising') }}</button>
+        </form>
+    </section>
+{% endblock %}
