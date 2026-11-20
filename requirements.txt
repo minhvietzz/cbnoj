@@ -39,6 +39,8 @@ netaddr
 webauthn<1
 bleach[css]
 markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git
+# The 'latex' extra of the markdown2 fork needs this; newer fork revisions raise without it (CI unit job).
+latex2mathml
 discord-webhook
 django-admin-sortable2
 icalendar
