@@ -292,7 +292,7 @@ def parse_quiz_lines(lines):
         })
 
     if not cleaned and not errors:
-        errors.append({'line': None, 'question': None, 'message': 'No questions found. Each question must start with [qus].'})
+        errors.append({'line': None, 'question': None, 'message': 'No questions found. Each question must start with [qus].'})  # noqa: E501
     if len(cleaned) > MAX_QUESTIONS:
         errors.append({'line': None, 'question': None, 'message': 'At most %d questions per quiz.' % MAX_QUESTIONS})
     return cleaned, errors, warnings
@@ -306,9 +306,9 @@ def parse_quiz_file(name, data):
 TEMPLATE_LINES = [
     'MẪU ĐỀ TRẮC NGHIỆM — xóa các dòng này và thay bằng đề của bạn',
     'Quy ước: mỗi câu hỏi bắt đầu bằng [qus]. Các đáp án gõ tay A. B. C. D. (không dùng danh sách tự động đánh số).',
-    '[ans] ghi chữ cái đáp án đúng. Nhiều chữ cái (ví dụ B, D) là câu nhiều đáp án đúng. Không có đáp án A. B. = câu trả lời ngắn.',
+    '[ans] ghi chữ cái đáp án đúng. Nhiều chữ cái (ví dụ B, D) là câu nhiều đáp án đúng. Không có đáp án A. B. = câu trả lời ngắn.',  # noqa: E501
     '[exp] giải thích (không bắt buộc). [pts] số điểm của câu (không bắt buộc, mặc định 1).',
-    '[tag] chủ đề, cách nhau bằng dấu phẩy (không bắt buộc, dùng để lọc ngân hàng đề). [lvl] độ khó 1 dễ, 2 trung bình, 3 khó (không bắt buộc).',
+    '[tag] chủ đề, cách nhau bằng dấu phẩy (không bắt buộc, dùng để lọc ngân hàng đề). [lvl] độ khó 1 dễ, 2 trung bình, 3 khó (không bắt buộc).',  # noqa: E501
     '',
     '[qus] Thủ đô của Việt Nam là thành phố nào?',
     'A. Hà Nội',
@@ -331,7 +331,7 @@ TEMPLATE_LINES = [
     '[qus] Kết quả của 3 + 4 là bao nhiêu?',
     '[ans] 7 | bảy',
     '',
-    'Câu đúng/sai (dạng Phần II đề THPTQG): đúng 4 ý a) b) c) d) viết thường, [ans] ghi các ý ĐÚNG (ghi "không" nếu cả 4 ý đều sai).',
+    'Câu đúng/sai (dạng Phần II đề THPTQG): đúng 4 ý a) b) c) d) viết thường, [ans] ghi các ý ĐÚNG (ghi "không" nếu cả 4 ý đều sai).',  # noqa: E501
     '[sec] Phần II',
     '[qus] Các phát biểu sau về mạng máy tính đúng hay sai?',
     'a) Địa chỉ IP dùng để định danh thiết bị trong mạng.',
@@ -353,7 +353,7 @@ def build_template_docx():
     document = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
-        + paragraphs + '</w:body></w:document>'
+        + paragraphs + '</w:body></w:document>'  # noqa: W503
     )
     content_types = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'

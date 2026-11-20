@@ -4,8 +4,7 @@ from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _, ngettext
 
-from judge.models import BankQuestion, BankTag, Quiz, QuizAttempt, QuizOption, QuizProfileStat, QuizQuestion, \
-    QuizViolation
+from judge.models import QuizOption, QuizQuestion, QuizViolation
 from judge.utils import quiz_stats
 
 
@@ -28,7 +27,8 @@ class QuizAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'description', 'creator', 'source_name')}),
         (_('Mode'), {'fields': ('mode', 'course', 'track', 'is_public', 'lesson')}),
-        (_('Mock exam'), {'fields': ('start_time', 'end_time', 'time_limit', 'max_attempts', 'questions_per_attempt', 'proctoring',
+        (_('Mock exam'), {'fields': ('start_time', 'end_time', 'time_limit', 'max_attempts', 'questions_per_attempt',
+                                     'proctoring',
                                      'max_violations', 'results_release', 'results_published', 'extra_minutes',
                                      'seb_browser_key', 'rules_text')}),
         (_('Behaviour'), {'fields': ('shuffle_questions', 'shuffle_options', 'show_answers')}),

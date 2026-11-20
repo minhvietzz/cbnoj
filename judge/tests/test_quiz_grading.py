@@ -58,7 +58,7 @@ class TF4ParserTest(SimpleTestCase):
         return parse_quiz_lines(text.strip().splitlines())
 
     def test_lowercase_four_statements_is_tf4(self):
-        questions, errors, _ = self.parse('''
+        questions, errors, _ = self.parse("""
 [sec] Phần II
 [qus] Phát biểu nào đúng?
 a) Một
@@ -66,7 +66,7 @@ b) Hai
 c) Ba
 d) Bốn
 [ans] a, c
-''')
+""")
         self.assertEqual(errors, [])
         q = questions[0]
         self.assertEqual(q['kind'], 'tf4')
@@ -74,7 +74,7 @@ d) Bốn
         self.assertEqual([o['correct'] for o in q['options']], [True, False, True, False])
 
     def test_explicit_type_and_none_true(self):
-        questions, errors, _ = self.parse('''
+        questions, errors, _ = self.parse("""
 [qus] Tất cả đều sai
 [type] tf
 A. Một
@@ -82,36 +82,36 @@ B. Hai
 C. Ba
 D. Bốn
 [ans] không
-''')
+""")
         self.assertEqual(errors, [])
         self.assertEqual(questions[0]['kind'], 'tf4')
         self.assertFalse(any(o['correct'] for o in questions[0]['options']))
 
     def test_tf_needs_exactly_four_statements(self):
-        _, errors, _ = self.parse('''
+        _, errors, _ = self.parse("""
 [qus] Thiếu ý
 [type] tf
 a) Một
 b) Hai
 c) Ba
 [ans] a
-''')
+""")
         self.assertTrue(any('exactly 4' in e['message'] for e in errors))
 
     def test_uppercase_four_options_stay_single_choice(self):
-        questions, errors, _ = self.parse('''
+        questions, errors, _ = self.parse("""
 [qus] Trắc nghiệm thường
 A. Một
 B. Hai
 C. Ba
 D. Bốn
 [ans] B
-''')
+""")
         self.assertEqual(errors, [])
         self.assertEqual(questions[0]['kind'], 'single')
 
     def test_section_is_sticky(self):
-        questions, _, _ = self.parse('''
+        questions, _, _ = self.parse("""
 [sec] Phần I
 [qus] Câu 1
 A. x
@@ -121,5 +121,5 @@ B. y
 A. x
 B. y
 [ans] B
-''')
+""")
         self.assertEqual([q['section'] for q in questions], ['Phần I', 'Phần I'])

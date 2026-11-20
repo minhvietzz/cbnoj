@@ -11,9 +11,9 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, bank, comment, contests, course, quiz, server_status, language, license, mailgun, notification, \
-    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, widgets
+from judge.views import TitledTemplateView, api, bank, blog, comment, contests, course, language, license, mailgun, \
+    notification, organization, preview, problem, problem_download, problem_manage, quiz, ranked_submission, \
+    register, server_status, stats, status, submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views import practice, problem_run, quiz_exam, quiz_report
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit

@@ -5,19 +5,19 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Q
-from django.http import Http404, HttpResponseRedirect
+from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.generic import FormView, ListView, TemplateView, View
 
-from judge.models import BankQuestion, BankTag, Quiz
+from judge.models import BankQuestion, BankTag
 from judge.utils.question_bank import add_to_bank, bank_to_marker_text, copy_to_quiz, count_duplicates, get_tags, \
     question_hash, split_tags
 from judge.utils.quiz_parser import QuizFormatError, parse_quiz_file, parse_quiz_lines
 from judge.utils.views import TitleMixin
-from judge.views.quiz import ManageForm, MAX_UPLOAD_BYTES, can_upload, make_slug
+from judge.views.quiz import MAX_UPLOAD_BYTES, ManageForm, can_upload, make_slug
 
 __all__ = ['BankList', 'BankAction', 'BankImport', 'BankImportConfirm', 'BankEdit', 'BankCompose']
 

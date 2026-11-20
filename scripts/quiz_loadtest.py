@@ -120,7 +120,7 @@ def main():
     for thread in threads:
         thread.join()
     print('\n%d candidates, %.0f s' % (args.users, time.time() - started))
-    print('%-12s %6s %8s %8s %8s %8s  %s' % ('endpoint', 'calls', 'p50 ms', 'p95 ms', 'p99 ms', 'max ms', 'status codes'))
+    print('%-12s %6s %8s %8s %8s %8s  %s' % ('endpoint', 'calls', 'p50 ms', 'p95 ms', 'p99 ms', 'max ms', 'status codes'))  # noqa: E501
     for name, values in sorted(timings.items()):
         print('%-12s %6d %8.0f %8.0f %8.0f %8.0f  %s' % (
             name, len(values), 1000 * statistics.median(values), 1000 * percentile(values, 95),

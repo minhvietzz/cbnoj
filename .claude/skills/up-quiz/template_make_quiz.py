@@ -1,7 +1,8 @@
 # Mẫu tạo quiz. Chạy: cd /home/vnojsite/site && /home/vnojsite/bin/python manage.py shell < file_nay.py
 # Sửa SLUG, TITLE, dữ liệu MC / TF / SHORT trước khi chạy.
 from django.db import transaction
-from judge.models import Quiz, QuizQuestion, QuizOption
+
+from judge.models import Quiz, QuizOption, QuizQuestion
 
 SLUG = 'kt-vi-du'
 TITLE = 'KT ví dụ'

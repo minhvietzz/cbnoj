@@ -1,10 +1,10 @@
 import ipaddress
 import secrets
 import unicodedata
-from collections import defaultdict
 from datetime import timedelta
 
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -20,9 +20,8 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 
-from judge.models import Course, CourseLesson, CourseRole, Organization, Profile, Quiz, QuizAttempt, QuizOption, QuizQuestion
+from judge.models import Course, CourseLesson, Organization, Profile, Quiz, QuizAttempt, QuizOption, QuizQuestion
 from judge.models.course import EDITABLE_ROLES
-from django.contrib import messages
 from judge.utils import quiz_grading, seb
 from judge.utils.question_bank import add_to_bank, split_tags
 from judge.utils.quiz_parser import QuizFormatError, build_template_docx, parse_quiz_file, parse_quiz_lines
@@ -441,8 +440,8 @@ class UploadForm(forms.Form):
                                   widget=forms.Textarea(attrs={'rows': 3}))
     file = forms.FileField(required=False, label=gettext_lazy('Quiz file (.docx, .txt, .md)'))
     text = forms.CharField(required=False, label=gettext_lazy('Or paste the quiz text'),
-                           widget=forms.Textarea(attrs={'rows': 10, 'placeholder': '[qus] ...\nA. ...\nB. ...\n[ans] A'}))
-    time_limit = forms.IntegerField(min_value=0, max_value=600, initial=0, label=gettext_lazy('Time limit (minutes, 0 = none)'))
+                           widget=forms.Textarea(attrs={'rows': 10, 'placeholder': '[qus] ...\nA. ...\nB. ...\n[ans] A'}))  # noqa: E501
+    time_limit = forms.IntegerField(min_value=0, max_value=600, initial=0, label=gettext_lazy('Time limit (minutes, 0 = none)'))  # noqa: E501
     max_attempts = forms.IntegerField(min_value=0, max_value=100, initial=0,
                                       label=gettext_lazy('Maximum attempts (0 = unlimited)'))
     shuffle_questions = forms.BooleanField(required=False, label=gettext_lazy('Shuffle questions'))
@@ -573,7 +572,7 @@ def save_questions(quiz, questions, banks=None):
     for number, q in enumerate(questions, 1):
         question = QuizQuestion.objects.create(
             quiz=quiz, order=number, kind=q['kind'], text=q['text'], points=q['points'],
-            section=q.get('section', ''), passage=q.get('passage', ''), explanation=q['explanation'], accepted_answers='\n'.join(q['answers']),
+            section=q.get('section', ''), passage=q.get('passage', ''), explanation=q['explanation'], accepted_answers='\n'.join(q['answers']),  # noqa: E501
             bank_question=banks[number - 1] if banks else None)
         for index, option in enumerate(q['options'], 1):
             QuizOption.objects.create(question=question, order=index, text=option['text'],
@@ -652,7 +651,7 @@ class ManageForm(forms.ModelForm):
 
     class Meta:
         model = Quiz
-        fields = ('title', 'description', 'mode', 'course', 'organizations', 'track', 'start_time', 'end_time', 'time_limit',
+        fields = ('title', 'description', 'mode', 'course', 'organizations', 'track', 'start_time', 'end_time', 'time_limit',  # noqa: E501
                   'max_attempts', 'questions_per_attempt', 'proctoring', 'max_violations', 'results_release',
                   'rules_text',
                   'seb_browser_key', 'shuffle_questions', 'shuffle_options', 'show_answers', 'is_public', 'lesson')

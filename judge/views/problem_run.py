@@ -49,7 +49,7 @@ class ProblemRun(LoginRequiredMixin, ProblemMixin, SingleObjectMixin, View):
                 raise ValueError
             inputs = [t['input'] for t in tests]
             if not 0 < len(inputs) <= MAX_TESTS or not all(isinstance(i, str) and len(i.encode()) <= MAX_INPUT
-                                                             for i in inputs):
+                                                           for i in inputs):
                 raise ValueError
         except (ValueError, TypeError, KeyError):
             return self.error('bad_request', 'Dữ liệu gửi lên không hợp lệ.', 400)

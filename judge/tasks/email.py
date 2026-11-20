@@ -1,8 +1,8 @@
 import logging
 
 from celery import shared_task
-from django.core.mail import EmailMultiAlternatives, get_connection
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives, get_connection
 
 __all__ = ('send_email_task',)
 logger = logging.getLogger('judge.mail')
@@ -22,5 +22,5 @@ def send_email_task(self, data):
     try:
         message.send()
     except Exception as exc:
-        logger.warning('Failed to send mail to %s: %s', data['to'], exc)
+        logger.warning('Failed to send mail to %s: %s', data['to'], exc)  # noqa: G200
         raise self.retry(exc=exc, countdown=30)

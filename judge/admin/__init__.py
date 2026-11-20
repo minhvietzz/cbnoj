@@ -5,24 +5,24 @@ from django.contrib.auth.models import User
 from django.contrib.flatpages.models import FlatPage
 
 from judge.admin.comments import CommentAdmin
-from judge.admin.course import CourseAdmin, CourseLessonAdmin
-from judge.admin.quiz import BankQuestionAdmin, BankTagAdmin, QuizAdmin, QuizAttemptAdmin, QuizProfileStatAdmin, \
-    QuizQuestionAdmin
 from judge.admin.contest import ContestAdmin, ContestParticipationAdmin, ContestTagAdmin
+from judge.admin.course import CourseAdmin, CourseLessonAdmin
 from judge.admin.interface import BlogPostAdmin, BlogPostTagAdmin, FlatPageAdmin, LicenseAdmin, LogEntryAdmin, \
     NavigationBarAdmin
 from judge.admin.organization import OrganizationAdmin, OrganizationRequestAdmin
 from judge.admin.problem import ProblemAdmin
 from judge.admin.profile import ProfileAdmin, UserAdmin
+from judge.admin.quiz import BankQuestionAdmin, BankTagAdmin, QuizAdmin, QuizAttemptAdmin, QuizProfileStatAdmin, \
+    QuizQuestionAdmin
 from judge.admin.runtime import JudgeAdmin, LanguageAdmin
 from judge.admin.submission import SubmissionAdmin
 from judge.admin.tag import TagAdmin, TagGroupAdmin, TagProblemAdmin
 from judge.admin.taxon import OrganizationProblemTagAdmin, ProblemGroupAdmin, ProblemTypeAdmin
 from judge.admin.ticket import TicketAdmin
-from judge.models import Badge, BlogPost, BlogPostTag, Comment, CommentLock, Contest, ContestParticipation, \
-    ContestTag, Course, CourseLesson, BankQuestion, BankTag, Quiz, QuizAttempt, QuizProfileStat, QuizQuestion, Judge, Language, License, MiscConfig, NavigationBar, Organization, \
-    OrganizationProblemTag, OrganizationRequest, Problem, ProblemGroup, ProblemType, Profile, Submission, Tag, \
-    TagGroup, TagProblem, Ticket
+from judge.models import Badge, BankQuestion, BankTag, BlogPost, BlogPostTag, Comment, CommentLock, Contest, \
+    ContestParticipation, ContestTag, Course, CourseLesson, Judge, Language, License, MiscConfig, NavigationBar, \
+    Organization, OrganizationProblemTag, OrganizationRequest, Problem, ProblemGroup, ProblemType, Profile, Quiz, \
+    QuizAttempt, QuizProfileStat, QuizQuestion, Submission, Tag, TagGroup, TagProblem, Ticket
 
 admin.site.register(BlogPost, BlogPostAdmin)
 admin.site.register(BlogPostTag, BlogPostTagAdmin)

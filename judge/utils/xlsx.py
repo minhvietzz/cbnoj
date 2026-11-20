@@ -84,7 +84,7 @@ def build_xlsx(header, rows, sheet_name='Sheet1'):
     for number, values in enumerate([header] + list(rows), 1):
         cells = ''.join(cell(number, col, value, bold=number == 1) for col, value in enumerate(values))
         body.append('<row r="%d">%s</row>' % (number, cells))
-    widths = ''.join('<col min="%d" max="%d" width="%d" customWidth="1"/>' % (i + 1, i + 1, max(10, min(40, len(str(h)) + 4)))
+    widths = ''.join('<col min="%d" max="%d" width="%d" customWidth="1"/>' % (i + 1, i + 1, max(10, min(40, len(str(h)) + 4)))  # noqa: E501
                      for i, h in enumerate(header))
     sheet = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
              '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'

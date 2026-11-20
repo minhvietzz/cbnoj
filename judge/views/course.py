@@ -15,7 +15,8 @@ from django.views.generic import DetailView, ListView, View
 from judge.models import Course, CourseLesson, CourseRole, RoleInCourse, Submission
 from judge.utils.views import TitleMixin, generic_message
 
-__all__ = ['CourseList', 'CourseDetail', 'CourseLessonDetail', 'CourseLessonRanking', 'CourseGrades', 'CourseJoin', 'CourseLeave']
+__all__ = ['CourseList', 'CourseDetail', 'CourseLessonDetail', 'CourseLessonRanking', 'CourseGrades', 'CourseJoin',
+           'CourseLeave']
 
 COLORS = ('mint', 'sky', 'lilac', 'peach', 'butter', 'pink')
 
@@ -215,7 +216,7 @@ class CourseLessonDetail(CourseMixin, TitleMixin, DetailView):
                 request, _('This lesson is locked'),
                 _('Reach at least %(percent)d%% of the score in "%(lesson)s" to open this lesson '
                   '(you have %(current)d%%).') % {'percent': info['required'], 'lesson': info['lesson'].title,
-                                                    'current': info['current']},
+                                                  'current': info['current']},
                 status=403)
         return self.render_to_response(context)
 

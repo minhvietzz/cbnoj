@@ -1,5 +1,7 @@
 from datetime import timedelta
+from unittest import skipUnless
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
@@ -9,10 +11,6 @@ from django.utils import timezone
 from judge.models import Course, CourseRole, Profile, Quiz, QuizAttempt, QuizOption, QuizQuestion, QuizViolation
 from judge.views.quiz_exam import record_violation
 
-
-from unittest import skipUnless
-
-from django.conf import settings
 
 # The pages only exist while local_settings.py has QUIZ_ENABLED = True (see dmoj/urls.py).
 quiz_enabled = skipUnless(getattr(settings, 'QUIZ_ENABLED', False), 'the quiz feature is switched off')

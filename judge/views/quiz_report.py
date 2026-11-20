@@ -7,7 +7,6 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.views.generic import DetailView, TemplateView, View
 

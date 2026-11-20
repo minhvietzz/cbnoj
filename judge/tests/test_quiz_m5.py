@@ -1,8 +1,10 @@
 import io
 import zipfile
 from datetime import timedelta
+from unittest import skipUnless
 from xml.etree import ElementTree
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
@@ -13,10 +15,6 @@ from judge.models import (BankQuestion, BankTag, Course, CourseRole, Profile, Qu
                           QuizProfileStat, QuizQuestion, QuizTopicStat)
 from judge.utils import quiz_stats, seb, xlsx
 
-
-from unittest import skipUnless
-
-from django.conf import settings
 
 # The pages only exist while local_settings.py has QUIZ_ENABLED = True (see dmoj/urls.py).
 quiz_enabled = skipUnless(getattr(settings, 'QUIZ_ENABLED', False), 'the quiz feature is switched off')
@@ -46,7 +44,7 @@ class ExamFixture(TestCase):
         self.questions = []
         for number in range(1, 4):
             bank = BankQuestion.objects.create(kind='single', text='q%d' % number, level=2, content_hash='h%d' % number,
-                                               options=[{'text': 'A', 'correct': True}, {'text': 'B', 'correct': False}])
+                                               options=[{'text': 'A', 'correct': True}, {'text': 'B', 'correct': False}])  # noqa: E501
             bank.tags.add(self.tag)
             question = QuizQuestion.objects.create(quiz=self.quiz, order=number, kind='single', text='q%d' % number,
                                                    bank_question=bank, explanation='why %d' % number)
@@ -282,7 +280,7 @@ class XlsxTest(SimpleTestCase):
         data = xlsx.build_xlsx(['Name', 'Score'], [['Nguyễn <A> & "B"', 9.5], ['bad\x00char', 7], [None, True]],
                                'Sheet: *1/')
         archive = zipfile.ZipFile(io.BytesIO(data))
-        self.assertEqual(sorted(archive.namelist()), ['[Content_Types].xml', '_rels/.rels', 'xl/_rels/workbook.xml.rels',
+        self.assertEqual(sorted(archive.namelist()), ['[Content_Types].xml', '_rels/.rels', 'xl/_rels/workbook.xml.rels',  # noqa: E501
                                                       'xl/styles.xml', 'xl/workbook.xml', 'xl/worksheets/sheet1.xml'])
         for name in archive.namelist():
             ElementTree.fromstring(archive.read(name))        # every part parses as XML

@@ -100,7 +100,8 @@ class Quiz(models.Model):
                                             help_text=_('Used when results are released manually.'))
     rules_text = models.TextField(verbose_name=_('exam rules'), blank=True)
     extra_minutes = models.PositiveIntegerField(verbose_name=_('extra minutes for everyone'), default=0,
-                                                help_text=_('Added by a teacher during the exam, e.g. after an outage.'))
+                                                help_text=_('Added by a teacher during the exam, '
+                                                            'e.g. after an outage.'))
     seb_browser_key = models.CharField(max_length=64, blank=True, verbose_name=_('Safe Exam Browser key'),
                                        help_text=_('Optional. When set, the exam can only be taken in Safe Exam '
                                                    'Browser configured with this Browser Exam Key.'))

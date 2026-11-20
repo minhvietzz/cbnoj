@@ -1,5 +1,7 @@
 from datetime import timedelta
+from unittest import skipUnless
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
@@ -10,10 +12,6 @@ from judge.models import (BankQuestion, BankTag, Course, CourseRole, Profile, Qu
                           QuizProfileStat, QuizQuestion)
 from judge.utils import practice, quiz_stats
 
-
-from unittest import skipUnless
-
-from django.conf import settings
 
 # The pages only exist while local_settings.py has QUIZ_ENABLED = True (see dmoj/urls.py).
 quiz_enabled = skipUnless(getattr(settings, 'QUIZ_ENABLED', False), 'the quiz feature is switched off')
@@ -42,7 +40,7 @@ class PracticeTestCase(TestCase):
         for number in range(1, 5):
             self.questions.append(self.bank('py-%d' % number, [self.py], level=2))
         self.tf = self.bank('tf', [self.net], kind='tf4', options=[('a', True), ('b', False), ('c', True),
-                                                                    ('d', False)], explanation='Because.')
+                                                                   ('d', False)], explanation='Because.')
 
     def bank(self, text, tags, kind='single', level=1, options=None, explanation=''):
         options = options or [('A', True), ('B', False)]
