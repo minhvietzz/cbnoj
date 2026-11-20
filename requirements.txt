@@ -38,9 +38,9 @@ lupa
 netaddr
 webauthn<1
 bleach[css]
-markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git
-# The 'latex' extra of the markdown2 fork needs this; newer fork revisions raise without it (CI unit job).
-latex2mathml
+# Pinned to the revision running in production: newer fork revisions need latex2mathml and change
+# how <style> is rendered (breaks test_bleach), so CI went red on unpinned HEAD.
+markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git@60ef5410777363d52ee8034e9481bd8cfd2e79bd
 discord-webhook
 django-admin-sortable2
 icalendar
