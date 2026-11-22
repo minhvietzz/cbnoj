@@ -44,6 +44,13 @@ app.conf.beat_schedule = {
             'expires': 10 * 60,
         },
     },
+    'notify-upcoming-quizzes': {
+        'task': 'judge.tasks.quiz.notify_upcoming_quizzes',
+        'schedule': crontab(minute='*/5'),
+        'options': {
+            'expires': 5 * 60,
+        },
+    },
     'organization-monthly-reset': {
         'task': 'judge.tasks.organization.organization_monthly_reset',
         'schedule': crontab(minute=0, hour=0, day_of_month=1),

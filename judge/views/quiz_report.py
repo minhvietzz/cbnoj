@@ -1,4 +1,5 @@
 import csv
+import logging
 from statistics import median
 
 from django.contrib import messages
@@ -11,10 +12,13 @@ from django.utils.translation import gettext as _
 from django.views.generic import DetailView, TemplateView, View
 
 from judge.models import Quiz, QuizAttempt, QuizProfileStat
+from judge.tasks.quiz import notify_quiz_results
 from judge.utils import quiz_stats, xlsx
 from judge.utils.views import TitleMixin
 from judge.views.course import CourseMixin
 from judge.views.quiz import QuizMixin, can_upload
+
+logger = logging.getLogger('judge.quiz')
 
 __all__ = ['QuizResults', 'QuizLive', 'QuizResultsAction', 'QuizMe', 'CourseQuizReport']
 
@@ -163,8 +167,14 @@ class QuizResultsAction(ManagerOnlyMixin, View):
             return back
 
         if action in ('publish', 'unpublish'):
+            newly_published = action == 'publish' and not quiz.results_published
             quiz.results_published = action == 'publish'
             quiz.save(update_fields=['results_published'])
+            if newly_published:
+                try:
+                    notify_quiz_results.delay(quiz.id)
+                except Exception:
+                    logger.exception('Could not queue the results notification for quiz %s', quiz.id)
             messages.success(request, _('Results published.') if quiz.results_published else _('Results hidden.'))
             return back
 

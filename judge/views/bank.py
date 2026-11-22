@@ -300,8 +300,48 @@ class BankCompose(BankAccessMixin, TitleMixin, TemplateView):
             request.session[COMPOSE_KEY] = []
         elif action == 'random':
             return self.add_random(request, current)
+        elif action == 'matrix':
+            return self.add_matrix(request, current)
         elif action == 'create':
             return self.create(request)
+        return HttpResponseRedirect(reverse('bank_compose'))
+
+    @staticmethod
+    def filtered_pool(request, exclude_ids):
+        pool = BankQuestion.objects.exclude(id__in=exclude_ids)
+        tag = request.POST.get('tag', '')
+        if tag.isdigit():
+            pool = pool.filter(tags__id=int(tag))
+        if request.POST.get('kind') in ('single', 'multi', 'short', 'tf4'):
+            pool = pool.filter(kind=request.POST['kind'])
+        return pool
+
+    def add_matrix(self, request, current):
+        """Add N easy + N medium + N hard random questions in one go (tag and type filters are shared)."""
+        labels = {1: _('easy'), 2: _('medium'), 3: _('hard')}
+        picked, short = [], []
+        for level in (1, 2, 3):
+            try:
+                wanted = max(0, min(200, int(request.POST.get('n%d' % level) or 0)))
+            except ValueError:
+                wanted = 0
+            if not wanted:
+                continue
+            pool = self.filtered_pool(request, current + picked).filter(level=level)
+            ids = list(pool.values_list('id', flat=True).distinct())
+            got = random.sample(ids, min(wanted, len(ids)))
+            picked += got
+            if len(got) < wanted:
+                short.append(_('%(level)s: %(got)d of %(wanted)d') % {
+                    'level': labels[level], 'got': len(got), 'wanted': wanted,
+                })
+        if not picked and not short:
+            messages.warning(request, _('Enter how many questions you want at each difficulty.'))
+            return HttpResponseRedirect(reverse('bank_compose'))
+        request.session[COMPOSE_KEY] = current + picked
+        messages.success(request, _('%(n)d random questions added.') % {'n': len(picked)})
+        if short:
+            messages.warning(request, _('Not enough matching questions: %(details)s') % {'details': '; '.join(short)})
         return HttpResponseRedirect(reverse('bank_compose'))
 
     def add_random(self, request, current):
@@ -309,12 +349,7 @@ class BankCompose(BankAccessMixin, TitleMixin, TemplateView):
             count = max(1, min(200, int(request.POST.get('count', '10'))))
         except ValueError:
             count = 10
-        pool = BankQuestion.objects.exclude(id__in=current)
-        tag = request.POST.get('tag', '')
-        if tag.isdigit():
-            pool = pool.filter(tags__id=int(tag))
-        if request.POST.get('kind') in ('single', 'multi', 'short', 'tf4'):
-            pool = pool.filter(kind=request.POST['kind'])
+        pool = self.filtered_pool(request, current)
         if request.POST.get('level') in ('1', '2', '3'):
             pool = pool.filter(level=int(request.POST['level']))
         ids = list(pool.values_list('id', flat=True).distinct())

@@ -60,6 +60,27 @@
                 </select>
                 <button type="submit">{{ _('Add random') }}</button>
             </form>
+
+            <h3 class="course-section-title">{{ _('Add by difficulty (matrix)') }}</h3>
+            <form method="post" class="bk-random">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="matrix">
+                <label>{{ _('Easy') }} <input type="number" name="n1" value="0" min="0" max="200"></label>
+                <label>{{ _('Medium') }} <input type="number" name="n2" value="0" min="0" max="200"></label>
+                <label>{{ _('Hard') }} <input type="number" name="n3" value="0" min="0" max="200"></label>
+                <select name="tag">
+                    <option value="">{{ _('Any tag') }}</option>
+                    {% for t in tags %}<option value="{{ t.id }}">{{ t.name }} ({{ t.n }})</option>{% endfor %}
+                </select>
+                <select name="kind">
+                    <option value="">{{ _('All types') }}</option>
+                    <option value="single">{{ _('Single choice') }}</option>
+                    <option value="multi">{{ _('Multiple choice') }}</option>
+                    <option value="short">{{ _('Short answer') }}</option>
+                    <option value="tf4">{{ _('True/False (4 statements)') }}</option>
+                </select>
+                <button type="submit">{{ _('Add') }}</button>
+            </form>
         </section>
 
         <section class="qz-form-card">

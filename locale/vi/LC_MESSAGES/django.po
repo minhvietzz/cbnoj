@@ -11646,3 +11646,26 @@ msgstr "Bố cục mới (trình soạn thảo và chạy thử)"
 
 msgid "Please complete the \"I am human\" check."
 msgstr "Vui lòng hoàn thành bước xác minh \"Tôi là người\"."
+
+msgid "Add by difficulty (matrix)"
+msgstr "Thêm theo mức độ (ma trận)"
+
+msgid "easy"
+msgstr "dễ"
+
+msgid "medium"
+msgstr "trung bình"
+
+msgid "hard"
+msgstr "khó"
+
+#, python-format
+msgid "%(level)s: %(got)d of %(wanted)d"
+msgstr "%(level)s: được %(got)d/%(wanted)d"
+
+#, python-format
+msgid "Not enough matching questions: %(details)s"
+msgstr "Không đủ câu phù hợp: %(details)s"
+
+msgid "Enter how many questions you want at each difficulty."
+msgstr "Hãy nhập số câu muốn lấy ở mỗi mức độ."
