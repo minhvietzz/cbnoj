@@ -99,6 +99,7 @@ class QuizResults(LoginRequiredMixin, QuizMixin, TitleMixin, TemplateView):
             'distribution': distribution,
             'distribution_max': max((c for _lo, _hi, c in distribution), default=0) or 1,
             'accuracy': quiz_stats.question_accuracy(quiz, rows),
+            'review': quiz_stats.question_review(quiz, rows),
             'flagged': flagged,
             'tab': None,
         })

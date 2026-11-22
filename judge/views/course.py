@@ -1,10 +1,12 @@
+import csv
 from collections import defaultdict
 from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max, Min, Q
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -13,6 +15,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import DetailView, ListView, View
 
 from judge.models import Course, CourseLesson, CourseRole, RoleInCourse, Submission
+from judge.utils import xlsx
 from judge.utils.views import TitleMixin, generic_message
 
 __all__ = ['CourseList', 'CourseDetail', 'CourseLessonDetail', 'CourseLessonRanking', 'CourseGrades', 'CourseJoin',
@@ -338,6 +341,36 @@ class CourseGrades(CourseMixin, TitleMixin, DetailView):
 
     def get_title(self):
         return _('Grades') + ' — ' + self.course.name
+
+    def get(self, request, *args, **kwargs):
+        export = request.GET.get('export')
+        if export in ('csv', 'xlsx'):
+            self.object = self.get_object()
+            context = self.get_context_data(object=self.object)
+            if not context['can_edit']:
+                raise PermissionDenied()
+            return self.export(export, context)
+        return super().get(request, *args, **kwargs)
+
+    def export(self, kind, context):
+        lessons, rows = context['lessons'], context['rows']
+        header = ['Rank', 'Username', 'Name'] + [lesson.title for lesson in lessons] + ['Total', 'Max', 'Percent']
+        table = [[row['rank'], row['user'].user.username, row['user'].display_name] +
+                 [cell['score'] for cell in row['cells']] + [row['score'], row['max'], round(row['percent'], 1)]
+                 for row in rows]
+        name = '%s-grades.%s' % (self.course.slug, kind)
+        if kind == 'xlsx':
+            response = HttpResponse(
+                xlsx.build_xlsx(header, table, self.course.name),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        else:
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response.write('\ufeff')  # BOM: Excel needs it to read Vietnamese names as UTF-8
+            writer = csv.writer(response)
+            writer.writerow(header)
+            writer.writerows(table)
+        response['Content-Disposition'] = 'attachment; filename="%s"' % name
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

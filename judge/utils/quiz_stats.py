@@ -294,6 +294,45 @@ def question_accuracy(quiz, rows):
     return result
 
 
+MIN_FOR_DISCRIMINATION = 10      # candidates needed before the top/bottom comparison means anything
+MIN_FOR_FLAG = 5                 # answers needed before a question can be flagged
+HARD_PERCENT = 10                # at or below this share of fully correct answers a question is suspicious
+
+
+def question_review(quiz, rows):
+    """{question id: {'discrimination': float or None, 'flag': 'inverse' / 'hard' / None}}.
+
+    Discrimination is the share of fully correct answers among the top 27% of candidates minus the same share among
+    the bottom 27%. A clearly negative value (strong candidates miss it, weak ones get it) or almost nobody getting a
+    question right are the usual signs of a wrong answer key, so those questions are flagged for the teacher.
+    """
+    ranked = sorted(rows, key=lambda r: -r['score'])
+    group = int(round(len(ranked) * 0.27)) if len(ranked) >= MIN_FOR_DISCRIMINATION else 0
+    top = [r['attempt'] for r in ranked[:group]]
+    bottom = [r['attempt'] for r in ranked[-group:]] if group else []
+    attempts = [r['attempt'] for r in rows]
+
+    def share(group_attempts, key):
+        seen = [a for a in group_attempts if key in a.results]
+        return sum(1 for a in seen if a.results.get(key)) / len(seen) if seen else None
+
+    review = {}
+    for question in quiz.questions.all():
+        key = str(question.id)
+        seen = [a for a in attempts if key in a.results]
+        correct = sum(1 for a in seen if a.results.get(key))
+        percent = 100.0 * correct / len(seen) if seen else 0
+        upper, lower = (share(top, key), share(bottom, key)) if group else (None, None)
+        discrimination = round(upper - lower, 2) if upper is not None and lower is not None else None
+        flag = None
+        if discrimination is not None and discrimination < 0:
+            flag = 'inverse'
+        elif len(seen) >= MIN_FOR_FLAG and percent <= HARD_PERCENT:
+            flag = 'hard'
+        review[question.id] = {'discrimination': discrimination, 'flag': flag}
+    return review
+
+
 MAX_HEATMAP_TOPICS = 12
 
 

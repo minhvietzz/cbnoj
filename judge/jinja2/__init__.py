@@ -12,6 +12,7 @@ from statici18n.templatetags.statici18n import inlinei18n
 
 from judge.highlight_code import highlight_code
 from judge.user_translations import gettext
+from judge.utils.compile_hints import compile_hints
 from . import (camo, datetime, filesize, format, gravatar, language, markdown, rating, reference, render, social,
                spaceless, submission, timedelta)
 from . import registry
@@ -20,6 +21,7 @@ registry.function('str', str)
 registry.filter('str', str)
 registry.filter('json', json.dumps)
 registry.filter('highlight', highlight_code)
+registry.filter('compile_hints', compile_hints)
 registry.filter('urlquote', quote)
 registry.filter('roundfloat', round)
 registry.function('ordinal', lambda n: '%d%s' % (n, 'tsnrhtdd'[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10::4]))

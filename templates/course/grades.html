@@ -27,6 +27,12 @@
                 {% else %}
                     <span class="gr-title">{{ _('Your progress') }}</span>
                 {% endif %}
+                {% if can_edit %}
+                    <span class="gr-export">
+                        <a href="?export=xlsx"><i class="fa fa-file-excel-o"></i> Excel</a>
+                        <a href="?export=csv"><i class="fa fa-download"></i> CSV</a>
+                    </span>
+                {% endif %}
                 <span class="gr-legend">
                     <span class="gc gc-0">0</span> {{ _('not started') }}
                     <span class="gc gc-mid">&nbsp;</span> {{ _('in progress') }}

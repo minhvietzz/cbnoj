@@ -1,4 +1,5 @@
 from datetime import timedelta
+from types import SimpleNamespace
 from unittest import skipUnless
 
 from django.conf import settings
@@ -181,6 +182,31 @@ class RankingTest(StatsTestCase):
         self.assertEqual(bins[5][2], 1)    # 5/10
         accuracy = quiz_stats.question_accuracy(quiz, rows)
         self.assertEqual([percent for _q, percent, _n in accuracy], [100, 50])
+
+    @staticmethod
+    def fake_rows(question_ids, count, answer):
+        """count fake candidates, best first; answer(rank, position) says whether they got that question right."""
+        return [{'score': count - rank, 'attempt': SimpleNamespace(
+            results={str(q): answer(rank, i) for i, q in enumerate(question_ids)})} for rank in range(count)]
+
+    def test_question_review_flags_inverse_and_hard_questions(self):
+        quiz = self.make_quiz('review', count=3)
+        ids = [q.id for q in quiz.questions.all()]
+        rows = self.fake_rows(ids, 12, lambda rank, i: [rank < 6, rank >= 6, False][i])
+        review = quiz_stats.question_review(quiz, rows)
+        good, inverse, hard = (review[q] for q in ids)
+        self.assertGreater(good['discrimination'], 0)
+        self.assertIsNone(good['flag'])
+        self.assertLess(inverse['discrimination'], 0)
+        self.assertEqual(inverse['flag'], 'inverse')
+        self.assertEqual(hard['flag'], 'hard')
+
+    def test_question_review_needs_enough_candidates(self):
+        quiz = self.make_quiz('review-small', count=1)
+        ids = [q.id for q in quiz.questions.all()]
+        review = quiz_stats.question_review(quiz, self.fake_rows(ids, 6, lambda rank, i: rank >= 3))
+        self.assertIsNone(review[ids[0]]['discrimination'])
+        self.assertIsNone(review[ids[0]]['flag'])
 
 
 class ReportViewsTest(StatsTestCase):

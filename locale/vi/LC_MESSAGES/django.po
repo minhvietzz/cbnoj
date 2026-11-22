@@ -11669,3 +11669,27 @@ msgstr "Không đủ câu phù hợp: %(details)s"
 
 msgid "Enter how many questions you want at each difficulty."
 msgstr "Hãy nhập số câu muốn lấy ở mỗi mức độ."
+
+msgid "Discrimination"
+msgstr "Độ phân biệt"
+
+msgid "Review"
+msgstr "Cần rà soát"
+
+msgid "Share of fully correct answers among the top 27 percent of candidates minus the share among the bottom 27 percent."
+msgstr "Tỉ lệ làm đúng hoàn toàn của 27 phần trăm thí sinh điểm cao nhất trừ tỉ lệ của 27 phần trăm thấp nhất."
+
+msgid "Strong candidates missed it and weak ones got it right: check the answer key."
+msgstr "Thí sinh giỏi làm sai còn thí sinh yếu làm đúng: hãy kiểm tra lại đáp án."
+
+msgid "Almost nobody got it right: check the answer key and the wording."
+msgstr "Gần như không ai làm đúng: hãy kiểm tra lại đáp án và cách diễn đạt câu hỏi."
+
+msgid "Check the answer key"
+msgstr "Kiểm tra đáp án"
+
+msgid "Very few correct"
+msgstr "Rất ít người đúng"
+
+msgid "Possible causes"
+msgstr "Nguyên nhân có thể"

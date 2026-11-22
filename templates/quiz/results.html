@@ -130,7 +130,7 @@
             <h3 class="course-section-title">{{ _('Accuracy per question') }}</h3>
             <div class="h-scrollable-table">
                 <table class="table">
-                    <thead><tr><th>#</th><th>{{ _('Question') }}</th><th>{{ _('Type') }}</th><th>{{ _('Fully correct') }}</th></tr></thead>
+                    <thead><tr><th>#</th><th>{{ _('Question') }}</th><th>{{ _('Type') }}</th><th>{{ _('Fully correct') }}</th><th title="{{ _('Share of fully correct answers among the top 27 percent of candidates minus the share among the bottom 27 percent.') }}">{{ _('Discrimination') }}</th><th>{{ _('Review') }}</th></tr></thead>
                     <tbody>
                     {% for question, percent, answered in accuracy %}
                         <tr>
@@ -138,6 +138,9 @@
                             <td>{{ question.text|striptags|truncate(90) }}</td>
                             <td>{{ question.get_kind_display() }}</td>
                             <td><span class="qr-meter{% if percent < 40 %} low{% endif %}"><i style="width: {{ percent }}%"></i></span> {{ percent }}%</td>
+                            {% set info = review[question.id] %}
+                            <td>{% if info.discrimination is none %}–{% else %}{{ '%+.2f'|format(info.discrimination) }}{% endif %}</td>
+                            <td>{% if info.flag == 'inverse' %}<span class="qr-warn" title="{{ _('Strong candidates missed it and weak ones got it right: check the answer key.') }}"><i class="fa fa-exclamation-triangle"></i> {{ _('Check the answer key') }}</span>{% elif info.flag == 'hard' %}<span class="qr-warn" title="{{ _('Almost nobody got it right: check the answer key and the wording.') }}"><i class="fa fa-exclamation-triangle"></i> {{ _('Very few correct') }}</span>{% endif %}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
