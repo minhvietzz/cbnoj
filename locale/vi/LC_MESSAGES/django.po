@@ -11628,3 +11628,21 @@ msgstr "Số câu mỗi bài thi"
 
 msgid "Each attempt draws this many random questions from the quiz. 0 means all questions."
 msgstr "Mỗi lượt làm bài bốc ngẫu nhiên đúng số câu này từ bộ đề. 0 nghĩa là lấy tất cả các câu."
+
+msgid "Optional. A letter is shown when empty."
+msgstr "Không bắt buộc. Nếu để trống sẽ hiện một chữ cái."
+
+msgid "Anyone logged in can join without approval."
+msgstr "Ai đã đăng nhập cũng có thể tham gia mà không cần duyệt."
+
+msgid "role"
+msgstr "vai trò"
+
+msgid "Old layout"
+msgstr "Bố cục cũ"
+
+msgid "New layout (editor and try-run)"
+msgstr "Bố cục mới (trình soạn thảo và chạy thử)"
+
+msgid "Please complete the \"I am human\" check."
+msgstr "Vui lòng hoàn thành bước xác minh \"Tôi là người\"."
