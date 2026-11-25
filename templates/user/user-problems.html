@@ -29,10 +29,12 @@
 
 {% block title_row %}
     {% set tab = 'problems' %}
+    {% set pf_head = true %}
     {% include "user/user-tabs.html" %}
 {% endblock %}
 
 {% block user_content %}
+    <section class="pf-card pf-card-wide">
     {% if pp_breakdown %}
         <h3 class="pp-breakdown-header">{{ _('Points breakdown') }}</h3>
         <div id="submissions-table" class="pp-table table">
@@ -122,4 +124,5 @@
             </table>
         </div>
     {% endfor %}
+    </section>
 {% endblock %}

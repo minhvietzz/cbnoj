@@ -3,10 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView, View
 
-from judge.models import BankTag
+from judge.models import BankTag, Subject
 from judge.utils import practice
 from judge.utils.views import TitleMixin
 from judge.views.quiz import AttemptMixin, can_upload, collect_answers
@@ -19,6 +20,16 @@ def to_int(value, default=0):
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def days_ago(when):
+    """'today' / 'yesterday' / 'N days ago' for the notebook."""
+    days = max(0, (timezone.localdate() - timezone.localtime(when).date()).days)
+    if days == 0:
+        return _('today')
+    if days == 1:
+        return _('yesterday')
+    return _('%(n)d days ago') % {'n': days}
 
 
 class PracticeAccessMixin(LoginRequiredMixin):
@@ -39,11 +50,22 @@ class PracticeSetup(PracticeAccessMixin, TitleMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        profile = self.request.user.profile
         tracks, topics = practice.tag_options()
+        subjects = practice.subject_options()
+        home = practice.default_subject()
+        wrong = practice.mistakes(profile)
+        for row in wrong[:3]:
+            row['when'] = days_ago(row['last_wrong'])
+        tag_subjects = practice.tag_subjects()
         context.update(self.tab_context('practice'))
         context.update({'tracks': tracks, 'topics': topics, 'default_count': practice.DEFAULT_COUNT,
                         'min_count': practice.MIN_COUNT, 'max_count': practice.MAX_COUNT,
-                        'form': kwargs.get('form', {})})
+                        'form': kwargs.get('form', {}), 'subjects': subjects,
+                        'default_subject_id': home.id if home else (subjects[0].id if subjects else 0),
+                        'tag_subjects': {t: sorted(x for x in v if x is not None) for t, v in tag_subjects.items()},
+                        'weak': practice.weak_topics(profile), 'stats': practice.summary(profile),
+                        'mistake_rows': wrong[:3], 'mistake_total': len(wrong)})
         return context
 
     def post(self, request, *args, **kwargs):
@@ -59,10 +81,12 @@ class PracticeSetup(PracticeAccessMixin, TitleMixin, TemplateView):
         else:
             tag_ids = [to_int(i) for i in post.getlist('tags')]
             track_ids = [to_int(i) for i in post.getlist('tracks')]
+            subject = Subject.objects.filter(id=to_int(post.get('subject')), is_active=True).first()
             questions = practice.pick_questions(
                 profile, tag_ids=tag_ids, track_ids=track_ids, level=to_int(post.get('level')),
                 kinds=post.get('kinds', ''), count=to_int(post.get('count'), practice.DEFAULT_COUNT),
-                prefer_new=post.get('prefer_new') == 'on')
+                prefer_new=post.get('prefer_new') == 'on', subject=subject,
+                prefer_wrong=post.get('prefer_wrong') == 'on')
             names = list(BankTag.objects.filter(id__in=[i for i in tag_ids + track_ids if i])
                          .order_by('name').values_list('name', flat=True))
             title = _('Practice') + (': ' + ', '.join(names[:3]) if names else '')
@@ -84,6 +108,8 @@ class PracticeMistakes(PracticeAccessMixin, TitleMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(self.tab_context('mistakes'))
         context['rows'] = practice.mistakes(self.request.user.profile)
+        for row in context['rows']:
+            row['when'] = days_ago(row['last_wrong'])
         return context
 
 

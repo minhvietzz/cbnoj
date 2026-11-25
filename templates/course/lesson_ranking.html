@@ -8,81 +8,70 @@
 {% endblock %}
 
 {% block body %}
-    <div class="lr-head">
-        <a class="lr-back" href="{{ lesson.get_absolute_url() }}"><i class="fa fa-arrow-left"></i> {{ lesson.title }}</a>
+<div class="crs neo-flat">
+    <div class="crs-lr-head">
+        <a class="crs-crumb" href="{{ lesson.get_absolute_url() }}">&larr; {{ lesson.title }}</a>
     </div>
 
     {% if rows and lps %}
-        <div class="gr-stats">
-            <div class="gr-stat gr-stat-blue"><b>{{ rows|length }}</b><span>{{ _('students') }}</span></div>
-            <div class="gr-stat gr-stat-mint"><b>{{ started }}</b><span>{{ _('have started') }}</span></div>
-            <div class="gr-stat gr-stat-yellow"><b>{{ lps|length }}</b><span>{{ _('problems') }}</span></div>
-            <div class="gr-stat gr-stat-pink"><b>{% if me %}#{{ me.rank }}{% else %}–{% endif %}</b><span>{{ _('your rank') }}</span></div>
+        <div class="crs-statrow">
+            <div class="crs-stat"><b>{{ rows|length }}</b><span>{{ _('students') }}</span></div>
+            <div class="crs-stat"><b>{{ started }}</b><span>{{ _('have started') }}</span></div>
+            <div class="crs-stat"><b>{{ lps|length }}</b><span>{{ _('problems') }}</span></div>
+            <div class="crs-stat"><b>{% if me %}#{{ me.rank }}{% else %}&ndash;{% endif %}</b><span>{{ _('your rank') }}</span></div>
         </div>
 
-        <div class="gr-card">
-            <div class="gr-toolbar">
+        <section class="crs-panel">
+            <div class="crs-toolbar">
                 {% if rows|length > 1 %}
-                    <label class="gr-search"><i class="fa fa-search"></i>
-                        <input type="search" id="gr-filter" placeholder="{{ _('Search students...') }}" autocomplete="off">
-                    </label>
+                    <input type="search" id="gr-filter" placeholder="{{ _('Search students...') }}" aria-label="{{ _('Search students...') }}" autocomplete="off">
                 {% endif %}
-                <span class="gr-legend">
-                    <span class="gc gc-0">0</span> {{ _('not started') }}
-                    <span class="gc gc-mid">&nbsp;</span> {{ _('in progress') }}
-                    <span class="gc gc-full"><i class="fa fa-check"></i></span> {{ _('complete') }}
+                <span class="crs-legend">
+                    <span class="crs-gc crs-gc-0">0</span> {{ _('not started') }}
+                    <span class="crs-gc crs-gc-mid">&nbsp;</span> {{ _('in progress') }}
+                    <span class="crs-gc crs-gc-full">&#10003;</span> {{ _('complete') }}
                 </span>
             </div>
-
-            <div class="gr-scroll">
-                <table class="gr-table" id="gr-table">
+            <div class="crs-scroll">
+                <table class="crs-table" id="gr-table">
                     <thead>
                     <tr>
-                        <th class="gr-rank">#</th>
-                        <th class="gr-user">{{ _('Student') }}</th>
+                        <th>#</th>
+                        <th>{{ _('Student') }}</th>
                         {% for lp in lps %}
-                            <th class="gr-lesson">
-                                <a href="{{ lp.problem.get_absolute_url() }}" title="{{ lp.problem.name }}">{{ loop.index }}</a>
-                                <small>{{ lp.points }}</small>
-                            </th>
+                            <th class="crs-c"><a href="{{ lp.problem.get_absolute_url() }}" title="{{ lp.problem.name }}">{{ loop.index }}</a><small>{{ lp.points }}</small></th>
                         {% endfor %}
-                        <th class="gr-total">{{ _('Total') }}</th>
+                        <th class="crs-r">{{ _('Total') }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for row in rows %}
-                        <tr class="{% if row.user.id == request.profile.id %}gr-me{% endif %}" data-name="{{ row.user.user.username|lower }}">
-                            <td class="gr-rank">
-                                {% if row.score and row.rank <= 3 %}<span class="gr-medal gr-medal-{{ row.rank }}">{{ row.rank }}</span>{% else %}{{ row.rank }}{% endif %}
-                            </td>
-                            <td class="gr-user">{{ link_user(row.user) }}</td>
+                        <tr{% if row.user.id == request.profile.id %} class="crs-me"{% endif %} data-name="{{ row.user.user.username|lower }}">
+                            <td class="crs-mono">{{ row.rank }}</td>
+                            <td>{{ link_user(row.user) }}</td>
                             {% for cell in row.cells %}
-                                <td class="gr-cell">
+                                <td class="crs-c">
                                     {% set has_subs = cell.score or cell.tried %}
-                                    {% if has_subs %}<a href="{{ url('user_submissions', lps[loop.index0].problem.code, row.user.user.username) }}" style="color: inherit; text-decoration: none; display: inline-block;" title="{{ _('View submissions') }}">{% endif %}
+                                    {% if has_subs %}<a href="{{ url('user_submissions', lps[loop.index0].problem.code, row.user.user.username) }}" title="{{ _('View submissions') }}">{% endif %}
                                     {% if cell.score >= cell.max %}
-                                        <span class="gc gc-full" title="{{ cell.score|round|int }}/{{ cell.max }}"><i class="fa fa-check"></i> {{ cell.score|round|int }}</span>
+                                        <span class="crs-gc crs-gc-full" title="{{ cell.score|round|int }}/{{ cell.max }}">&#10003; {{ cell.score|round|int }}</span>
                                     {% elif cell.score %}
-                                        <span class="gc gc-mid" style="--p: {{ cell.percent|round|int }}" title="{{ cell.score|round|int }}/{{ cell.max }}">{{ cell.score|round|int }}<small>/{{ cell.max }}</small></span>
+                                        <span class="crs-gc crs-gc-mid" title="{{ cell.score|round|int }}/{{ cell.max }}">{{ cell.score|round|int }}<small>/{{ cell.max }}</small></span>
                                     {% else %}
-                                        <span class="gc gc-0" title="0/{{ cell.max }}">0</span>
+                                        <span class="crs-gc crs-gc-0" title="0/{{ cell.max }}">0</span>
                                     {% endif %}
                                     {% if has_subs %}</a>{% endif %}
                                 </td>
                             {% endfor %}
-                            <td class="gr-total">
-                                <div class="gr-total-top"><b>{{ row.score|round|int }}</b><small>/{{ row.max }}</small></div>
-                                <div class="gr-meter"><i style="width: {{ row.percent|round|int }}%"></i></div>
-                                <span class="gr-pct">{{ row.solved }}/{{ lps|length }} {{ _('solved') }}</span>
-                            </td>
+                            <td class="crs-r"><b>{{ row.score|round|int }}</b><small>/{{ row.max }}</small><span class="crs-sub">{{ row.solved }}/{{ lps|length }} {{ _('solved') }}</span></td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <details class="gr-key">
+        <details class="crs-key">
             <summary>{{ _('Problem key') }}</summary>
             <ol>
                 {% for lp in lps %}
@@ -91,10 +80,9 @@
             </ol>
         </details>
     {% else %}
-        <div class="course-empty course-empty-small">
-            <p>{% if not lps %}{{ _('This lesson has no practice problems.') }}{% else %}{{ _('No students have joined yet.') }}{% endif %}</p>
-        </div>
+        <p class="crs-empty-row crs-panel">{% if not lps %}{{ _('This lesson has no practice problems.') }}{% else %}{{ _('No students have joined yet.') }}{% endif %}</p>
     {% endif %}
+</div>
 {% endblock %}
 
 {% block bodyend %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="tabs">
+        <h2>{{ quiz.title }}</h2>
+        <ul>
+            <li class="tab"><a href="{{ quiz.get_absolute_url() }}"><i class="tab-icon fa fa-eye"></i> {{ _('View quiz') }}</a></li>
+            <li class="tab"><a href="{{ url('quiz_manage', quiz.slug) }}"><i class="tab-icon fa fa-pencil"></i> {{ _('Manage') }}</a></li>
+            <li class="tab"><a href="{{ url('quiz_results', quiz.slug) }}"><i class="tab-icon fa fa-trophy"></i> {{ _('Results') }}</a></li>
+            <li class="tab active"><span><i class="tab-icon fa fa-files-o"></i> {{ _('Exam codes') }}</span></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block media %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+    <style>
+        .vx-page { background: #F6F5F1; color: #15171C; font-family: 'Be Vietnam Pro', system-ui, sans-serif; padding: 20px; border-radius: 6px; }
+        .vx-layout { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+        .vx-side { flex: 0 0 320px; display: flex; flex-direction: column; gap: 16px; max-width: 100%; }
+        .vx-main { flex: 1 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        .vx-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; padding: 22px; }
+        .vx-card h2 { margin: 0 0 14px; font-size: 17px; font-weight: 700; color: #15171C; }
+        .vx-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .vx-field label, .vx-check { font-size: 14px; font-weight: 600; }
+        .vx-check { display: flex; gap: 10px; align-items: center; font-weight: 400; margin-bottom: 14px; }
+        .vx-input { height: 42px; box-sizing: border-box; border: 1px solid #BDBAB0; border-radius: 6px; padding: 0 12px; font-size: 16px; font-family: inherit; background: #fff; color: #15171C; }
+        .vx-input.mono { font-family: 'JetBrains Mono', monospace; font-size: 15px; }
+        .vx-hint { font-size: 13px; color: #5E6470; }
+        .vx-btn { height: 46px; width: 100%; border: 0; border-radius: 6px; background: #1F3FBF; color: #fff; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .vx-btn:hover { background: #1A35A0; }
+        .vx-ok { background: #E3F2EA; border: 1px solid #BFE0CD; border-radius: 6px; padding: 16px 20px; font-size: 13px; line-height: 1.6; color: #17613D; }
+        .vx-warn { background: #FBEFE4; border: 1px solid #EBCBA8; border-radius: 6px; padding: 16px 20px; font-size: 13px; line-height: 1.6; color: #8A4B0E; }
+        .vx-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .vx-code-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; overflow: hidden; }
+        .vx-code-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #DAD8D0; }
+        .vx-code { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; }
+        .vx-meta { font-size: 12px; color: #5E6470; }
+        .vx-dist { padding: 12px 16px; background: #FAF9F6; font-size: 12px; color: #5E6470; display: flex; flex-direction: column; gap: 5px; }
+        .vx-dist-row { display: flex; align-items: center; gap: 8px; }
+        .vx-dist-row b { width: 14px; color: #15171C; font-family: 'JetBrains Mono', monospace; }
+        .vx-bar { flex: 1; height: 7px; background: #E7E5DE; border-radius: 3px; overflow: hidden; }
+        .vx-bar i { display: block; height: 100%; background: #1F3FBF; }
+        .vx-actions { display: flex; border-top: 1px solid #DAD8D0; font-size: 13px; font-weight: 600; }
+        .vx-actions a { flex: 1; padding: 11px; text-align: center; color: #15171C; }
+        .vx-actions a:hover { color: #1F3FBF; }
+        .vx-head-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+        .vx-head-row h2 { margin: 0; }
+        .vx-link { font-size: 13px; font-weight: 600; color: #1F3FBF; }
+        .vx-table-wrap { overflow-x: auto; }
+        table.vx-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        table.vx-table th { text-transform: uppercase; font-size: 12px; text-align: center; color: #5E6470; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid #DAD8D0; white-space: nowrap; }
+        table.vx-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid #EFEDE6; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+        table.vx-table td.vx-first, table.vx-table th.vx-first { text-align: left; }
+        .vx-stale { color: #8A4B0E; font-size: 12px; padding: 0 16px 10px; background: #FAF9F6; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <div class="vx-page">
+        <div class="vx-layout">
+            <aside class="vx-side">
+                <section class="vx-card">
+                    <h2>{{ _('Settings') }}</h2>
+                    {% if drawn %}
+                        <div class="vx-warn" style="margin-bottom: 16px">{{ _('This quiz draws a random subset of questions for every candidate, so exam codes (which contain every question) cannot be used. Set "questions per attempt" to 0 first.') }}</div>
+                    {% endif %}
+                    {% if locked %}
+                        <div class="vx-warn" style="margin-bottom: 16px">{{ _('Candidates already have attempts on the current exam codes, so they cannot be replaced. Reset or delete those attempts first.') }}</div>
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="vx-field">
+                            <label for="vx-count">{{ _('Number of codes') }}</label>
+                            <div style="display: flex; align-items: center; gap: 10px">
+                                <input class="vx-input" id="vx-count" name="count" type="number" min="{{ min_count }}" max="{{ max_count }}" value="{{ cards|length or 4 }}" style="width: 80px; text-align: center; font-weight: 700">
+                                <span class="vx-hint">{{ _('from 2 to 12') }}</span>
+                            </div>
+                        </div>
+                        <div class="vx-field">
+                            <label for="vx-start">{{ _('Codes start from') }}</label>
+                            <input class="vx-input mono" id="vx-start" name="start_code" type="text" maxlength="8" value="{{ cards[0].variant.code if cards else '0101' }}" style="width: 120px">
+                        </div>
+                        <label class="vx-check"><input type="checkbox" name="shuffle_questions" value="1" checked> {{ _('Shuffle questions inside each section') }}</label>
+                        <label class="vx-check"><input type="checkbox" name="shuffle_options" value="1" checked> {{ _('Shuffle options A B C D') }}</label>
+                        <p class="vx-hint" style="margin: 0 0 16px">{{ _('Options such as "both A and B" or "all of the above" keep their place.') }}</p>
+                        <button class="vx-btn" type="submit"{% if drawn or locked %} disabled{% endif %}>{{ _('Regenerate codes') if cards else _('Generate exam codes') }}</button>
+                    </form>
+                </section>
+                {% if cards %}
+                    {% if all_unique and all_even %}
+                        <section class="vx-ok"><b>{{ _('Checked:') }}</b> {{ _('no two codes are identical; correct answers A/B/C/D are evenly spread in every code.') }}</section>
+                    {% else %}
+                        <section class="vx-warn">
+                            <b>{{ _('Checked:') }}</b>
+                            {% if all_unique %}{{ _('no two codes are identical.') }}{% else %}{{ _('some codes are identical.') }}{% endif %}
+                            {% if not all_even %}{{ _('The spread of correct answers A/B/C/D is uneven in some codes (more than 10 points from an even share), usually because the quiz has few questions.') }}{% endif %}
+                        </section>
+                    {% endif %}
+                {% endif %}
+            </aside>
+            <section class="vx-main">
+                {% if not cards %}
+                    <div class="vx-card"><span class="vx-hint">{{ _('No exam codes yet. Set the options and generate them.') }} ({{ question_total }} {{ _('questions') }})</span></div>
+                {% else %}
+                    <div class="vx-cards">
+                        {% for c in cards %}
+                            <article class="vx-code-card">
+                                <div class="vx-code-head"><b class="vx-code">{{ c.variant.code }}</b><span class="vx-meta">{{ c.pages }} {{ _('pages') }} · {{ c.count }} {{ _('questions') }}</span></div>
+                                <div class="vx-dist">
+                                    {% for letter in letters %}
+                                        <div class="vx-dist-row"><b>{{ letter }}</b><span class="vx-bar"><i style="width: {{ c.dist.percent[letter]|round(0)|int }}%"></i></span><span>{{ c.dist[letter] }}</span></div>
+                                    {% endfor %}
+                                </div>
+                                {% if c.stale %}<div class="vx-stale">{{ _('The questions changed after this code was made; regenerate it.') }}</div>{% endif %}
+                                <div class="vx-actions">
+                                    <a href="{{ url('quiz_variant_print', quiz.slug, c.variant.code) }}" target="_blank">{{ _('View print version') }}</a>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                    <section class="vx-card">
+                        <div class="vx-head-row">
+                            <h2>{{ _('Answer key of all codes') }}</h2>
+                            <a class="vx-link" href="{{ url('quiz_variants_key_print', quiz.slug) }}" target="_blank">{{ _('Print answer key') }}</a>
+                        </div>
+                        <div class="vx-table-wrap">
+                            <table class="vx-table">
+                                <thead>
+                                    <tr>
+                                        <th class="vx-first">{{ _('Question') }}</th>
+                                        {% for k in key_rows %}<th>{{ k.variant.code }}</th>{% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in range(key_rows[0].rows|length) %}
+                                        <tr>
+                                            <td class="vx-first">{{ i + 1 }}</td>
+                                            {% for k in key_rows %}<td>{{ k.rows[i].key if i < k.rows|length else '' }}</td>{% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="vx-hint" style="margin: 12px 0 0">{{ _('True/false questions show the statements in order (True = first letter of "True"); short answer questions show the accepted answers.') }}</p>
+                    </section>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+{% endblock %}

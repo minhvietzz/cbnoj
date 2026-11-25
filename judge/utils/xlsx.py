@@ -98,3 +98,55 @@ def build_xlsx(header, rows, sheet_name='Sheet1'):
         archive.writestr('xl/styles.xml', STYLES)
         archive.writestr('xl/worksheets/sheet1.xml', sheet)
     return buffer.getvalue()
+
+
+def read_rows(data):
+    """Read the first sheet of an .xlsx file into a list of rows (lists of strings).
+
+    Only plain cell values are supported (numbers, text, shared strings, inline strings), which is all a class list
+    needs. Raises ValueError when the file is not a readable workbook.
+    """
+    import xml.etree.ElementTree as ET
+    ns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+        names = zf.namelist()
+        shared = []
+        if 'xl/sharedStrings.xml' in names:
+            for si in ET.fromstring(zf.read('xl/sharedStrings.xml')).findall('m:si', ns):
+                shared.append(''.join(t.text or '' for t in si.iter('{%s}t' % ns['m'])))
+        sheets = sorted(n for n in names if re.match(r'xl/worksheets/sheet\d+\.xml$', n))
+        if not sheets:
+            raise ValueError('no sheet')
+        root = ET.fromstring(zf.read(sheets[0]))
+    except (zipfile.BadZipFile, ET.ParseError, KeyError) as e:
+        raise ValueError(str(e))
+
+    def column(ref):
+        letters = re.match(r'[A-Z]+', ref).group(0)
+        n = 0
+        for ch in letters:
+            n = n * 26 + ord(ch) - 64
+        return n - 1
+
+    rows = []
+    for row in root.iter('{%s}row' % ns['m']):
+        cells = {}
+        for c in row.findall('m:c', ns):
+            ref = c.get('r') or ''
+            if not ref:
+                continue
+            kind = c.get('t')
+            if kind == 'inlineStr':
+                text = ''.join(t.text or '' for t in c.iter('{%s}t' % ns['m']))
+            else:
+                v = c.find('m:v', ns)
+                text = (v.text or '') if v is not None else ''
+                if kind == 's' and text.isdigit() and int(text) < len(shared):
+                    text = shared[int(text)]
+                elif kind != 's' and text.endswith('.0'):
+                    text = text[:-2]
+            cells[column(ref)] = text.strip()
+        if cells:
+            rows.append([cells.get(i, '') for i in range(max(cells) + 1)])
+    return rows

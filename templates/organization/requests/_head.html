@@ -1,0 +1,5 @@
+{# Header band of the membership-request pages (no organization context, only `object`). #}
+<div class="og-head og-plain">
+    <div class="og-id"><div class="og-name"><h1>{{ content_title or title }}</h1></div></div>
+    {% if object is defined and object and object.slug is defined and with_tabs %}{% include "organization/requests/tabs.html" %}{% endif %}
+</div>

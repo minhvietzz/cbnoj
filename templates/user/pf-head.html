@@ -1,0 +1,22 @@
+{# Header of a profile page (Profile.dc.html): letter avatar, name, one line of facts, edit button. #}
+{% set pf_name = user.user.first_name or user.user.username %}
+<div class="pf-head">
+    <div class="pf-id">
+        <span class="pf-avatar" aria-hidden="true"><span class="pf-initials">{{ name_initials(pf_name) }}</span><img src="{{ gravatar(user, 160) }}" width="80" height="80" alt=""></span>
+        <div class="pf-id-text">
+            <h1>{{ pf_name }}{% if user.display_rank != 'user' %} <span class="pf-tag">{{ user.get_display_rank_display() }}</span>{% endif %}</h1>
+            <div class="pf-line">
+                <span>{{ user.user.username }}</span>
+                {% for c in pf_classes %}{% if loop.first %}<span>{% endif %}{{ c.classroom.name }}{% if not loop.last %}, {% else %}</span>{% endif %}{% endfor %}
+                {% with orgs=user.organizations.filter(is_unlisted=False) %}
+                    {% for org in orgs %}<a href="{{ org.get_absolute_url() }}">{{ org.name }}</a>{% endfor %}
+                {% endwith %}
+                <span>{{ _('Joined in') }} {{ user.user.date_joined|date('m/Y') }}</span>
+                {% if user.user == request.user or request.user.is_superuser %}<span>{{ user.user.email }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% if user.user == request.user %}
+        <div class="pf-actions"><a class="pf-btn" href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></div>
+    {% endif %}
+</div>

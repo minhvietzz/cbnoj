@@ -1,6 +1,8 @@
 from reversion import revisions
 
 from judge.models.choices import ACE_THEMES, EFFECTIVE_MATH_ENGINES, MATH_ENGINES_CHOICES, TIMEZONE
+from judge.models.classroom import ClassAnnouncement, ClassAssignment, ClassMember, Classroom, RoleInClass, \
+    Subject
 from judge.models.comment import Comment, CommentLock, CommentVote
 from judge.models.contest import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Rating
@@ -13,8 +15,8 @@ from judge.models.problem_data import CHECKERS, ProblemData, ProblemTestCase, pr
     problem_directory_file
 from judge.models.profile import Badge, Organization, OrganizationMonthlyUsage, OrganizationQuota, \
     OrganizationRequest, Profile, WebAuthnCredential
-from judge.models.quiz import BankQuestion, BankTag, Quiz, QuizAttempt, QuizOption, QuizProfileStat, QuizQuestion, \
-    QuizTopicStat, QuizViolation
+from judge.models.quiz import BankQuestion, BankTag, ExamVariant, Quiz, QuizAttempt, QuizOption, QuizProfileStat, \
+    QuizQuestion, QuizTopicStat, QuizViolation
 from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.tag import Tag, TagData, TagGroup, TagProblem

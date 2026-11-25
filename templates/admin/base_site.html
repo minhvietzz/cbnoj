@@ -1,4 +1,8 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+{% block wpadmin_extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "wpadmin/css/wpadmin.cbn.css" %}?v=8" />{% endblock %}
+
+{% block adminmenu %}{{ block.super }}{% if user.is_authenticated and user.is_staff %}{% include "admin/_cba_nav.html" %}{% endif %}{% endblock %}
 
 {% block pretitle %}{{ block.super }}
     <form style="display: none" id="empty-action-form" method="post">

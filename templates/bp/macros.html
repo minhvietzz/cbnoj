@@ -1,0 +1,8 @@
+{# Shared bits of the flat "paper" pages (problems / submissions / ranking / contests). #}
+{% macro chip_class(result) -%}
+    {%- if result == 'AC' -%}ok
+    {%- elif result in ('WA', 'IE') -%}bad
+    {%- elif result in ('TLE', 'MLE', 'OLE', 'IR', 'RTE', '_AC', 'OTH') -%}warn
+    {%- else -%}grey
+    {%- endif -%}
+{%- endmacro %}

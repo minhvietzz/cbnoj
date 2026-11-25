@@ -4,39 +4,60 @@
 
 {% block title_row %}
     {% include "quiz/tabs.html" %}
+    {% set task_tab = 'quiz' %}
+    {% include "task-tabs.html" %}
 {% endblock %}
 
 {% block body %}
-    <form class="course-search" method="get" action="{{ url('quiz_list') }}">
-        <input type="hidden" name="tab" value="{{ tab }}">
-        <input type="search" name="search" value="{{ search }}" placeholder="{{ _('Search quizzes...') }}">
-        <button type="submit">{{ _('Search') }}</button>
-    </form>
-
+<div class="qz-list neo-flat">
+    <aside class="qz-side">
+        <form method="get" action="{{ url('quiz_list') }}" class="qz-side-f">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            {% if subject %}<input type="hidden" name="subject" value="{{ subject }}">{% endif %}
+            <label for="qz-q">{{ _('Search quizzes') }}</label>
+            <input id="qz-q" type="search" name="search" value="{{ search }}" placeholder="{{ _('Quiz name') }}">
+        </form>
+        <div class="qz-side-g">
+            <span class="qz-side-h">{{ _('Chapter') }}</span>
+            <a href="{{ url('quiz_list') }}?tab={{ tab }}&search={{ search|urlencode }}" class="{{ 'on' if not subject }}"><span>{{ _('All') }}</span><span>{{ total_visible }}</span></a>
+            {% for sub, n in subject_counts %}{% if n %}<a href="{{ url('quiz_list') }}?tab={{ tab }}&search={{ search|urlencode }}&subject={{ sub.slug|urlencode }}" class="{{ 'on' if subject == sub.slug }}"><span>{{ sub.name }}</span><span>{{ n }}</span></a>{% endif %}{% endfor %}
+        </div>
+        <a href="{{ url('practice') }}" class="qz-side-b">{{ _('Quick practice from the question bank') }}</a>
+    </aside>
+    <div class="qz-main">
+    {% if can_upload %}
+        <div class="qz-create-bar"><a class="qz-create" href="{{ url('quiz_upload') }}">+ {{ _('Create exam') }}</a></div>
+    {% endif %}
     {% if quizzes %}
-        <div class="course-grid">
-            {% for q in quizzes %}
-                <article class="course-card tone-{{ ['mint', 'sky', 'lilac', 'peach', 'butter', 'pink'][q.id % 6] }}">
-                    <a class="course-thumb" href="{{ q.get_absolute_url() }}" tabindex="-1" aria-hidden="true">
-                        <span class="course-initial">?</span>
-                    </a>
-                    <div class="course-body">
-                        <div class="course-head">
-                            <a class="course-title" href="{{ q.get_absolute_url() }}">{{ q.title }}</a>
-                            <span class="course-badges">
+        <div class="ql-card">
+            <table class="ql-table table">
+                <thead>
+                    <tr>
+                        <th style="width: 44px"></th>
+                        <th>{{ _('Quiz') }}</th>
+                        <th>{{ _('Chapter') }}</th>
+                        <th class="ql-num">{{ _('Questions') }}</th>
+                        <th class="ql-num">{{ _('Best score') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in quizzes %}
+                        <tr>
+                            <td><span class="ql-dot{% if q.my_best %}{{ ' ok' if q.my_best.percent >= 80 else (' mid' if q.my_best.percent >= 50 else ' bad') }}{% endif %}"></span></td>
+                            <td>
+                                <a class="ql-name" href="{{ q.get_absolute_url() }}">{{ q.title }}</a>
                                 {% if not q.is_public %}<span class="cbadge cbadge-private">{{ _('Private') }}</span>{% endif %}
-                                {% if q.my_best %}<span class="cbadge cbadge-joined">{{ q.my_best.percent }}%</span>{% endif %}
-                            </span>
-                        </div>
-                        {% if q.description %}<p class="course-desc">{{ q.description|striptags|truncate(130) }}</p>{% endif %}
-                        <div class="course-meta">
-                            <span><i class="fa fa-question-circle"></i> {{ q.qcount }} {{ _('questions') }}</span>
-                            <span><i class="fa fa-clock-o"></i> {% if q.time_limit %}{{ q.time_limit }} {{ _('minutes') }}{% else %}{{ _('No time limit') }}{% endif %}</span>
-                            {% if q.creator %}<span><i class="fa fa-user"></i> {{ link_user(q.creator) }}</span>{% endif %}
-                        </div>
-                    </div>
-                </article>
-            {% endfor %}
+                                {% if q.time_limit %}<span class="ql-sub">{{ q.time_limit }} {{ _('minutes') }}</span>{% endif %}
+                            </td>
+                            <td class="qz-mute">{{ q.subject.name if q.subject else _('Informatics') }}</td>
+                            <td class="ql-num">{{ q.qcount }}</td>
+                            <td class="ql-num"><b>{% if q.my_best %}{{ q.my_best.percent }}%{% else %}&mdash;{% endif %}</b></td>
+                            <td class="ql-num"><a class="ql-cta" href="{{ q.get_absolute_url() }}">{{ _('Retake') if q.my_best else _('Take the quiz') }}</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% if page_obj.has_other_pages() %}
             <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
@@ -49,4 +70,6 @@
             {% if can_upload %}<p style="margin-top: 16px"><a class="course-join" href="{{ url('quiz_upload') }}">{{ _('Upload quiz') }}</a></p>{% endif %}
         </div>
     {% endif %}
+    </div>
+</div>
 {% endblock %}

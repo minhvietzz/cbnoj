@@ -23,6 +23,9 @@ def quiz_recipients(quiz):
     """Profiles that may take the quiz, as a queryset of ids."""
     if quiz.course_id:
         return quiz.course.get_students()
+    if quiz.pk and quiz.classes.exists():
+        return Profile.objects.filter(class_roles__classroom__in=quiz.classes.all(),
+                                      class_roles__role='ST').distinct()
     if quiz.organizations.exists():
         return Profile.objects.filter(organizations__in=quiz.organizations.all()).distinct()
     if quiz.is_public:

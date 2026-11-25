@@ -1,0 +1,29 @@
+{% load i18n static %}<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="NONE,NOARCHIVE">
+<title>Đăng nhập | CBNoj Quản trị</title>
+<link rel="stylesheet" href="{% static 'wpadmin/css/wpadmin.cbn.css' %}?v=8">
+</head>
+<body class="cba-login-page">
+<main class="cba-login">
+    <div class="cba-login-brand"><span class="cba-logo">CB</span><span><b>CBNoj</b> <i>Quản trị</i></span></div>
+    <form method="post" action="{{ app_path }}" class="cba-login-card">
+        {% csrf_token %}
+        <h1>Đăng nhập</h1>
+        {% if form.errors and not form.non_field_errors %}<p class="cba-login-err">Vui lòng kiểm tra lại các ô bên dưới.</p>{% endif %}
+        {% if form.non_field_errors %}{% for e in form.non_field_errors %}<p class="cba-login-err">{{ e }}</p>{% endfor %}{% endif %}
+        {% if user.is_authenticated %}<p class="cba-login-err">Bạn đang đăng nhập bằng {{ user.get_username }}, nhưng tài khoản này không có quyền vào trang quản trị. Hãy đăng nhập bằng tài khoản khác.</p>{% endif %}
+        <div class="cba-field"><label for="id_username">Tên đăng nhập</label>
+            <input id="id_username" name="username" type="text" autocomplete="username" autofocus required value="{{ form.username.value|default_if_none:'' }}"></div>
+        <div class="cba-field"><label for="id_password">Mật khẩu</label>
+            <input id="id_password" name="password" type="password" autocomplete="current-password" required></div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="cba-primary cba-login-go">Đăng nhập</button>
+    </form>
+    <a class="cba-login-back" href="/">Quay về trang web</a>
+</main>
+</body>
+</html>

@@ -8,62 +8,176 @@
 
 {% block media %}
     <style>
-        .pr-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+        .pr-page { font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #15171C; }
+        .pr-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .pr-head h2 { margin: 0 0 4px; font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+        .pr-head p { margin: 0; font-size: 15px; color: #5E6470; }
+        .pr-stats { display: flex; border: 1px solid #DAD8D0; border-radius: 6px; background: #fff; }
+        .pr-stats div { padding: 10px 20px; }
+        .pr-stats div + div { border-left: 1px solid #DAD8D0; }
+        .pr-stats b { display: block; font-size: 22px; }
+        .pr-stats span { font-size: 12px; color: #5E6470; }
+        .pr-cols { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+        .pr-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; padding: 22px 24px; }
+        .pr-form { flex: 1 1 420px; display: flex; flex-direction: column; gap: 18px; }
+        .pr-side { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+        .pr-card h3 { margin: 0; font-size: 19px; font-weight: 700; }
+        .pr-field { display: flex; flex-direction: column; gap: 8px; }
+        .pr-label { font-size: 14px; font-weight: 600; }
+        .pr-hint { font-size: 12px; font-weight: 400; color: #5E6470; }
+        .pr-select, .pr-input { height: 42px; border: 1px solid #BDBAB0; border-radius: 6px; padding: 0 10px; font-size: 14px; background: #fff; color: #15171C; font-family: inherit; box-sizing: border-box; }
+        .pr-input { width: 120px; }
+        .pr-chips { display: flex; flex-wrap: wrap; gap: 8px; }
         .pr-chip { position: relative; cursor: pointer; }
         .pr-chip input { position: absolute; opacity: 0; pointer-events: none; }
-        .pr-chip span { display: inline-block; padding: 6px 16px; border-radius: 999px; border: 2px solid rgba(128, 128, 128, 0.4); font-weight: 700; user-select: none; }
-        .pr-chip small { opacity: 0.7; margin-left: 4px; }
-        .pr-chip:has(input:checked) span { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-        .pr-chip:has(input:focus-visible) span { outline: 3px solid #f59e0b; }
-        .pr-row-inline { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-bottom: 14px; }
-        .pr-row-inline input[type=number] { width: 90px; }
+        .pr-chip span { display: inline-block; padding: 7px 14px; border: 1px solid #BDBAB0; border-radius: 6px; font-size: 13px; background: #fff; user-select: none; }
+        .pr-chip small { color: #5E6470; margin-left: 4px; }
+        .pr-chip:has(input:checked) span { border-color: #1F3FBF; background: #E8ECFA; color: #1F3FBF; font-weight: 600; }
+        .pr-chip:has(input:focus-visible) span { outline: 2px solid #1F3FBF; outline-offset: 2px; }
+        .pr-chip[hidden] { display: none; }
+        .pr-seg { display: inline-flex; border: 1px solid #15171C; border-radius: 6px; overflow: hidden; align-self: flex-start; }
+        .pr-seg label { position: relative; cursor: pointer; }
+        .pr-seg input { position: absolute; opacity: 0; pointer-events: none; }
+        .pr-seg span { display: block; padding: 8px 16px; font-size: 14px; font-weight: 600; }
+        .pr-seg input:checked + span { background: #15171C; color: #fff; }
+        .pr-seg input:focus-visible + span { outline: 2px solid #1F3FBF; outline-offset: -2px; }
+        .pr-check { display: flex; gap: 10px; font-size: 14px; align-items: center; }
+        .pr-go { display: flex; align-items: center; justify-content: center; height: 48px; border: 0; border-radius: 6px; background: #1F3FBF; color: #fff; font-weight: 600; font-size: 15px; font-family: inherit; cursor: pointer; }
+        .pr-go:hover { background: #18329c; }
+        .pr-weak { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+        .pr-weak-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; }
+        .pr-weak-row b { font-weight: 600; }
+        .pr-weak-row span { color: #5E6470; font-variant-numeric: tabular-nums; }
+        .pr-bar { height: 8px; background: #E9E7E0; border-radius: 4px; overflow: hidden; }
+        .pr-bar i { display: block; height: 8px; }
+        .pr-note { font-size: 13px; color: #5E6470; margin: 10px 0 0; }
+        .pr-mhead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+        .pr-mhead a { font-size: 13px; font-weight: 600; color: #1F3FBF; }
+        .pr-mrow { padding: 12px 0; border-top: 1px solid #DAD8D0; display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+        .pr-mrow span:last-child { color: #5E6470; white-space: nowrap; }
+        .pr-empty { font-size: 14px; color: #5E6470; padding: 12px 0 0; }
     </style>
 {% endblock %}
 
 {% block body %}
     {% include "messages.html" %}
-    <section class="qz-form-card">
-        <h3 class="course-section-title" style="margin-top: 0">{{ _('Build a practice set') }}</h3>
-        <p class="qz-note">{{ _('Pick what you want to revise. You get instant feedback after each question, and wrong answers go to your mistake notebook.') }}</p>
-        {% if not topics and not tracks %}
-            <div class="course-empty course-empty-small"><p>{{ _('The question bank has no tagged questions yet.') }}</p></div>
-        {% endif %}
-        <form method="post">
-            {% csrf_token %}
-            {% if tracks %}
-                <b>{{ _('Track') }}</b>
-                <div class="pr-chips">
-                    {% for t in tracks %}<label class="pr-chip"><input type="checkbox" name="tracks" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+    <div class="pr-page">
+        <div class="pr-head">
+            <div>
+                <h2>{{ _('Practice') }}</h2>
+                <p>{{ _('Draw questions from the question bank, with priority to the ones you often get wrong.') }}</p>
+            </div>
+            <div class="pr-stats">
+                <div><b>{{ stats.streak }}</b><span>{{ _('days in a row') }}</span></div>
+                <div><b>{{ stats.answered }}</b><span>{{ _('questions answered') }}</span></div>
+                <div><b>{% if stats.percent is none %}-{% else %}{{ stats.percent }}%{% endif %}</b><span>{{ _('correct') }}</span></div>
+            </div>
+        </div>
+        <div class="pr-cols">
+            <form method="post" class="pr-card pr-form">
+                {% csrf_token %}
+                <h3>{{ _('Build a practice set') }}</h3>
+                {% if not topics and not tracks %}
+                    <div class="pr-empty">{{ _('The question bank has no tagged questions yet.') }}</div>
+                {% endif %}
+                <div class="pr-field">
+                    <label class="pr-label" for="pr-subject">{{ _('Subject') }}</label>
+                    <select class="pr-select" id="pr-subject" name="subject">
+                        {% for s in subjects %}<option value="{{ s.id }}"{% if s.id == default_subject_id %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                    </select>
                 </div>
-            {% endif %}
-            {% if topics %}
-                <b>{{ _('Topics') }}</b> <small>({{ _('none selected = all topics') }})</small>
-                <div class="pr-chips">
-                    {% for t in topics %}<label class="pr-chip"><input type="checkbox" name="tags" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+                {% if tracks %}
+                    <div class="pr-field">
+                        <span class="pr-label">{{ _('Track') }}</span>
+                        <div class="pr-chips">
+                            {% for t in tracks %}<label class="pr-chip" data-subjects="{{ tag_subjects.get(t.id, [])|join(',') }}"><input type="checkbox" name="tracks" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if topics %}
+                    <div class="pr-field">
+                        <span class="pr-label">{{ _('Chapter') }} <span class="pr-hint">({{ _('none selected = all topics') }})</span></span>
+                        <div class="pr-chips">
+                            {% for t in topics %}<label class="pr-chip" data-subjects="{{ tag_subjects.get(t.id, [])|join(',') }}"><input type="checkbox" name="tags" value="{{ t.id }}"><span>{{ t.name }}<small>{{ t.n }}</small></span></label>{% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="pr-field">
+                    <span class="pr-label">{{ _('Difficulty') }}</span>
+                    <div class="pr-seg">
+                        <label><input type="radio" name="level" value="1"><span>{{ _('Easy') }}</span></label>
+                        <label><input type="radio" name="level" value="2"><span>{{ _('Medium') }}</span></label>
+                        <label><input type="radio" name="level" value="3"><span>{{ _('Hard') }}</span></label>
+                        <label><input type="radio" name="level" value="0" checked><span>{{ _('Mixed') }}</span></label>
+                    </div>
                 </div>
-            {% endif %}
-
-            <b>{{ _('Difficulty') }}</b>
-            <div class="pr-chips">
-                <label class="pr-chip"><input type="radio" name="level" value="0" checked><span>{{ _('Any') }}</span></label>
-                <label class="pr-chip"><input type="radio" name="level" value="1"><span>{{ _('Easy') }}</span></label>
-                <label class="pr-chip"><input type="radio" name="level" value="2"><span>{{ _('Medium') }}</span></label>
-                <label class="pr-chip"><input type="radio" name="level" value="3"><span>{{ _('Hard') }}</span></label>
+                <div class="pr-field">
+                    <span class="pr-label">{{ _('Question type') }}</span>
+                    <div class="pr-seg">
+                        <label><input type="radio" name="kinds" value="" checked><span>{{ _('All') }}</span></label>
+                        <label><input type="radio" name="kinds" value="choice"><span>{{ _('Multiple choice') }}</span></label>
+                        <label><input type="radio" name="kinds" value="tf"><span>{{ _('True/False') }}</span></label>
+                    </div>
+                </div>
+                <div class="pr-field">
+                    <label class="pr-label" for="pr-count">{{ _('Questions') }}</label>
+                    <input class="pr-input" id="pr-count" type="number" name="count" value="{{ default_count }}" min="{{ min_count }}" max="{{ max_count }}">
+                </div>
+                <div class="pr-field">
+                    <label class="pr-label" for="pr-minutes">{{ _('Time limit (minutes, 0 = none)') }}</label>
+                    <input class="pr-input" id="pr-minutes" type="number" name="minutes" value="0" min="0" max="180">
+                </div>
+                <label class="pr-check"><input type="checkbox" name="prefer_wrong" checked> {{ _('Prefer questions I got wrong before') }}</label>
+                <label class="pr-check"><input type="checkbox" name="prefer_new"> {{ _('Prefer questions I have not mastered yet') }}</label>
+                <button type="submit" class="pr-go">{{ _('Start practising') }}</button>
+            </form>
+            <div class="pr-side">
+                <section class="pr-card">
+                    <h3>{{ _('Your weak topics') }}</h3>
+                    {% if weak %}
+                        <div class="pr-weak">
+                            {% for w in weak %}
+                                <div>
+                                    <div class="pr-weak-row"><b>{{ w.name }}</b><span>{{ w.pct }}% {{ _('correct') }} · {{ w.n }} {{ _('questions') }}</span></div>
+                                    <div class="pr-bar"><i style="width: {{ w.pct }}%; background: {{ w.color }}"></i></div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="pr-empty">{{ _('Not enough data yet. Practise a few sets and your weak topics will appear here.') }}</p>
+                    {% endif %}
+                </section>
+                <section class="pr-card">
+                    <div class="pr-mhead">
+                        <h3>{{ _('Mistake notebook') }}</h3>
+                        <a href="{{ url('practice_mistakes') }}">{% if mistake_total %}{{ _('See all') }} ({{ mistake_total }}){% else %}{{ _('Open') }}{% endif %}</a>
+                    </div>
+                    {% for r in mistake_rows %}
+                        <div class="pr-mrow"><span>{{ r.bank.text|truncatechars(90) }}</span><span>{{ r.when }}</span></div>
+                    {% else %}
+                        <p class="pr-empty">{{ _('Your mistake notebook is empty. Questions you answer wrongly will show up here.') }}</p>
+                    {% endfor %}
+                </section>
             </div>
+        </div>
+    </div>
+{% endblock %}
 
-            <b>{{ _('Question type') }}</b>
-            <div class="pr-chips">
-                <label class="pr-chip"><input type="radio" name="kinds" value="" checked><span>{{ _('All') }}</span></label>
-                <label class="pr-chip"><input type="radio" name="kinds" value="choice"><span>{{ _('Multiple choice') }}</span></label>
-                <label class="pr-chip"><input type="radio" name="kinds" value="tf"><span>{{ _('True/False') }}</span></label>
-            </div>
-
-            <div class="pr-row-inline">
-                <label>{{ _('Questions') }} <input type="number" name="count" value="{{ default_count }}" min="{{ min_count }}" max="{{ max_count }}"></label>
-                <label>{{ _('Time limit (minutes, 0 = none)') }} <input type="number" name="minutes" value="0" min="0" max="180"></label>
-                <label><input type="checkbox" name="prefer_new" checked> {{ _('Prefer questions I have not mastered yet') }}</label>
-            </div>
-            <button type="submit" class="course-join">{{ _('Start practising') }}</button>
-        </form>
-    </section>
+{% block js_media %}
+    <script>
+        $(function () {
+            var $subject = $('#pr-subject');
+            function sync() {
+                var id = String($subject.val());
+                $('.pr-chip[data-subjects]').each(function () {
+                    var list = (this.getAttribute('data-subjects') || '').split(',');
+                    var show = list.indexOf(id) !== -1;
+                    $(this).prop('hidden', !show);
+                    if (!show) $(this).find('input').prop('checked', false);
+                });
+            }
+            $subject.on('change', sync);
+            sync();
+        });
+    </script>
 {% endblock %}

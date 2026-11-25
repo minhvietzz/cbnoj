@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ quiz.title }} - {{ _('Answer key') }}</title>
+    {% include "quiz/variants/print_style.html" %}
+</head>
+<body>
+    <div class="vx-toolbar">
+        <button type="button" onclick="window.print()">{{ _('Print / Save PDF') }}</button>
+        <a href="{{ url('quiz_variants', quiz.slug) }}">{{ _('Back to exam codes') }}</a>
+    </div>
+    <main class="vx-sheet vx-key">
+        <header class="vx-title">
+            <h1>{{ quiz.title }}</h1>
+            <div class="vx-sub">{{ _('Answer key of all codes') }}</div>
+        </header>
+        <table>
+            <thead>
+                <tr>
+                    <th class="vx-kfirst">{{ _('Question') }}</th>
+                    {% for k in keys %}<th>{{ k.variant.code }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(keys[0].rows|length) %}
+                    <tr>
+                        <td class="vx-kfirst">{{ i + 1 }}</td>
+                        {% for k in keys %}<td>{{ k.rows[i].key if i < k.rows|length else '' }}</td>{% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

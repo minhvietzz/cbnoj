@@ -1,0 +1,41 @@
+{% extends "admin/delete_confirmation.html" %}
+{% load i18n admin_urls %}
+{% block content_title %}<div class="cba-head"><h1>Xóa "{{ object|truncatechars:50 }}"?</h1></div>{% endblock %}
+{% block content %}
+{% if perms_lacking or protected %}
+<div id="content-main" class="cba-del">
+    <div class="cba-danger"><b>Không xóa được.</b>
+    {% if perms_lacking %} Tài khoản của bạn không có quyền xóa các dữ liệu gắn kèm sau:{% endif %}
+    {% if protected %} Các dữ liệu sau đang được dùng nên phải xóa hoặc gỡ chúng trước:{% endif %}</div>
+    <section class="cba-card"><ul class="cba-plain">
+        {% for obj in perms_lacking %}<li>{{ obj }}</li>{% endfor %}
+        {% for obj in protected %}<li>{{ obj }}</li>{% endfor %}
+    </ul></section>
+    <p><a class="cba-btn cba-btn-line" href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">Quay lại</a></p>
+</div>
+{% else %}
+<div id="content-main" class="cba-del">
+    <div class="cba-danger"><b>Việc này không hoàn tác được.</b> Xóa {{ object_name }} "{{ object }}" sẽ xóa luôn các dữ liệu gắn với nó, liệt kê bên dưới. Nếu chỉ muốn ẩn đi, hãy đổi trạng thái thay vì xóa.</div>
+    <section class="cba-card cba-detail"><div class="cba-card-h">Sẽ bị xóa theo</div><ul>{{ deleted_objects|unordered_list }}</ul></section>
+    <form action="" method="post" id="cba-del-form">{% csrf_token %}
+        <input type="hidden" name="post" value="yes">
+        {% firstof object.code object.key object.username as cba_key %}
+        {% if cba_key %}
+        <div class="cba-confirm"><label for="cba-cf">Gõ <code>{{ cba_key }}</code> để xác nhận</label>
+            <input id="cba-cf" type="text" autocomplete="off" placeholder="{{ cba_key }}" data-expect="{{ cba_key }}"></div>
+        {% endif %}
+        <div class="cba-actions">
+            <button type="submit" class="cba-btn cba-btn-danger" id="cba-del-go"{% if cba_key %} disabled{% endif %}>Xóa vĩnh viễn</button>
+            <a class="cba-btn cba-btn-line" href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">Không xóa, quay lại</a>
+        </div>
+    </form>
+</div>
+<script>
+(function () {
+    var i = document.getElementById('cba-cf'), b = document.getElementById('cba-del-go');
+    if (!i) return;
+    i.addEventListener('input', function () { b.disabled = i.value.trim() !== i.getAttribute('data-expect'); });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -26,7 +26,7 @@ class QuizAdmin(admin.ModelAdmin):
     actions = ['publish_results', 'hide_results']
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'description', 'creator', 'source_name')}),
-        (_('Mode'), {'fields': ('mode', 'course', 'track', 'is_public', 'lesson')}),
+        (_('Mode'), {'fields': ('mode', 'course', 'subject', 'classes', 'track', 'is_public', 'lesson')}),
         (_('Mock exam'), {'fields': ('start_time', 'end_time', 'time_limit', 'max_attempts', 'questions_per_attempt',
                                      'proctoring',
                                      'max_violations', 'results_release', 'results_published', 'extra_minutes',

@@ -1,0 +1,49 @@
+{# Dashboard blocks of the home page: unfinished class assignments and exams that start soon. #}
+{% if home_todo or home_exams %}
+<style>
+    .hd { font-family: 'Be Vietnam Pro', 'Nunito', system-ui, sans-serif; color: #15171C; display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
+    .hd-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; }
+    .hd-card h2 { margin: 0; padding: 16px 22px 10px; font-size: 18px; font-weight: 700; display: flex; justify-content: space-between; align-items: baseline; }
+    .hd a { color: inherit; text-decoration: none; }
+    .hd-row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 13px 22px; border-top: 1px solid #DAD8D0; font-size: 14px; }
+    .hd-row b { font-weight: 600; }
+    .hd-sub { font-size: 12px; color: #5E6470; }
+    .hd-cta { display: inline-block; padding: 7px 14px; border: 1px solid #15171C; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    .hd-date { width: 48px; text-align: center; border: 1px solid #15171C; border-radius: 6px; padding: 5px 0; line-height: 1.1; flex: none; }
+    .hd-date span { display: block; font-size: 11px; font-weight: 600; color: #5E6470; }
+    .hd-date b { display: block; font-size: 20px; }
+    .hd-link { font-size: 13px; font-weight: 600; color: #1F3FBF !important; }
+    body[data-theme="dark"] .hd, body[data-theme="dark"] .hd-card { color: #ECEEF4; }
+    body[data-theme="dark"] .hd-card { background: #1C1F29; border-color: #343949; }
+    body[data-theme="dark"] .hd-row { border-top-color: #343949; }
+    body[data-theme="dark"] .hd-cta { border-color: #ECEEF4; }
+</style>
+<div class="hd">
+    {% if home_todo %}
+    <section class="hd-card">
+        <h2>{{ _('To do first') }} <a class="hd-link" href="{{ url('class_list') }}">{{ _('My classes') }}</a></h2>
+        {% for t in home_todo %}
+            {% set a = t.assignment %}
+            <div class="hd-row">
+                <span><b>{{ a.title }}</b><br><span class="hd-sub">{{ a.classroom.name }} · {{ a.get_kind_display() }}</span></span>
+                <span style="display:flex;gap:16px;align-items:center">
+                    <span style="font-variant-numeric:tabular-nums;font-size:13px">{% if a.due %}{{ _('Due') }} {{ a.due|date('d/m H:i') }}{% else %}{{ _('No deadline') }}{% endif %}</span>
+                    <a class="hd-cta" href="{{ url('class_assignments', a.classroom.slug) }}">{% if t.started %}{{ _('Continue') }}{% else %}{{ _('Start') }}{% endif %}</a>
+                </span>
+            </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% if home_exams %}
+    <section class="hd-card">
+        <h2>{{ _('Upcoming exams') }}</h2>
+        {% for e in home_exams %}
+            <a class="hd-row" href="{{ e.url }}" style="justify-content:flex-start">
+                <span class="hd-date"><span>{{ e.when|date('M')|upper }}</span><b>{{ e.when|date('d') }}</b></span>
+                <span><b>{{ e.name }}</b><br><span class="hd-sub">{{ _('Quiz') if e.kind == 'quiz' else _('Contest') }}{% if e.minutes %} · {{ e.minutes }} {{ _('minutes') }}{% endif %} · {{ e.when|date('H:i') }}</span></span>
+            </a>
+        {% endfor %}
+    </section>
+    {% endif %}
+</div>
+{% endif %}

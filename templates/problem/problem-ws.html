@@ -257,13 +257,36 @@
                 $('#language').append($('<span class="ws-spacer"></span>')).append($actions.addClass('in-bar'));
             }
 
-            $('#pdf_button').click(async function (e) {
+            // no server-side PDF renderer: load the statement in a hidden frame and open the print dialog from here
+            $('#pdf_button').click(function (e) {
                 e.preventDefault();
-                if (!$('#raw_problem').attr('src')) $('#raw_problem').attr('src', '{{ problem.code }}/raw');
-                while (!$('.math-loaded', frames['raw_problem'].document).length) {
-                    await new Promise(function (r) { setTimeout(r, 200); });
-                }
-                frames['raw_problem'].print();
+                var $a = $(this);
+                if ($a.data('busy')) return;
+                $a.data('busy', true);
+                var label = $a.text();
+                $a.text('Đang chuẩn bị…');
+                $('#raw_problem').remove();
+                var f = document.createElement('iframe');
+                f.id = 'raw_problem'; f.name = 'raw_problem';
+                f.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+                function done() { $a.text(label).data('busy', false); }
+                f.onload = function () {
+                    var tries = 0;
+                    var timer = setInterval(function () {
+                        tries++;
+                        var d = null;
+                        try { d = f.contentWindow.document; } catch (err) {}
+                        var math = d && d.querySelector('.math, mjx-container, .MathJax');
+                        var ready = d && (d.querySelector('.math-loaded') || !math || tries > 25);
+                        if (ready) {
+                            clearInterval(timer);
+                            try { f.contentWindow.focus(); f.contentWindow.print(); } catch (err) {}
+                            done();
+                        } else if (!d && tries > 25) { clearInterval(timer); done(); }
+                    }, 400);
+                };
+                f.src = {{ url('problem_raw', problem.code)|htmltojs }};
+                document.body.appendChild(f);
             });
 
             {% if request.user.is_authenticated and form %}
@@ -633,9 +656,9 @@
                     {% endif %}
                     <span class="ws-spacer"></span>
                     <button type="button" id="ws-reset-layout" class="ws-btn ghost" title="Đưa các khung về kích thước mặc định">Đặt lại khung</button>
-                    <button type="button" id="ws-old" class="ws-btn ghost" title="Quay lại giao diện cũ">Giao diện cũ</button>
                 </div>
                 <div id="pane-statement" class="ws-pane {{ '' if comments_open else 'active' }} content-description screen">
+                    <div class="ws-crumb"><a href="{{ url('problem_list') }}">{{ _('Problems') }}</a> / <span class="ws-code">{{ problem.code }}</span></div>
                     <h1 class="ws-title">{% if request.user.is_authenticated and problem.id in completed_problem_ids %}<i class="fa fa-check-circle" style="color: var(--ws-ok)"></i> {% endif %}{{ title }}</h1>
                     <div class="ws-chips" style="margin-bottom: 16px">
                         {% if problem.is_organization_private and problem.organization %}
@@ -687,7 +710,7 @@
                     {% endif %}
                     {% if can_edit_problem or problem.is_subs_manageable_by(request.user) %}
                         <details class="ws-manage">
-                            <summary><a href="#" onclick="return false">Quản lý &#9662;</a></summary>
+                            <summary>Quản lý</summary>
                             <div>
                                 {% if can_edit_problem %}
                                     <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('Manage tickets') }}{% if num_open_tickets %} ({{ num_open_tickets }}){% endif %}</a>

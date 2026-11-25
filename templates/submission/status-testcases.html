@@ -1,5 +1,6 @@
+{% from "bp/macros.html" import chip_class %}
 {% macro make_status(case) %}
-    <span title="{{ case.long_status }}" class="case-{{- case.result_class -}}">
+    <span title="{{ case.long_status }}" class="bp-chip {{ chip_class(case.result_class) }}">
         {%- if case.status == 'SC' %}&mdash;{% else %}{{ case.long_status }}{% endif -%}
     </span>
 {% endmacro %}
@@ -26,53 +27,48 @@
 
 {% if submission.status != 'IE' %}
     {% if submission.status == 'QU' %}
-        <h4>{{ _('We are waiting for a suitable judge to process your submission...') }}</h4>
+        <div class="sd-note"><i class="fa fa-spinner fa-pulse"></i> {{ _('We are waiting for a suitable judge to process your submission...') }}</div>
     {% elif submission.status == 'P' %}
-        <h4>{{ _('Your submission is being processed...') }}</h4>
+        <div class="sd-note"><i class="fa fa-spinner fa-pulse"></i> {{ _('Your submission is being processed...') }}</div>
     {% elif submission.status == 'CE' %}
-        <h3>{{ _('Compilation Error') }}</h3>
-        <pre>{{ submission.error|ansi2html }}</pre>
+        <h3 class="sd-h">{{ _('Compilation Error') }}</h3>
+        <pre class="sd-pre">{{ submission.error|ansi2html }}</pre>
         {% set hints = submission.error|compile_hints %}
         {% if hints %}
-            <div class="compile-hints" style="margin: 0.8em 0; padding: 0.7em 1em; border-left: 4px solid #f0a500; background: rgba(240, 165, 0, 0.10); border-radius: 6px;">
+            <div class="compile-hints sd-hint">
                 <b><i class="fa fa-lightbulb-o"></i> {{ _('Possible causes') }}</b>
-                <ul style="margin: 0.4em 0 0 1.2em;">
+                <ul>
                     {% for hint in hints %}<li>{{ hint }}</li>{% endfor %}
                 </ul>
             </div>
         {% endif %}
     {% else %}
         {% if submission.error %}
-            <h3>{{ _('Compilation Warnings') }}</h3>
-            <pre>{{ submission.error|ansi2html }}</pre>
-            <hr class="half-hr"><br>
+            <h3 class="sd-h">{{ _('Compilation Warnings') }}</h3>
+            <pre class="sd-pre">{{ submission.error|ansi2html }}</pre>
         {% endif %}
         {% if is_pretest %}
-            <h3>{{ _('Pretest Execution Results') }}</h3>
+            <h3 class="sd-h">{{ _('Pretest Execution Results') }}</h3>
         {% else %}
-            <h3>{{ _('Execution Results') }}</h3>
+            <h3 class="sd-h">{{ _('Execution Results') }}</h3>
         {% endif %}
-        <br>
         {% if can_view_testcase_status or can_view_batch_status %}
         {% if statuses or not submission.is_graded %}
+            <div class="sd-dots">
             {% for case in statuses %}
                 {% if case.status in ("AC", "PAC") %}
-                    <span class="fa fa-check case-{{ case.result_class }}"></span>
+                    <span class="sd-dot ok" title="{{ case.long_status }}"></span>
                 {% elif case.status == "SC" %}
-                    <span class="case-SC">&ndash;</span>
+                    <span class="sd-dot sc" title="{{ case.long_status }}"></span>
                 {% else %}
-                    <a href="#{{ case.id }}">
-                        <span class="fa fa-times case-{{ case.status }} case-bad"></span>
-                    </a>
+                    <a href="#{{ case.id }}" class="sd-dot {{ chip_class(case.result_class) }}" title="{{ case.long_status }}"></a>
                 {% endif %}
-                {% if case.num_combined > 1 %}
-                    <sup class="case-{{ case.status }}">&times;{{ case.num_combined }}</sup>
-                {% endif %}
+                {% if case.num_combined > 1 %}<sup class="bp-mute">&times;{{ case.num_combined }}</sup>{% endif %}
             {% endfor %}
             {% if not submission.is_graded %}
                 <span class="fa fa-spinner fa-pulse"></span>
             {% endif %}
-            <br><br>
+            </div>
         {% else %}
             <div>
                 <div class="alert alert-warning comment-lock">
@@ -84,12 +80,11 @@
         {% set test_case_counter = counter() %}
         {% for batch in batches %}
             {% if batch.id %}
-                {{ make_batch_status(batch, test_case_id()) }}
-                <br>
+                <div class="sd-batch">{{ make_batch_status(batch, test_case_id()) }}</div>
                 <div class="batch-cases">
             {% endif %}
         {% if can_view_testcase_status %}
-        <table class="submissions-status-table">{% for case in batch.cases %}
+        <table class="bp-table sd-cases submissions-status-table"><thead><tr><th>#</th><th>{{ _('Result') }}</th><th class="bp-r">{{ _('Time') }}</th><th class="bp-r">{{ _('Memory') }}</th>{% if not batch.id %}<th class="bp-r">{{ _('Score') }}</th>{% endif %}</tr></thead><tbody>{% for case in batch.cases %}
             {% set current_test_case_count = test_case_counter() %}
             {% set print_case_output = can_view_test and case.output %}
             {% set print_case_ext_feedback = case.extended_feedback
@@ -100,7 +95,7 @@
             {% set has_extended_data = print_case_output or print_case_ext_feedback or (can_view_test and curr_data) %}
 
             <tr id="{{ case.id }}" class="case-row toggle closed">
-                <td>
+                <td class="sd-case-n">
                     {%- if has_extended_data -%}
                         <i class="fa fa-chevron-right fa-fw"></i>
                     {%- endif -%}
@@ -115,29 +110,29 @@
 
                 <td>
                     {{ make_status(case) }}
-                    {%- if case.feedback %}&nbsp;({{ case.feedback }}){% endif -%}
+                    {%- if case.feedback %} <span class="bp-mute">({{ case.feedback }})</span>{% endif -%}
                 </td>
 
-                <td>
+                <td class="bp-r bp-mono">
                     {%- if case.status != 'SC' -%}
                         {%- if case.status == 'TLE' -%}
-                            [&gt;<span>{{ time_limit|floatformat(3) }}s,</span>
+                            &gt;<span>{{ time_limit|floatformat(3) }} s</span>
                         {%- else -%}
-                            [<span title="{{ case.time }}s">{{ case.time|floatformat(3) }}s,</span>
+                            <span title="{{ case.time }}s">{{ case.time|floatformat(3) }} s</span>
                         {%- endif -%}
                     {%- endif -%}
                 </td>
 
-                <td>{% if case.status != 'SC' %}{{ case.memory|kbdetailformat }}]{% endif %}</td>
+                <td class="bp-r bp-mono">{% if case.status != 'SC' and case.memory is not none %}{{ case.memory|kbdetailformat }}{% endif %}</td>
 
                 {% if not batch.id %}
-                    <td>({{ case.points|floatformat(-3) }}/{{ case.total|floatformat(0) }})</td>
+                    <td class="bp-r bp-mono">{{ case.points|floatformat(-3) }}/{{ case.total|floatformat(0) }}</td>
                 {% endif %}
             </tr>
 
             {% if has_extended_data %}
                 <tr id="{{ case.id }}-output" style="display:none" class="case-feedback toggled">
-                    <td colspan="5" class="case-output">
+                    <td colspan="5" class="case-output sd-out">
                         <div class="case-info">
                             {% if can_view_test and curr_data %}
                                 <strong>{{ _('Input:') }}</strong>
@@ -163,58 +158,46 @@
                 </tr>
             {% endif %}
         {% endfor %}
-        </table>
+        </tbody></table>
         {% endif %}
 
         {% if batch.id %}</div>{% endif %}
-            <br>
         {% endfor %}
         {% if statuses and submission.is_graded %}
-            <br>
+            <dl class="sd-sum">
             {% if submission.result != "AB" %}
                 {% if can_view_testcase_status %}
-                    <b>{{ _('Resources:') }}</b>
-                    {% if submission.result == "TLE" %}
-                        <span>---,</span>
-                    {% else %}
-                        <span title="{{ submission.time }}s">{{ submission.time|floatformat(3) }}s,</span>
-                    {% endif %}
-                    {{ submission.memory|kbdetailformat }}
-                    <br>
+                    <div><dt>{{ _('Resources:') }}</dt><dd class="bp-mono">
+                        {% if submission.result == "TLE" %}---{% else %}<span title="{{ submission.time }}s">{{ submission.time|floatformat(3) }} s</span>{% endif %}
+                        {% if submission.memory is not none %}· {{ submission.memory|kbdetailformat }}{% endif %}
+                    </dd></div>
                 {% endif %}
-                {% if is_pretest %}
-                    <b>{{ _('Final pretest score:') }}</b>
-                {% else %}
-                    <b>{{ _('Final score:') }}</b>
-                {% endif %}
-                {{ submission.case_points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}
+                <div><dt>{% if is_pretest %}{{ _('Final pretest score:') }}{% else %}{{ _('Final score:') }}{% endif %}</dt><dd><b>{{ submission.case_points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}</b>
                 {% if request.in_contest and submission.contest_or_none %}
                     {% with contest=submission.contest_or_none %}
                         {% set points=contest.points|roundfloat(3) %}
                         {% set total=contest.problem.points|floatformat(-1) %}
-                        ({{ _('%(points)s/%(total)s points', points=points, total=total) }})
+                        <span class="bp-mute">({{ _('%(points)s/%(total)s points', points=points, total=total) }})</span>
                     {% endwith %}
                 {% else %}
                     {% with points=submission.points|floatformat(3), total=submission.problem.points|floatformat(3) %}
-                        ({{ _('%(points)s/%(total)s points', points=points, total=total) }})
+                        <span class="bp-mute">({{ _('%(points)s/%(total)s points', points=points, total=total) }})</span>
                     {% endwith %}
                 {% endif %}
+                </dd></div>
                 {% if is_pretest and submission.result in ("AC", "PAC") %}
-                    <br>
-                    <i>{{ _('Passing pretests does not guarantee a full score on system tests.') }}</i>
+                    <div><dd><i>{{ _('Passing pretests does not guarantee a full score on system tests.') }}</i></dd></div>
                 {% endif %}
             {% else %}
-                <b>{{ _('Submission aborted!') }}</b>
+                <div><dd><b>{{ _('Submission aborted!') }}</b></dd></div>
             {% endif %}
-            <br>
+            </dl>
         {% endif %}
         {% else %}
         {% if not submission.is_graded %}
             <span class="fa fa-spinner fa-pulse"></span>
         {% endif %}
-        <div class="sub-result {{ submission.result_class }}" style="width: fit-content; padding: 10px;">
-            {{ submission.long_status }}
-        </div>
+        <span class="bp-chip {{ chip_class(submission.result_class) }}">{{ submission.long_status }}</span>
 
         {% endif %}
     {% endif %}

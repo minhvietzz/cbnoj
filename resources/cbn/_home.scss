@@ -1,0 +1,954 @@
+// Learning home page (Main.dc.html): white greeting band + stat boxes, "To do first" table, "Continue learning",
+// news cards, and a right column (exams, activity grid, leaderboard, new problems, comments).
+// Also holds the small mixins that the profile and course partials reuse (imported after this file).
+// Class prefix: lh-
+
+// ---- shared pieces (used by _courses.scss and _profile.scss as well) ---------------------------------------------
+@mixin la-tokens {
+    --la-l0: #edebe4;
+    --la-l1: #cbd5f5;
+    --la-l2: #98abea;
+    --la-l3: #5a76d8;
+    --la-l4: #1f3fbf;
+}
+
+@mixin la-tokens-dark {
+    --la-l0: #2a2e3a;
+    --la-l1: #26346e;
+    --la-l2: #34479a;
+    --la-l3: #5470e0;
+    --la-l4: #8aa0f6;
+}
+
+// full-bleed white band behind a page header
+@mixin la-band {
+    position: relative;
+    isolation: isolate;
+
+    &::before {
+        content: "";
+        display: block;
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 100vw;
+        transform: translateX(-50%);
+        background: var(--c-card);
+        border-bottom: 1px solid var(--c-line);
+    }
+}
+
+@mixin la-card {
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    box-shadow: none;
+    min-width: 0;
+}
+
+@mixin la-heat-cells {
+    > i {
+        display: block;
+        aspect-ratio: 1 / 1;
+        border-radius: 2px;
+        background: var(--la-l0);
+
+        &.lv1 { background: var(--la-l1); }
+        &.lv2 { background: var(--la-l2); }
+        &.lv3 { background: var(--la-l3); }
+        &.lv4 { background: var(--la-l4); }
+    }
+}
+
+body.cbn-ui .lh, body.cbn-ui .pf, body.cbn-ui .crs {
+    @include la-tokens;
+}
+
+body.cbn-ui[data-theme="dark"] .lh, body.cbn-ui[data-theme="dark"] .pf, body.cbn-ui[data-theme="dark"] .crs {
+    @include la-tokens-dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    body.cbn-ui[data-theme="auto"] .lh, body.cbn-ui[data-theme="auto"] .pf, body.cbn-ui[data-theme="auto"] .crs {
+        @include la-tokens-dark;
+    }
+}
+
+// the white band starts right under the top bar
+body.cbn-ui #content-body:has(> .lh, > .crs) {
+    padding-top: 0;
+}
+
+// ---- band -------------------------------------------------------------------------------------------------------
+body.cbn-ui .lh-band {
+    @include la-band;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    padding: 40px 0 32px;
+}
+
+body.cbn-ui .lh-hello {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    max-width: 680px;
+
+    h1 {
+        margin: 0;
+        font-size: 36px;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--c-ink);
+        overflow-wrap: anywhere;
+        text-wrap: balance;
+    }
+
+    p {
+        margin: 0;
+        color: var(--c-mute);
+        font-size: 16px;
+    }
+}
+
+body.cbn-ui .lh-eyebrow {
+    font-family: var(--cbn-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .lh-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+body.cbn-ui dl.lh-stats {
+    display: flex;
+    margin: 0;
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+
+    > div {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 2px;
+        padding: 14px 24px;
+        min-width: 0;
+
+        + div {
+            border-left: 1px solid var(--c-line);
+        }
+    }
+
+    dd {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.25;
+        font-weight: 700;
+        color: var(--c-ink);
+        font-variant-numeric: tabular-nums;
+    }
+
+    dt {
+        font-size: 12px;
+        color: var(--c-mute);
+        font-weight: 400;
+    }
+}
+
+// ---- buttons ----------------------------------------------------------------------------------------------------
+body.cbn-ui a.lh-btn, body.cbn-ui a.lh-btn:link, body.cbn-ui a.lh-btn:visited, body.cbn-ui button.lh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 20px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    background: var(--c-card);
+    color: var(--c-ink);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+    text-decoration: none;
+
+    &:hover {
+        background: var(--c-bg);
+        color: var(--c-ink);
+    }
+
+    &.lh-btn-fill, &.lh-btn-fill:link, &.lh-btn-fill:visited {
+        background: var(--c-blue);
+        border-color: var(--c-blue);
+        color: #fff;
+
+        &:hover {
+            background: var(--c-blue-h);
+            border-color: var(--c-blue-h);
+            color: #fff;
+        }
+    }
+
+    &.lh-btn-sm {
+        height: auto;
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+}
+
+// ---- layout -----------------------------------------------------------------------------------------------------
+body.cbn-ui .lh-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    gap: 24px;
+    align-items: start;
+    padding: 32px 0 0;
+}
+
+body.cbn-ui .lh-main, body.cbn-ui .lh-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    body.cbn-ui .lh-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.cbn-ui .lh-band {
+        padding: 28px 0 24px;
+    }
+
+    body.cbn-ui .lh-hello h1 {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 520px) {
+    body.cbn-ui dl.lh-stats {
+        width: 100%;
+
+        > div {
+            flex: 1 1 0;
+            padding: 12px 10px;
+        }
+
+        dd {
+            font-size: 22px;
+        }
+    }
+}
+
+// ---- cards ------------------------------------------------------------------------------------------------------
+body.cbn-ui .lh-card {
+    @include la-card;
+    overflow: hidden;
+
+    h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui .lh-card-pad {
+    padding: 18px 24px 20px;
+
+    h2 {
+        margin-bottom: 14px;
+    }
+}
+
+body.cbn-ui .lh-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 18px 24px 12px;
+
+    > a {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--c-blue);
+        white-space: nowrap;
+    }
+}
+
+body.cbn-ui .lh-sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .lh-mute { color: var(--c-mute); }
+body.cbn-ui .lh-nowrap { white-space: nowrap; }
+body.cbn-ui .lh-right { text-align: right; }
+body.cbn-ui .lh-mono { font-family: var(--cbn-mono); font-size: 13px; }
+
+body.cbn-ui .lh-empty {
+    margin: 0;
+    padding: 14px 24px 20px;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-mute);
+    font-size: 14px;
+}
+
+body.cbn-ui .lh-scroll {
+    overflow-x: auto;
+}
+
+// ---- table ------------------------------------------------------------------------------------------------------
+body.cbn-ui table.lh-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 0;
+    background: transparent;
+
+    th {
+        padding: 10px 16px;
+        border: 0;
+        border-bottom: 2px solid var(--c-ink);
+        background: transparent;
+        color: var(--c-mute);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-align: left;
+        text-transform: uppercase;
+        white-space: nowrap;
+
+        &.lh-right { text-align: right; }
+    }
+
+    td {
+        padding: 13px 16px;
+        border: 0;
+        border-bottom: 1px solid var(--c-line);
+        background: transparent;
+        font-size: 14px;
+        color: var(--c-ink);
+        vertical-align: middle;
+
+        &.lh-right { text-align: right; }
+    }
+
+    tr:last-child td {
+        border-bottom: 0;
+    }
+
+    th:first-child, td:first-child {
+        padding-left: 24px;
+    }
+
+    th:last-child, td:last-child {
+        padding-right: 24px;
+    }
+
+    td b {
+        font-weight: 600;
+    }
+
+    &.lh-table-tight {
+        th, td {
+            padding-top: 9px;
+            padding-bottom: 9px;
+        }
+
+        td:first-child, th:first-child {
+            width: 28px;
+        }
+    }
+}
+
+// ---- courses ----------------------------------------------------------------------------------------------------
+body.cbn-ui a.lh-course, body.cbn-ui a.lh-course:link, body.cbn-ui a.lh-course:visited {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 24px;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-ink);
+
+    &:hover {
+        background: var(--c-soft);
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui .lh-letter {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+    font-weight: 700;
+}
+
+body.cbn-ui .lh-course-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+
+    > b {
+        font-size: 15px;
+        font-weight: 600;
+    }
+}
+
+body.cbn-ui .lh-bar {
+    display: block;
+    height: 6px;
+    background: var(--c-track);
+    border-radius: 3px;
+    overflow: hidden;
+
+    i {
+        display: block;
+        height: 6px;
+        background: var(--c-blue);
+    }
+}
+
+body.cbn-ui .lh-course-meta {
+    flex: none;
+    min-width: 90px;
+    text-align: right;
+    font-size: 13px;
+    color: var(--c-mute);
+}
+
+@media (max-width: 520px) {
+    body.cbn-ui a.lh-course {
+        flex-wrap: wrap;
+        gap: 10px 14px;
+    }
+
+    body.cbn-ui .lh-course-meta {
+        flex: 1 0 100%;
+        text-align: left;
+        min-width: 0;
+        padding-left: 58px;
+        margin-top: -6px;
+    }
+}
+
+// ---- news -------------------------------------------------------------------------------------------------------
+body.cbn-ui .lh-switch {
+    display: inline-flex;
+    gap: 16px;
+
+    a {
+        padding-bottom: 2px;
+        border-bottom: 2px solid transparent;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--c-mute);
+
+        &.on {
+            border-bottom-color: var(--c-blue);
+            color: var(--c-ink);
+            font-weight: 700;
+        }
+    }
+}
+
+body.cbn-ui .lh-search form {
+    display: flex;
+    gap: 10px;
+    padding: 0 24px 14px;
+
+    input {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--c-input);
+        border-radius: 6px;
+        background: var(--c-card);
+        color: var(--c-ink);
+        font-family: inherit;
+    }
+}
+
+body.cbn-ui .lh-post {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--c-line);
+    min-width: 0;
+
+    &.lh-post-sticky {
+        --lh-fade: var(--c-soft);
+        background: var(--c-soft);
+    }
+}
+
+body.cbn-ui .lh-vote {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: 28px;
+    color: var(--c-mute);
+
+    a {
+        color: var(--c-mute);
+        font-size: 13px;
+        line-height: 1.4;
+
+        &:hover, &.voted {
+            color: var(--c-blue);
+        }
+    }
+
+    .lh-score {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui .lh-post-main {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    h3 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        line-height: 1.35;
+        font-weight: 700;
+
+        a {
+            color: var(--c-ink);
+
+            &:hover {
+                color: var(--c-blue);
+            }
+        }
+    }
+}
+
+body.cbn-ui .lh-byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--c-mute);
+
+    a {
+        color: inherit;
+    }
+}
+
+body.cbn-ui .lh-post-body, body.cbn-ui .lh-post-body.content-description {
+    margin: 0;
+    padding: 0;
+    color: var(--c-ink);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+    max-height: 210px;
+    overflow: hidden;
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 44px;
+        background: linear-gradient(to bottom, transparent, var(--lh-fade, var(--c-card)));
+        pointer-events: none;
+    }
+
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+    img { max-width: 100%; height: auto; }
+    pre { max-width: 100%; overflow-x: auto; }
+    table { display: block; max-width: 100%; overflow-x: auto; }
+
+    pre, .highlight, .highlight pre {
+        background: var(--c-soft);
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui a.lh-more, body.cbn-ui a.lh-more:link, body.cbn-ui a.lh-more:visited {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cbn-ui .lh-pages {
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--c-line);
+
+    .pagination { margin: 0; }
+}
+
+// ---- right column -----------------------------------------------------------------------------------------------
+body.cbn-ui a.lh-exam, body.cbn-ui a.lh-exam:link, body.cbn-ui a.lh-exam:visited {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 24px;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-ink);
+
+    &:hover {
+        background: var(--c-soft);
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui .lh-date {
+    flex: none;
+    min-width: 52px;
+    padding: 5px 6px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    text-align: center;
+    line-height: 1.1;
+
+    span {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--c-mute);
+        white-space: nowrap;
+    }
+
+    b {
+        display: block;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    &.lh-date-live {
+        border-color: var(--c-ok-fg);
+
+        span {
+            color: var(--c-ok-fg);
+        }
+    }
+}
+
+body.cbn-ui .lh-exam-t {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+
+    b {
+        font-size: 14px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+}
+
+body.cbn-ui .lh-heat {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 4px;
+
+    @include la-heat-cells;
+}
+
+body.cbn-ui .lh-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--c-mute);
+}
+
+body.cbn-ui a.lh-row, body.cbn-ui a.lh-row:link, body.cbn-ui a.lh-row:visited {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 11px 24px;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-ink);
+    font-size: 14px;
+
+    b {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    &:hover {
+        background: var(--c-soft);
+        color: var(--c-blue);
+    }
+}
+
+body.cbn-ui .lh-comment {
+    padding: 10px 24px;
+    border-top: 1px solid var(--c-line);
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+
+    .lh-poster {
+        display: block;
+        font-weight: 600;
+    }
+}
+
+body.cbn-ui .lh-feeds {
+    padding: 10px 24px 14px;
+    border-top: 1px solid var(--c-line);
+    font-size: 12px;
+    color: var(--c-mute);
+}
+
+// ---- top-bar drop-downs (NavMenus.dc.html): header row, square icon + name + one line of text ---------------------
+body.cbn-ui nav#navigation ul#nav-list li > ul.nm-menu {
+    min-width: 300px;
+    padding: 0;
+
+    &.nm-menu-wide {
+        min-width: 320px;
+    }
+
+    > li.nm-head {
+        display: block;
+        padding: 10px 18px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--c-mute);
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    > li > a.nm-item, > li > a.nm-item:link, > li > a.nm-item:visited {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px !important;
+        border-top: 1px solid var(--c-line2);
+        white-space: normal;
+
+        &:hover {
+            background: var(--c-bg);
+        }
+
+        &:hover b {
+            color: var(--c-blue);
+        }
+    }
+
+    > li:first-child > a.nm-item {
+        border-top: 1px solid var(--c-line2);
+    }
+
+    > li > a.nm-foot, > li > a.nm-foot:link, > li > a.nm-foot:visited {
+        display: block;
+        padding: 12px 18px !important;
+        border-top: 1px solid var(--c-line2);
+        color: var(--c-blue);
+        font-size: 13px;
+        font-weight: 600;
+
+        &:hover {
+            color: var(--c-blue-h);
+        }
+    }
+
+    > li.nm-links {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 18px;
+        border-top: 1px solid var(--c-line2);
+
+        align-items: flex-start;
+
+        > a, > a:link, > a:visited {
+            display: block;
+            width: auto;
+            padding: 6px 0 !important;
+            border: 0 !important;
+            font-size: 13px;
+            font-weight: 400;
+            text-align: left;
+            color: var(--c-mute) !important;
+
+            &:hover {
+                color: var(--c-blue) !important;
+            }
+        }
+    }
+}
+
+body.cbn-ui .nm-ico {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+    font-family: var(--cbn-mono);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+
+    &.nm-ico-green {
+        background: var(--c-ok-bg);
+        color: var(--c-ok-fg);
+        font-family: var(--cbn-sans);
+    }
+
+    &.nm-ico-gold {
+        background: var(--c-warn-bg);
+        color: var(--c-warn-fg);
+        font-family: var(--cbn-sans);
+    }
+
+    &.nm-ico-navy {
+        background: var(--c-navy);
+        color: var(--c-gold);
+        font-family: var(--cbn-sans);
+    }
+}
+
+body.cbn-ui .nm-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    b {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--c-ink);
+    }
+
+    span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--c-mute);
+    }
+}
+
+// collapsed (phone) menu: the drop-down parts are listed under their parent on the navy background
+@media (max-width: 760px) {
+    body.cbn-ui nav#navigation ul#nav-list > li > ul.nm-menu {
+        min-width: 0;
+
+        > li.nm-head {
+            display: none;
+        }
+
+        > li > a.nm-item, > li > a.nm-item:link, > li > a.nm-item:visited {
+            padding: 10px 4px !important;
+            border-top: 0;
+            color: var(--c-navy-text) !important;
+
+            .nm-txt b {
+                color: var(--c-navy-text);
+            }
+
+            .nm-txt span {
+                color: var(--c-navy-text);
+                opacity: 0.7;
+            }
+        }
+
+        > li > a.nm-foot, > li > a.nm-foot:link, > li > a.nm-foot:visited {
+            padding: 10px 4px !important;
+            border-top: 0;
+            color: var(--c-gold) !important;
+        }
+
+        > li.nm-links {
+            border-top: 0;
+            padding: 4px 4px;
+
+            > a, > a:link, > a:visited {
+                color: var(--c-navy-text) !important;
+            }
+        }
+    }
+}
+
+// collapsed menu: top-level rows need their own height (the generic rule left them 17px tall)
+@media (max-width: 760px) {
+    body.cbn-ui nav#navigation ul#nav-list > li > a, body.cbn-ui nav#navigation ul#nav-list > li > a:link,
+    body.cbn-ui nav#navigation ul#nav-list > li > a:visited {
+        padding: 12px 4px !important;
+    }
+}
+
+// phone: each assignment becomes a small stacked row instead of a squeezed four-column table
+@media (max-width: 600px) {
+    body.cbn-ui table.lh-todo {
+        display: block;
+
+        thead {
+            display: none;
+        }
+
+        tbody {
+            display: block;
+        }
+
+        tr {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 14px;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--c-line);
+        }
+
+        tr:last-child {
+            border-bottom: 0;
+        }
+
+        td, td:first-child, td:last-child {
+            display: block;
+            padding: 0;
+            border: 0;
+        }
+
+        td:nth-child(1) {
+            flex: 1 0 100%;
+        }
+
+        td:nth-child(4) {
+            margin-left: auto;
+        }
+    }
+}

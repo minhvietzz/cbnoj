@@ -8,48 +8,64 @@
 
 {% block media %}
     <style>
-        .mk-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 6px; border-bottom: 1px solid rgba(128, 128, 128, 0.25); }
-        .mk-row .mk-text { flex: 1; min-width: 0; }
-        .mk-row .mk-meta { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-        .mk-tag { display: inline-block; margin-right: 6px; padding: 1px 10px; border-radius: 999px; background: rgba(128, 128, 128, 0.18); font-size: 12px; font-weight: 700; }
-        .mk-count { flex: none; min-width: 34px; text-align: center; padding: 2px 10px; border-radius: 999px; background: #ef4444; color: #fff; font-weight: 800; }
-        .mk-actions { display: flex; gap: 12px; align-items: center; margin: 14px 0; flex-wrap: wrap; }
+        .pr-page { font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #15171C; }
+        .pr-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; padding: 22px 24px; }
+        .pr-card h3 { margin: 0 0 6px; font-size: 19px; font-weight: 700; }
+        .pr-note { font-size: 14px; color: #5E6470; margin: 0 0 14px; }
+        .pr-bar-actions { display: flex; gap: 16px; align-items: center; margin: 0 0 8px; flex-wrap: wrap; font-size: 14px; }
+        .pr-input { height: 36px; width: 80px; border: 1px solid #BDBAB0; border-radius: 6px; padding: 0 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+        .pr-go { height: 40px; padding: 0 20px; border: 0; border-radius: 6px; background: #1F3FBF; color: #fff; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer; }
+        .pr-go:hover { background: #18329c; }
+        .pr-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .pr-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #15171C; padding: 8px 10px; border-bottom: 2px solid #15171C; }
+        .pr-table td { padding: 12px 10px; border-bottom: 1px solid #DAD8D0; vertical-align: top; }
+        .pr-table .pr-pick { width: 28px; }
+        .pr-table .pr-when { white-space: nowrap; color: #5E6470; }
+        .pr-table .pr-times { font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 500; color: #B3261E; white-space: nowrap; }
+        .pr-tag { display: inline-block; margin: 4px 6px 0 0; padding: 1px 8px; border: 1px solid #BDBAB0; border-radius: 6px; font-size: 12px; color: #5E6470; }
+        .pr-empty { font-size: 14px; color: #5E6470; }
+        .pr-link { display: inline-block; margin-top: 10px; font-weight: 600; color: #1F3FBF; }
     </style>
 {% endblock %}
 
 {% block body %}
     {% include "messages.html" %}
-    {% if rows %}
-        <form method="post" action="{{ url('practice') }}">
-            {% csrf_token %}
-            <input type="hidden" name="source" value="mistakes">
-            <p class="qz-note">{{ _('Questions whose latest answer was wrong. Answer one correctly and it leaves the notebook.') }}</p>
-            <div class="mk-actions">
-                <label><input type="checkbox" id="mk-all"> {{ _('Select all') }}</label>
-                <label>{{ _('Time limit (minutes, 0 = none)') }} <input type="number" name="minutes" value="0" min="0" max="180" style="width: 80px"></label>
-                <button type="submit" class="course-join">{{ _('Practise the selected (or all)') }}</button>
-                <span class="lesson-score">{{ rows|length }} {{ _('questions') }}</span>
-            </div>
-            {% for r in rows %}
-                <div class="mk-row">
-                    <input type="checkbox" name="ids" value="{{ r.bank.id }}" class="mk-pick" aria-label="{{ _('Select') }}">
-                    <div class="mk-text">
-                        <div class="content-description">{{ r.bank.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
-                        <div class="mk-meta">
-                            {% for t in r.bank.tags.all() %}<span class="mk-tag">{{ t.name }}</span>{% endfor %}
-                            {{ _('Last missed') }} {{ r.last_wrong|date('d/m/Y') }}
-                        </div>
-                    </div>
-                    <span class="mk-count" title="{{ _('Times wrong') }}">{{ r.wrong }}×</span>
+    <div class="pr-page">
+        {% if rows %}
+            <form method="post" action="{{ url('practice') }}" class="pr-card">
+                {% csrf_token %}
+                <input type="hidden" name="source" value="mistakes">
+                <h3>{{ _('Mistake notebook') }} <span class="pr-when" style="font-size: 14px; font-weight: 400; color: #5E6470">({{ rows|length }} {{ _('questions') }})</span></h3>
+                <p class="pr-note">{{ _('Questions whose latest answer was wrong. Answer one correctly and it leaves the notebook.') }}</p>
+                <div class="pr-bar-actions">
+                    <label><input type="checkbox" id="mk-all"> {{ _('Select all') }}</label>
+                    <label>{{ _('Time limit (minutes, 0 = none)') }} <input class="pr-input" type="number" name="minutes" value="0" min="0" max="180"></label>
+                    <button type="submit" class="pr-go">{{ _('Practise the selected (or all)') }}</button>
                 </div>
-            {% endfor %}
-        </form>
-    {% else %}
-        <div class="course-empty course-empty-small">
-            <p>{{ _('Your mistake notebook is empty. Questions you answer wrongly will show up here.') }}</p>
-            <p><a class="lesson-nav-btn" href="{{ url('practice') }}">{{ _('Start practising') }}</a></p>
-        </div>
-    {% endif %}
+                <table class="pr-table">
+                    <thead><tr><th class="pr-pick"></th><th>{{ _('Question') }}</th><th>{{ _('Last missed') }}</th><th>{{ _('Times wrong') }}</th></tr></thead>
+                    <tbody>
+                        {% for r in rows %}
+                            <tr>
+                                <td class="pr-pick"><input type="checkbox" name="ids" value="{{ r.bank.id }}" class="mk-pick" aria-label="{{ _('Select') }}"></td>
+                                <td>
+                                    <div class="content-description">{{ r.bank.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                                    {% for t in r.bank.tags.all() %}<span class="pr-tag">{{ t.name }}</span>{% endfor %}
+                                </td>
+                                <td class="pr-when">{{ r.when }}<br><small>{{ r.last_wrong|date('d/m/Y') }}</small></td>
+                                <td class="pr-times">{{ r.wrong }}×</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        {% else %}
+            <div class="pr-card">
+                <p class="pr-empty">{{ _('Your mistake notebook is empty. Questions you answer wrongly will show up here.') }}</p>
+                <a class="pr-link" href="{{ url('practice') }}">{{ _('Start practising') }}</a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block js_media %}

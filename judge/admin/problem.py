@@ -144,7 +144,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
             ),
         }),
         (_('Social Media'), {'classes': ('collapse',), 'fields': ('og_image', 'summary')}),
-        (_('Taxonomy'), {'fields': ('types', 'group', 'tags')}),
+        (_('Taxonomy'), {'fields': ('subject', 'types', 'group', 'tags')}),
         (_('Points'), {'fields': (('points', 'partial'), 'short_circuit')}),
         (_('Limits'), {'fields': ('time_limit', 'memory_limit')}),
         (_('Language'), {'fields': ('allowed_languages',)}),

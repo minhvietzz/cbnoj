@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    {% include "bank/import_plain_style.html" %}
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <form method="post" class="bi-page">
+        {% csrf_token %}
+        <h2 class="bi-title">{{ _('Import an exam paper') }}</h2>
+        <div class="bi-steps">
+            <span class="bi-step is-done">1 · {{ _('Upload file') }}</span>
+            <span class="bi-step is-now">2 · {{ _('Review and edit') }}</span>
+            <span class="bi-step">3 · {{ _('Save to the bank') }}</span>
+        </div>
+        {% if problems %}
+            <div class="bi-error">
+                <b>{{ _('Fix these before saving') }}</b>
+                <ul style="margin: 6px 0 0; padding-left: 20px">{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+            </div>
+        {% endif %}
+        <div class="bi-cols">
+            <aside class="bi-aside">
+                <section class="bi-card">
+                    <b>{{ draft.source }}</b>
+                    <div class="bi-note">{{ draft.format }} · {{ questions|length }} {{ _('questions recognised') }}</div>
+                    {% for code, name in kinds.items() %}{% if counts.get(code) %}
+                        <div class="bi-sum"><span>{{ name }}</span><b>{{ counts[code] }}</b></div>
+                    {% endif %}{% endfor %}
+                    {% if not draft.has_key %}<div class="bi-note">{{ _('No answer table found at the end of the file.') }}</div>{% endif %}
+                </section>
+                {% if flagged or draft.doc_warnings %}
+                    <section class="bi-warnbox">
+                        <b>{{ flagged|length }} {{ _('questions need checking') }}</b>
+                        <ul style="margin: 6px 0 0; padding-left: 18px">
+                            {% for number, q in flagged %}<li><a href="#bq-{{ number }}">{{ _('Question') }} {{ number }}</a>: {% for w in q.warn %}{{ labels[w] }} {% endfor %}</li>{% endfor %}
+                            {% for w in draft.doc_warnings %}
+                                {% if w.code == 'pdf_images' %}<li>{{ _('The PDF has pictures on pages') }} {{ w.pages|join(', ') }}: {{ _('they are not imported.') }}</li>{% endif %}
+                                {% if w.code == 'key_unreadable' %}<li>{{ _('An answer table was found but could not be read.') }}</li>{% endif %}
+                            {% endfor %}
+                        </ul>
+                    </section>
+                {% endif %}
+                <section class="bi-card">
+                    <div class="bi-field" style="margin-top: 0">
+                        <label class="bi-label" for="bi-subject">{{ _('Subject') }}</label>
+                        <select class="bi-select" id="bi-subject" name="subject">
+                            {% for s in subjects %}<option value="{{ s.id }}"{% if (form.get('subject') or default_subject|string) == s.id|string %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="bi-field">
+                        <label class="bi-label" for="bi-tags">{{ _('Chapter (tag)') }}</label>
+                        <input class="bi-input" id="bi-tags" name="tags" list="bi-tag-list" value="{{ form.get('tags', '') }}" maxlength="200" placeholder="{{ _('Comma separated') }}">
+                        <datalist id="bi-tag-list">{% for n in tag_names %}<option value="{{ n }}">{% endfor %}</datalist>
+                    </div>
+                    <div class="bi-field">
+                        <label class="bi-label" for="bi-level">{{ _('Difficulty') }}</label>
+                        <select class="bi-select" id="bi-level" name="level">
+                            {% for value, name in [('0', _('Unrated')), ('1', _('Easy')), ('2', _('Medium')), ('3', _('Hard'))] %}<option value="{{ value }}"{% if form.get('level') == value %} selected{% endif %}>{{ name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="bi-field">
+                        <span class="bi-label">{{ _('Save as') }}</span>
+                        <div class="bi-radio">
+                            <label><input type="radio" name="mode" value="bank"{% if form.get('mode', 'bank') != 'quiz' %} checked{% endif %}> {{ _('Question bank only') }}</label>
+                            <label><input type="radio" name="mode" value="quiz"{% if form.get('mode') == 'quiz' %} checked{% endif %}> {{ _('Bank and a quiz') }}</label>
+                        </div>
+                        <input class="bi-input" name="title" value="{{ form.get('title', '') }}" maxlength="200" placeholder="{{ _('Quiz title (only for a quiz)') }}">
+                    </div>
+                    <button type="submit" name="action" value="save" class="bi-btn">{{ _('Save questions') }} ({{ questions|length }})</button>
+                    <button type="submit" name="action" value="apply" class="bi-btn is-plain" style="margin-top: 8px">{{ _('Apply my changes') }}</button>
+                    <button type="submit" name="action" value="cancel" class="bi-btn is-plain" style="margin-top: 8px; border-color: #BDBAB0; color: #5E6470">{{ _('Cancel and upload another file') }}</button>
+                    <p class="bi-note">{{ _('Nothing is stored until you press Save. Questions already in the bank are skipped.') }}</p>
+                </section>
+            </aside>
+            <section class="bi-list-col">
+                {% for q in questions %}
+                    {% set i = loop.index0 %}
+                    <article class="bi-q{% if q.warn %} is-warn{% endif %}" id="bq-{{ loop.index }}">
+                        <div class="bi-qhead">
+                            <span>{{ _('Question') }} {{ loop.index }}{% if q.num %} ({{ _('in the file') }}: {{ q.num }}){% endif %}</span>
+                            <span class="bi-state">{% if q.warn %}{{ _('Needs checking') }}{% else %}{{ _('Recognised') }}{% endif %}</span>
+                        </div>
+                        <textarea class="bi-text" name="text_{{ i }}" rows="{{ [2, [8, q.text.count('\n') + 2]|min]|max }}">{{ q.text }}</textarea>
+                        {% if q.options %}
+                            <div class="bi-opts">
+                                {% for o in q.options %}
+                                    <label class="bi-opt"><input type="checkbox" name="ok_{{ i }}" value="{{ loop.index0 }}"{% if o.correct %} checked{% endif %}><b>{{ ('abcdef' if q.kind == 'tf4' else 'ABCDEF')[loop.index0] }}{{ ')' if q.kind == 'tf4' else '.' }}</b><span>{{ o.text }}</span></label>
+                                {% endfor %}
+                            </div>
+                            <div class="bi-note" style="margin: 0">{{ _('Tick the correct options (for true/false: the statements that are true).') }}</div>
+                        {% endif %}
+                        {% for w in q.warn %}<div class="bi-qwarn">{{ labels[w] }}</div>{% endfor %}
+                        <div class="bi-qtools">
+                            <label>{{ _('Type') }}
+                                <select class="bi-select" name="kind_{{ i }}">
+                                    {% for code in ['single', 'tf4', 'short'] %}<option value="{{ code }}"{% if q.kind == code or (code == 'single' and q.kind == 'multi') %} selected{% endif %}>{{ kinds[code] }}</option>{% endfor %}
+                                </select>
+                            </label>
+                            <label>{{ _('Short answer') }} <input class="bi-input" name="ans_{{ i }}" value="{{ q.answers|join(' | ') }}" placeholder="{{ _('Accepted answers, separated by |') }}"></label>
+                            <label class="bi-del"><input type="checkbox" name="del_{{ i }}"> {{ _('Delete this question') }}</label>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        </div>
+    </form>
+{% endblock %}

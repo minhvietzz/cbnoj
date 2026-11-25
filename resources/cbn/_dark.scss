@@ -1,0 +1,86 @@
+// Pages that kept hard-coded light colours from the old theme: follow the CBN tokens (works in light, dark and auto).
+body.cbn-ui .content-description, body.cbn-ui .content-description p, body.cbn-ui .content-description li,
+body.cbn-ui .content-description td, body.cbn-ui .content-description th, body.cbn-ui .content-description h1,
+body.cbn-ui .content-description h2, body.cbn-ui .content-description h3, body.cbn-ui .content-description h4,
+body.cbn-ui .content-description strong, body.cbn-ui #ws .ws-title, body.cbn-ui #ws .ws-pane, body.cbn-ui #ws .ws-pane p,
+body.cbn-ui #ws .ws-pane li { color: var(--c-ink); }
+body.cbn-ui .content-description a:not(.button) { color: var(--c-blue); }
+body.cbn-ui .content-description pre, body.cbn-ui .content-description code { background: var(--c-soft); color: var(--c-ink); border-color: var(--c-line); }
+body.cbn-ui .content-description blockquote { color: var(--c-mute); border-left-color: var(--c-line); }
+body.cbn-ui .content-description table th { background: var(--c-soft); }
+body.cbn-ui .content-description table td, body.cbn-ui .content-description table th { border-color: var(--c-line); }
+
+// white cards of the practice / exam-code / question-bank pages
+body.cbn-ui .pr-stats, body.cbn-ui .pr-card, body.cbn-ui .qz-guide, body.cbn-ui .qz-form-card, body.cbn-ui .vx-page, body.cbn-ui .vx-card,
+body.cbn-ui .magazine-layout, body.cbn-ui .magazine-topbar {
+    background: var(--c-card);
+    color: var(--c-ink);
+    border-color: var(--c-line);
+}
+body.cbn-ui .pr-card h1, body.cbn-ui .pr-card h2, body.cbn-ui .pr-card h3, body.cbn-ui .pr-card h4, body.cbn-ui .pr-card label, body.cbn-ui .pr-card b,
+body.cbn-ui .vx-card h2, body.cbn-ui .vx-card h3, body.cbn-ui .vx-card label, body.cbn-ui .qz-guide h3, body.cbn-ui .qz-form-card h3, body.cbn-ui .qz-form-card h4,
+body.cbn-ui .pr-stats b { color: var(--c-ink); }
+body.cbn-ui .pr-card p, body.cbn-ui .vx-card p, body.cbn-ui .pr-stats span, body.cbn-ui .qz-note { color: var(--c-mute); }
+body.cbn-ui .pr-card input, body.cbn-ui .pr-card select, body.cbn-ui .vx-card input, body.cbn-ui .vx-card select, body.cbn-ui .qz-form-card input,
+body.cbn-ui .qz-form-card select, body.cbn-ui .qz-form-card textarea { background: var(--c-card); color: var(--c-ink); border-color: var(--c-input); }
+body.cbn-ui .pr-seg button, body.cbn-ui .pr-seg label { color: var(--c-ink); }
+
+// markdown / ace editors everywhere (profile, blog, editorial, comments)
+body.cbn-ui .ace_editor, body.cbn-ui .ace_scroller, body.cbn-ui .ui.segment.tab, body.cbn-ui .ui.bottom.attached.segment { background: var(--c-card) !important; color: var(--c-ink) !important; }
+body.cbn-ui .martor-field .ace_gutter, body.cbn-ui .ace-github .ace_gutter { background: var(--c-soft) !important; color: var(--c-mute) !important; }
+body.cbn-ui .ace_marker-layer .ace_active-line, body.cbn-ui .ace_gutter-active-line { background: var(--c-soft) !important; }
+body.cbn-ui .ace_cursor { color: var(--c-ink) !important; }
+body.cbn-ui .ace_print-margin { display: none; }
+
+body.cbn-ui .pr-head, body.cbn-ui .pr-head h1, body.cbn-ui .pr-head h2, body.cbn-ui .pr-head p { color: var(--c-ink); }
+body.cbn-ui .pr-head p { color: var(--c-mute); }
+body.cbn-ui .pr-page { background: transparent; }
+// blog list top bar buttons: flat like the rest
+body.cbn-ui .magazine-topbar a, body.cbn-ui .magazine-topbar a:link, body.cbn-ui .magazine-topbar a:visited, body.cbn-ui .magazine-topbar button:not(.search-icon) {
+    border-radius: 6px !important; background: var(--c-blue) !important; color: #fff !important; box-shadow: none; font-weight: 600; border: 0;
+}
+body.cbn-ui .magazine-topbar select, body.cbn-ui .magazine-topbar input { background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-input); border-radius: 6px; }
+
+// ---- ticket page: flat, token colours ---------------------------------------------------------------------------
+body.cbn-ui .ticket-title { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; color: var(--c-ink); }
+body.cbn-ui .ticket-title .title { font-size: 22px; font-weight: 700; color: var(--c-ink); }
+body.cbn-ui .ticket-title .vote-status, body.cbn-ui .ticket-title .status { color: var(--c-mute); }
+body.cbn-ui .ticket-title .status .fa-exclamation-circle { color: var(--c-bad-fg); }
+body.cbn-ui .ticket-container { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+body.cbn-ui .ticket-messages { flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+body.cbn-ui .ticket-sidebar { flex: 1 1 240px; min-width: 0; }
+body.cbn-ui .ticket-info { display: flex; flex-direction: column; gap: 12px; }
+body.cbn-ui .ticket-sidebar .info-box { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; overflow: hidden; box-shadow: none; }
+body.cbn-ui .ticket-sidebar .info-title { background: var(--c-soft); color: var(--c-mute); border-bottom: 1px solid var(--c-line); padding: 8px 14px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+body.cbn-ui .ticket-sidebar .info-data { background: transparent; color: var(--c-ink); padding: 10px 14px; font-size: 14px; }
+body.cbn-ui .ticket-sidebar .info-empty { color: var(--c-mute); font-style: normal; }
+body.cbn-ui .ticket-sidebar button, body.cbn-ui .ticket-sidebar button:hover {
+    display: block; width: 100%; margin: 0 0 8px; padding: 10px 14px; border-radius: 6px; box-shadow: none; font-weight: 600; font-size: 14px; cursor: pointer;
+    border: 1px solid var(--c-ink); background: var(--c-card); color: var(--c-ink);
+}
+body.cbn-ui .ticket-sidebar button.close-ticket { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+body.cbn-ui .ticket-message { display: flex; gap: 14px; align-items: flex-start; background: transparent; }
+body.cbn-ui .ticket-message .info { flex: 0 0 96px; }
+body.cbn-ui .ticket-message .user-gravatar { width: 48px; height: 48px; border-radius: 6px; }
+body.cbn-ui .ticket-message .detail { flex: 1 1 0; min-width: 0; background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-line); border-radius: 6px; box-shadow: none; overflow: hidden; }
+body.cbn-ui .ticket-message .detail .header { background: var(--c-soft); color: var(--c-mute); border-bottom: 1px solid var(--c-line); padding: 8px 14px; font-size: 13px; }
+body.cbn-ui .ticket-message .detail .body, body.cbn-ui .ticket-message .detail .content-description { padding: 12px 14px; color: var(--c-ink); }
+body.cbn-ui .ticket-message .info::before, body.cbn-ui .ticket-message .info::after { display: none; }
+body.cbn-ui .autofill-trigger, body.cbn-ui .autofill-popup, body.cbn-ui .autofill-search { background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-input); border-radius: 6px; }
+body.cbn-ui .autofill-controls button { border-radius: 4px; padding: 4px 12px; font-weight: 600; background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-line); cursor: pointer; }
+body.cbn-ui .autofill-controls button.active { background: var(--c-blue); color: #fff; border-color: var(--c-blue); }
+body.cbn-ui .ticket-message.new-message input[type=submit].button { background: var(--c-blue); color: #fff; border-radius: 6px; box-shadow: none; padding: 9px 20px; font-weight: 600; border: 0; }
+body.cbn-ui .ticket-title .title, body.cbn-ui .ticket-title { color: var(--c-ink) !important; }
+body.cbn-ui .ticket-message .detail .header, body.cbn-ui .ticket-message .detail .header .time { color: var(--c-mute) !important; }
+body.cbn-ui .ticket-sidebar button:not(.close-ticket):not(.open-ticket) { color: var(--c-ink) !important; background: var(--c-card) !important; }
+body.cbn-ui .ticket-sidebar button.close-ticket, body.cbn-ui .ticket-sidebar button.open-ticket { color: #fff !important; background: var(--c-blue) !important; }
+body.cbn-ui .autofill-controls button:not(.active) { color: var(--c-ink) !important; background: var(--c-card) !important; }
+body.cbn-ui .autofill-controls button.active { color: #fff !important; }
+
+body.cbn-ui .centered-form, body.cbn-ui .centered-form label, body.cbn-ui .centered-form p, body.cbn-ui .centered-form th, body.cbn-ui .centered-form td { color: var(--c-ink); }
+body.cbn-ui form.form-area th, body.cbn-ui form.form-area td > label { min-width: 150px; color: var(--c-ink); font-weight: 600; font-size: 14px; }
+body.cbn-ui form.form-area th { padding-right: 16px; vertical-align: top; text-align: left; }
+body.cbn-ui form.form-area .helptext, body.cbn-ui form.form-area .fa-info-circle + span { color: var(--c-mute); }
+body.cbn-ui form.form-area input[type=text], body.cbn-ui form.form-area input[type=number], body.cbn-ui form.form-area input[type=password], body.cbn-ui form.form-area input[type=email],
+body.cbn-ui form.form-area input[type=datetime-local], body.cbn-ui form.form-area select, body.cbn-ui form.form-area textarea { background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-input); border-radius: 6px; box-shadow: none; }
+body.cbn-ui .centered-form label, body.cbn-ui .centered-form div, body.cbn-ui .centered-form span, body.cbn-ui .centered-form h4 { color: var(--c-ink) !important; }

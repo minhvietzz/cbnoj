@@ -1,4 +1,7 @@
 {% extends "tabs-base.html" %}
+{% set left_align_tabs = pf_head %}
+
+{% block post_tab_spacer %}{% if pf_head %}{% include "user/pf-head.html" %}{% endif %}{% endblock %}
 
 {% block tabs %}
     {% if user.user == request.user and not request.official_contest_mode %}

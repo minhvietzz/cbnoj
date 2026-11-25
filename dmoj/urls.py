@@ -14,7 +14,7 @@ from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, bank, blog, comment, contests, course, language, license, mailgun, \
     notification, organization, preview, problem, problem_download, problem_manage, quiz, ranked_submission, \
     register, server_status, stats, status, submission, tag, tasks, ticket, two_factor, user, widgets
-from judge.views import practice, problem_run, quiz_exam, quiz_report
+from judge.views import classroom, practice, problem_run, quiz_exam, quiz_report, quiz_variants
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -25,6 +25,7 @@ from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, Contest
     OrganizationUserSearchSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
     PublicProblemSelect2View, TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, \
     UserSearchSelect2View, UserSelect2View
+from judge.views.ui_switch import set_ui_mode
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
@@ -111,6 +112,8 @@ quiz_patterns = [
         path('action/', bank.BankAction.as_view(), name='bank_action'),
         path('import/', bank.BankImport.as_view(), name='bank_import'),
         path('import/confirm/', bank.BankImportConfirm.as_view(), name='bank_import_confirm'),
+        path('import-plain/', bank.BankImportPlain.as_view(), name='bank_import_plain'),
+        path('import-plain/preview/', bank.BankImportPlainPreview.as_view(), name='bank_import_plain_preview'),
         path('compose/', bank.BankCompose.as_view(), name='bank_compose'),
         path('<int:pk>/edit/', bank.BankEdit.as_view(), name='bank_edit'),
     ])),
@@ -128,6 +131,9 @@ quiz_patterns = [
         path('results/', quiz_report.QuizResults.as_view(), name='quiz_results'),
         path('results/live/', quiz_report.QuizLive.as_view(), name='quiz_live'),
         path('results/action/', quiz_report.QuizResultsAction.as_view(), name='quiz_results_action'),
+        path('variants/', quiz_variants.QuizVariants.as_view(), name='quiz_variants'),
+        path('variants/key/print/', quiz_variants.QuizVariantKeyPrint.as_view(), name='quiz_variants_key_print'),
+        path('variants/<str:code>/print/', quiz_variants.QuizVariantPrint.as_view(), name='quiz_variant_print'),
         path('delete/', quiz.QuizDelete.as_view(), name='quiz_delete'),
         path('attempt/<int:attempt>/', quiz.QuizAttemptView.as_view(), name='quiz_attempt'),
         path('attempt/<int:attempt>/save/', quiz.QuizAttemptSave.as_view(), name='quiz_attempt_save'),
@@ -251,6 +257,7 @@ urlpatterns = [
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
     path('set-theme/', user.set_theme, name='set_theme'),
     path('set-problem-ui/', user.set_problem_ui, name='set_problem_ui'),
+    path('ui/<str:mode>/', set_ui_mode, name='cbn_ui_switch'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('user/<str:user>', include([
@@ -285,6 +292,23 @@ urlpatterns = [
     path('server-status/', server_status.ServerStatusPage.as_view(), name='server_status'),
     path('server-status/data/', server_status.ServerStatusData.as_view(), name='server_status_data'),
     *quiz_patterns,
+    path('classes/', classroom.MyClasses.as_view(), name='class_list'),
+    path('classes/create/', classroom.ClassCreate.as_view(), name='class_create'),
+    path('classes/join/', classroom.ClassJoin.as_view(), name='class_join'),
+    path('classes/import/', classroom.ClassImport.as_view(), name='class_import'),
+    path('classes/import/template.csv', classroom.ClassImportTemplate.as_view(), name='class_import_template'),
+    path('class/<slug:slug>/', include([
+        path('', classroom.ClassDetail.as_view(), name='class_detail'),
+        path('edit/', classroom.ClassEdit.as_view(), name='class_edit'),
+        path('members/', classroom.ClassMembers.as_view(), name='class_members'),
+        path('assignments/', classroom.ClassAssignments.as_view(), name='class_assignments'),
+        path('assignments/delete/', classroom.ClassAssignmentDelete.as_view(), name='class_assignment_delete'),
+        path('announce/', classroom.ClassAnnouncementPost.as_view(), name='class_announce'),
+        path('ranking/', classroom.ClassRanking.as_view(), name='class_ranking'),
+        path('grades/', classroom.ClassGrades.as_view(), name='class_grades'),
+        path('exams/', classroom.ClassExams.as_view(), name='class_exams'),
+        path('report/print/', classroom.ClassReportPrint.as_view(), name='class_report_print'),
+    ])),
     path('course/<slug:slug>/', include([
         path('', course.CourseDetail.as_view(), name='course_detail'),
         path('lesson/<int:lesson>/', course.CourseLessonDetail.as_view(), name='course_lesson'),
@@ -366,6 +390,8 @@ urlpatterns = [
         ])),
         path('/user/<str:user>/solved', organization.OrganizationUserSolvedProblems.as_view(),
              name='organization_user_solved'),
+        path('/exams', organization.OrganizationExams.as_view(), name='organization_exams'),
+        path('/classes', organization.OrganizationClasses.as_view(), name='organization_classes'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),

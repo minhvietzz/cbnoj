@@ -69,6 +69,7 @@ class JudgeAdminForm(ModelForm):
 
 class JudgeAdmin(VersionAdmin):
     form = JudgeAdminForm
+    change_list_template = 'admin/judge/judge/change_list.html'
     readonly_fields = ('created', 'online', 'start_time', 'ping', 'load', 'last_ip', 'runtimes', 'storages',
                        'is_disabled')
     fieldsets = (
@@ -82,6 +83,14 @@ class JudgeAdmin(VersionAdmin):
     formfield_overrides = {
         TextField: {'widget': AdminMartorWidget},
     }
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = dict(extra_context or {})
+        qs = Judge.objects.all()
+        extra_context['judges_online'] = qs.filter(online=True).count()
+        extra_context['judges_offline'] = qs.filter(online=False, is_disabled=False).count()
+        extra_context['judges_disabled'] = qs.filter(is_disabled=True).count()
+        return super().changelist_view(request, extra_context=extra_context)
 
     def get_urls(self):
         return ([path('<int:id>/disconnect/', self.disconnect_view, name='judge_judge_disconnect'),

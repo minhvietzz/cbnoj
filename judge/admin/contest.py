@@ -160,7 +160,7 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rate_disqualified', 'rating_floor', 'rating_ceiling',
                                   'rate_exclude')}),
         (_('Access'), {'fields': ('access_code', 'is_private', 'private_contestants', 'is_organization_private',
-                                  'organization', 'view_contest_scoreboard')}),
+                                  'organization', 'classes', 'view_contest_scoreboard')}),
         (_('Justice'), {'fields': ('banned_users',)}),
         (_('Ranking'), {'fields': ('csv_ranking',)}),
     )

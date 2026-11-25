@@ -47,16 +47,6 @@
         <script src="{{ static('libs/chart.js/Chart.js') }}"></script>
         <script type="text/javascript">
             $(function () {
-                var info_float = $('.info-float');
-                var container = $('#content-right');
-                if (!featureTest('position', 'sticky')) {
-                    fix_div(info_float, 55);
-                    $(window).resize(function () {
-                        info_float.width(container.width());
-                    });
-                    info_float.width(container.width());
-                }
-
                 function escapeRegExp(string) {
                     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
                 }
@@ -68,7 +58,8 @@
                     return data.text.search(regex) >= 0 || data.id.search(regex) >= 0 ? data : null;
                 }
 
-                $('#status').select2({
+                $('#sb-mine').on('change', function () { window.location = this.checked ? this.getAttribute('data-mine') : this.getAttribute('data-all'); });
+                $('#sb-status').select2({
                     theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
                     placeholder: {{ _('Filter by status...')|htmltojs }},
@@ -76,7 +67,7 @@
                     width: '100%',
                 }).css({'visibility': 'visible'});
 
-                $('#language').select2({
+                $('#sb-lang').select2({
                     theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
                     placeholder: {{ _('Filter by language...')|htmltojs }},
@@ -84,7 +75,7 @@
                     width: '100%',
                 }).css({'visibility': 'visible'});
 
-                $('#organization').select2({
+                $('#sb-org').select2({
                     theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: 0,
                     matcher: idAndTextMatcher,
@@ -146,14 +137,14 @@
                 var _collect = function (e) {
                     return e.value;
                 };
-                var language_filter = $.map($('select#language option[selected]'), _collect);
-                var status_filter = $.map($('select#status option[selected]'), _collect);
-                var organization_filter = $.map($('select#organization option[selected]'), _collect);
+                var language_filter = $.map($('select#sb-lang option[selected]'), _collect);
+                var status_filter = $.map($('select#sb-status option[selected]'), _collect);
+                var organization_filter = $.map($('select#sb-org option[selected]'), _collect);
 
-                var table = $('#submissions-table');
+                var table = $('#sb-rows');
                 var statistics = $("#statistics-table");
                 var doing_ajax = false;
-                var first = parseInt(table.find('>div:first-child').attr('id'));
+                var first = parseInt(table.find('>tr:first-child').attr('id'));
 
                 var update_submission = function (message, force) {
                     if (language_filter.length && 'language' in message &&
@@ -166,14 +157,14 @@
                         message.organizations.indexOf(parseInt(organization_filter[0])) == -1)
                         return;
                     var id = message.id;
-                    var row = table.find('div#' + id);
+                    var row = table.find('tr#' + id);
                     if (row.length < 1) {
                         if (id < first)
                             return;
                         first = id;
-                        row = $('<div>', {id: id, 'class': 'submission-row'}).hide().prependTo(table);
-                        if (table.find('>div').length >= {{ paginator.per_page }})
-                            table.find('>div:last-child').slideUp('slow', function () {
+                        row = $('<tr>', {id: id, 'class': 'sb-row'}).hide().prependTo(table);
+                        if (table.find('>tr').length >= {{ paginator.per_page }})
+                            table.find('>tr:last-child').fadeOut('slow', function () {
                                 $(this).remove();
                             });
                     }
@@ -185,9 +176,8 @@
                         }).done(function (data) {
                             var was_shown = row.is(':visible');
                             row.html(data);
-                            register_time(row.find('.time-with-rel'));
                             if (!was_shown) {
-                                row.slideDown('slow');
+                                row.fadeIn('slow');
                             }
                             if (!force)
                                 setTimeout(function () {
@@ -270,136 +260,102 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% include "submission/submission-list-tabs.html" %}
-{% endblock %}
-
-{% block media %}
-    {% if perms.judge.change_submission and perms.judge.rejudge_submission %}
-        <style>
-            td.sub-prop, col.sub-prop {
-                width: 22%
-            }
-
-            col.sub-info, td.sub-info {
-                width: 78%
-            }
-
-            #status, #language {
-                visibility: hidden;
-            }
-        </style>
-    {% endif %}
-
-    <style>
-        .total {
-            text-align: center;
-            margin-bottom: 0.5em;
-        }
-
-        #status-graph {
-            padding: 1em 0em;
-        }
-
-        #status-graph canvas {
-            display: block;
-            margin: 0 auto;
-        }
-    </style>
+    {% set show_filters = not hide_sidebar %}
+    <header class="bp-head bp-head-row sb-head">
+        <h1>{% if content_title and content_title|string != _('All submissions')|string %}{{ content_title }}{% else %}{{ _('Submissions (title)') }}{% endif %}</h1>
+        {% if show_filters %}
+            <form id="sb-filter" class="sb-filters" name="form" action="{{ first_page_href }}" method="get">
+                <div class="sb-f">
+                    <select id="sb-status" name="status" aria-label="{{ _('Status') }}"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                        {% if is_in_low_power_mode %}<option value="">{{ _('All results') }}</option>{% endif %}
+                        {% for id, name in all_statuses %}
+                            <option {% if id in selected_statuses %}selected{% endif %} value="{{ id }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="sb-f">
+                    <select id="sb-lang" name="language" aria-label="{{ _('Language') }}"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                        {% if is_in_low_power_mode %}<option value="">{{ _('All languages') }}</option>{% endif %}
+                        {% for code, name in all_languages %}
+                            <option {% if code in selected_languages %}selected{% endif %} value="{{ code }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if not organization and not is_in_low_power_mode %}
+                    <div class="sb-f">
+                        <select id="sb-org" name="organization" aria-label="{{ _('Organization') }}">
+                            <option value="">{{ _('All organizations') }}</option>
+                            {% for code, name in all_organizations %}
+                                <option {% if code == selected_organization %}selected{% endif %} value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                {% if request.user.is_authenticated and my_submissions_link %}
+                    <label class="sb-mine"><input id="sb-mine" type="checkbox" data-mine="{{ my_submissions_link }}" data-all="{{ all_submissions_link }}"{% if tab == 'my_submissions_tab' %} checked{% endif %}> {{ _('Only my submissions') }}</label>
+                {% endif %}
+                <button type="submit" class="bp-btn line sb-go">{{ _('Filter') }}</button>
+            </form>
+        {% endif %}
+        {% if best_submissions_link or tab == 'user_submissions_tab' or perms.judge.change_submission %}
+            <div class="bp-tabs sb-tabs">
+                <a href="{{ all_submissions_link }}" class="{{ 'on' if tab == 'all_submissions_list' }}">{{ _('All') }}</a>
+                {% if tab == 'user_submissions_tab' %}<a class="on">{{ _("%(user)s's", user=tab_username) }}</a>{% endif %}
+                {% if best_submissions_link %}<a href="{{ best_submissions_link }}" class="{{ 'on' if tab == 'best_submissions_list' }}">{{ _('Best') }}</a>{% endif %}
+                {% if perms.judge.change_submission %}<a href="{{ url('admin:judge_submission_changelist') }}">{{ _('Admin') }}</a>{% endif %}
+            </div>
+        {% endif %}
+    </header>
 {% endblock %}
 
 {% block body %}
-    {% if page_obj.has_other_pages() %}
-        <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
-    {% endif %}
-
-    <div id="common-content">
+    <div class="bp-page sb-page">
+        <div class="ws-closed">
+            <a href="javascript:void(0)">{{ _('You were disconnected. Refresh to show latest updates.') }}</a>
+        </div>
+        <section class="bp-card">
+            <div class="bp-scroll">
+                <table class="bp-table sb-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ _('Time') }}</th>
+                            <th>{{ _('Submitter') }}</th>
+                            {% if show_problem %}<th>{{ _('Problem') }}</th>{% endif %}
+                            <th>{{ _('Result') }}</th>
+                            <th class="bp-r">{{ _('Score') }}</th>
+                            <th class="bp-r">{{ _('Runtime') }}</th>
+                            <th>{{ _('Language') }}</th>
+                            <th class="sb-act"><span class="sr-only">{{ _('Actions') }}</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="sb-rows">
+                        {% set profile_id = request.profile.id if request.user.is_authenticated else 0 %}
+                        {% for submission in submissions %}
+                            <tr class="sb-row" id="{{ submission.id }}">
+                                {% with problem_name=show_problem and (submission.problem.i18n_name or submission.problem.name) %}
+                                    {% include "submission/row.html" %}
+                                {% endwith %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not submissions %}<div class="bp-empty">{{ _('No submissions found.') }}</div>{% endif %}
+            {% if page_obj.has_other_pages() %}
+                <div class="bp-pages">{% include "list-pages.html" %}</div>
+            {% endif %}
+        </section>
         {% if not hide_sidebar %}
-        <div id="content-right" class="submission">
-            <div class="info-float">
-                <div class="sidebox">
-                    <h3>{{ _('Filter submissions') }} <i class="fa fa-search"></i></h3>
-                    <div class="sidebox-content">
-                        <form id="filter-form" name="form" action="{{ first_page_href }}" method="get">
-                            <div class="filter-form-group">
-                                <label for="status"><i>{{ _('Status') }}</i></label>
-                                <select id="status" name="status"{% if not is_in_low_power_mode %} multiple{% endif %}>
-                                    {% if is_in_low_power_mode %}
-                                        <option value="">{{ _('All') }}</option>
-                                        <option disabled="disabled">---</option>
-                                    {% endif %}
-                                    {% for id, name in all_statuses %}
-                                        <option {% if id in selected_statuses %}selected{% endif %}
-                                                value="{{ id }}">{{ name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="filter-form-group">
-                                <label for="language"><i>{{ _('Language') }}</i></label>
-                                <select id="language" name="language"{% if not is_in_low_power_mode %} multiple{% endif %}>
-                                    {% if is_in_low_power_mode %}
-                                        <option value="">{{ _('All') }}</option>
-                                        <option disabled="disabled">---</option>
-                                    {% endif %}
-                                    {% for code, name in all_languages %}
-                                        <option {% if code in selected_languages %}selected{% endif %}
-                                                value="{{ code }}">{{ name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% if not organization and not is_in_low_power_mode %}
-                                <div class="filter-form-group">
-                                    <label for="organization"><i>{{ _('Organization') }}</i></label>
-                                    <select id="organization" name="organization">
-                                        <option value="">{{ _('All') }}</option>
-                                        <option disabled="disabled">---</option>
-                                        {% for code, name in all_organizations %}
-                                            <option {% if code == selected_organization %}selected{% endif %}
-                                                    value="{{ code }}">{{ name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            {% endif %}
-                            <div class="form-submit-group">
-                                <a id="go" onclick="form.submit()" class="button">{{ _('Go') }}</a>
-                            </div>
-                        </form>
-                    </div>
-                    <div id="statistics-table">
-                        <h3>{{ _('Statistics') }} <i class="fa fa-pie-chart"></i></h3>
-                        <div class="sidebox-content">
-                            <div id="status-graph">
-                                <canvas width="230" height="170"></canvas>
-                            </div>
-                            <div class="total">
-                                {{ _('Total:') }} <span id="total-submission-count"></span>
-                            </div>
-                        </div>
-                    </div>
+            <section class="bp-card sb-stats" id="statistics-table">
+                <div class="bp-card-h">{{ _('Statistics') }}</div>
+                <div class="sb-stats-b">
+                    <div id="status-graph"><canvas width="230" height="170"></canvas></div>
+                    <div class="bp-mute">{{ _('Total:') }} <b id="total-submission-count"></b></div>
                 </div>
-            </div>
-        </div>
+            </section>
         {% endif %}
-
-        <div id="content-left" class="submission">
-            <div class="ws-closed">
-                <a href="javascript:void(0)">{{ _('You were disconnected. Refresh to show latest updates.') }}</a>
-            </div>
-
-            <div id="submissions-table">
-                {% set profile_id = request.profile.id if request.user.is_authenticated else 0 %}
-                {% for submission in submissions %}
-                    <div class="submission-row" id="{{ submission.id }}">
-                        {% with problem_name=show_problem and (submission.problem.i18n_name or submission.problem.name) %}
-                            {% include "submission/row.html" %}
-                        {% endwith %}
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
     </div>
-    {% if page_obj.has_other_pages() %}
-        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
-    {% endif %}
 {% endblock %}
 
 {% block bodyend %}

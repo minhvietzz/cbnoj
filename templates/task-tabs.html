@@ -1,0 +1,25 @@
+{# "Bài tập" switch: programming problems | quizzes, plus the subject filter. Needs task_tab ('code' | 'quiz'). #}
+<style>
+    .tk { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: flex-end; justify-content: space-between; margin: 6px 0 16px; border-bottom: 1px solid #DAD8D0; font-family: 'Be Vietnam Pro', 'Nunito', system-ui, sans-serif; }
+    .tk-tabs { display: flex; gap: 28px; }
+    .tk-tabs a { padding: 0 0 12px; border-bottom: 3px solid transparent; font-size: 15px; color: #5E6470; text-decoration: none; }
+    .tk-tabs a.on { border-bottom-color: #1F3FBF; font-weight: 700; color: inherit; }
+    .tk-subject { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; font-size: 13px; font-weight: 600; color: #5E6470; }
+    .tk-subject select { height: 36px; border: 1px solid #BDBAB0; border-radius: 6px; padding: 0 10px; font: inherit; font-size: 14px; background: #fff; color: #15171C; }
+</style>
+<div class="tk">
+    <div class="tk-tabs">
+        <a href="{{ url('problem_list') }}{% if subject %}?subject={{ subject|urlencode }}{% endif %}" class="{{ 'on' if task_tab == 'code' }}">{{ _('Programming') }}</a>
+        <a href="{{ url('quiz_list') }}{% if subject %}?subject={{ subject|urlencode }}{% endif %}" class="{{ 'on' if task_tab == 'quiz' }}">{{ _('Quizzes') }}</a>
+    </div>
+    {% if subjects and subjects|length > 0 %}
+        <form method="get" class="tk-subject">
+            {% if task_tab == 'quiz' and tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
+            <label for="tk-subject">{{ _('Subject') }}</label>
+            <select id="tk-subject" name="subject" onchange="this.form.submit()">
+                <option value="">{{ _('All subjects') }}</option>
+                {% for s in subjects %}<option value="{{ s.slug }}"{% if subject == s.slug %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+            </select>
+        </form>
+    {% endif %}
+</div>

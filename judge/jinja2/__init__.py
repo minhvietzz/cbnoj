@@ -31,6 +31,24 @@ registry.function('user_trans', gettext)
 
 
 @registry.function
+def nav_menu_orgs(user):
+    from judge.utils.learning import nav_menu_orgs as fetch
+    return fetch(user)
+
+
+@registry.function
+def nav_problem_count():
+    from judge.utils.learning import nav_problem_count as fetch
+    return fetch()
+
+
+@registry.function
+def name_initials(name):
+    from judge.utils.learning import initials
+    return initials(name)
+
+
+@registry.function
 def counter(start=1):
     return itertools.count(start).__next__
 

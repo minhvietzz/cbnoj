@@ -1,89 +1,77 @@
 {% extends "base.html" %}
 
 {% block title_ruler %}{% endblock %}
-
-{% block title_row %}
-    <div class="tabs">
-        <h2>{{ _('Courses') }}</h2>
-        <ul>
-            <li class="tab{% if tab == 'all' %} active{% endif %}">
-                <a href="{{ url('course_list') }}?tab=all"><i class="tab-icon fa fa-list"></i> {{ _('Available courses') }}</a>
-            </li>
-            {% if request.user.is_authenticated %}
-                <li class="tab{% if tab == 'mine' %} active{% endif %}">
-                    <a href="{{ url('course_list') }}?tab=mine"><i class="tab-icon fa fa-graduation-cap"></i> {{ _('My courses') }}</a>
-                </li>
-            {% endif %}
-        </ul>
-    </div>
-{% endblock %}
+{% block title_row %}{% endblock %}
 
 {% block body %}
-    <form class="course-search" method="get" action="{{ url('course_list') }}">
-        <input type="hidden" name="tab" value="{{ tab }}">
-        <input type="search" name="search" value="{{ search }}" placeholder="{{ _('Search courses...') }}">
-        <button type="submit">{{ _('Search') }}</button>
-    </form>
+<div class="crs neo-flat">
+    <header class="crs-band">
+        <h1>{{ _('Courses') }}</h1>
+        <div class="crs-tabs" role="tablist">
+            {% if request.user.is_authenticated %}
+                <a href="{{ url('course_list') }}?tab=mine"{% if tab == 'mine' %} class="on"{% endif %}>{{ _('My courses') }}</a>
+            {% endif %}
+            <a href="{{ url('course_list') }}?tab=all"{% if tab == 'all' %} class="on"{% endif %}>{{ _('All courses') }}</a>
+        </div>
+    </header>
 
-    {% if courses %}
-        <div class="course-grid">
-            {% for c in courses %}
-                <article class="course-card tone-{{ c.color }}">
-                    <a class="course-thumb" href="{{ c.get_absolute_url() }}" tabindex="-1" aria-hidden="true">
-                        <span class="course-initial">{{ c.initial }}</span>
-                        {% if c.image_url %}<img src="{{ c.image_url }}" alt="" loading="lazy" onerror="this.remove();">{% endif %}
-                    </a>
-                    <div class="course-body">
-                        <div class="course-head">
-                            <a class="course-title" href="{{ c.get_absolute_url() }}">{{ c.name }}</a>
-                            <span class="course-badges">
-                                {% if c.my_role %}<span class="cbadge cbadge-joined">{{ _('Joined') }}</span>{% endif %}
-                                {% if not c.is_public %}<span class="cbadge cbadge-private">{{ _('Private') }}</span>{% endif %}
-                                {% if c.is_open %}
-                                    <span class="cbadge cbadge-open">{{ _('Open') }}</span>
+    <div class="crs-body">
+        <form class="crs-search" method="get" action="{{ url('course_list') }}" role="search">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <input type="search" name="search" value="{{ search }}" placeholder="{{ _('Search courses...') }}" aria-label="{{ _('Search courses...') }}">
+            <button type="submit" class="crs-sr">{{ _('Search') }}</button>
+        </form>
+
+        {% if courses %}
+            <div class="crs-grid">
+                {% for c in courses %}
+                    <article class="crs-card crs-c-{{ c.color }}">
+                        <div class="crs-strip"></div>
+                        <div class="crs-card-body">
+                            <h2><a href="{{ c.get_absolute_url() }}">{{ c.name }}</a>
+                                {% if not c.is_public %}<span class="crs-chip">{{ _('Private') }}</span>{% endif %}
+                                {% if not c.is_open %}<span class="crs-chip">{{ _('Closed') }}</span>{% endif %}
+                            </h2>
+                            {% if c.about %}<p class="crs-about">{{ c.about|striptags|truncate(150) }}</p>{% endif %}
+                            <div class="crs-meta">
+                                <span>{{ c.lesson_count }} {{ _('lessons') }}</span>
+                                <span>{{ c.student_count }} {{ _('students') }}</span>
+                                {% if c.teacher_list %}<span>{% for teacher in c.teacher_list %}{{ link_user(teacher) }}{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+                            </div>
+                            <div class="crs-foot">
+                                {% if c.progress %}
+                                    <div class="crs-progress">
+                                        <span><span>{{ _('Progress') }}</span><b>{{ c.progress.percent }}%</b></span>
+                                        <span class="crs-bar"><i style="width: {{ c.progress.percent }}%"></i></span>
+                                    </div>
+                                {% elif c.my_role %}
+                                    <a class="crs-link" href="{{ c.get_absolute_url() }}">{{ _('Continue') }}</a>
+                                {% elif c.is_public and c.is_open %}
+                                    {% if request.user.is_authenticated %}
+                                        <form method="post" action="{{ url('course_join', c.slug) }}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="crs-btn">{{ _('Join this course') }}</button>
+                                        </form>
+                                    {% else %}
+                                        <a class="crs-btn" href="{{ url('auth_login') }}?next={{ request.get_full_path()|urlencode }}">{{ _('Log in to join') }}</a>
+                                    {% endif %}
                                 {% else %}
-                                    <span class="cbadge cbadge-closed">{{ _('Closed') }}</span>
+                                    <span class="crs-closed">{{ _('Registration is closed.') }}</span>
                                 {% endif %}
-                            </span>
+                            </div>
                         </div>
-                        {% if c.about %}<p class="course-desc">{{ c.about|striptags|truncate(150) }}</p>{% endif %}
-                        <div class="course-meta">
-                            {% if c.teacher_list %}
-                                <span><i class="fa fa-user"></i>
-                                    {% for teacher in c.teacher_list %}{{ link_user(teacher) }}{% if not loop.last %}, {% endif %}{% endfor %}
-                                </span>
-                            {% endif %}
-                            <span><i class="fa fa-book"></i> {{ c.lesson_count }} {{ _('lessons') }}</span>
-                            <span><i class="fa fa-users"></i> {{ c.student_count }} {{ _('students') }}</span>
-                        </div>
-                        <div class="course-cta">
-                            {% if c.my_role %}
-                                <a class="course-btn course-btn-ghost" href="{{ c.get_absolute_url() }}">{{ _('Continue') }} <i class="fa fa-arrow-right"></i></a>
-                            {% elif c.is_public and c.is_open %}
-                                {% if request.user.is_authenticated %}
-                                    <form method="post" action="{{ url('course_join', c.slug) }}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="course-btn">{{ _('Join this course') }}</button>
-                                    </form>
-                                {% else %}
-                                    <a class="course-btn" href="{{ url('auth_login') }}?next={{ request.get_full_path()|urlencode }}">{{ _('Log in to join') }}</a>
-                                {% endif %}
-                            {% else %}
-                                <span class="course-closed"><i class="fa fa-lock"></i> {{ _('Registration is closed.') }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </article>
-            {% endfor %}
-        </div>
-        {% if page_obj.has_other_pages() %}
-            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% if page_obj.has_other_pages() %}
+                <div class="crs-pages">{% include "list-pages.html" %}</div>
+            {% endif %}
+        {% else %}
+            <div class="crs-empty">
+                <h2>{{ _('No courses yet') }}</h2>
+                <p>{% if tab == 'mine' %}{{ _('You have not joined any course.') }} <a href="{{ url('course_list') }}?tab=all">{{ _('All courses') }}</a>{% else %}{{ _('Courses will appear here once they are published.') }}{% endif %}</p>
+            </div>
         {% endif %}
-    {% else %}
-        <div class="course-empty">
-            <div class="course-empty-blob"><i class="fa fa-graduation-cap"></i></div>
-            <h3>{{ _('No courses yet') }}</h3>
-            <p>{% if tab == 'mine' %}{{ _('You have not joined any course.') }}{% else %}{{ _('Courses will appear here once they are published.') }}{% endif %}</p>
-        </div>
-    {% endif %}
+    </div>
+</div>
 {% endblock %}

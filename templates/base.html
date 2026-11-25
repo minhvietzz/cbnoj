@@ -11,27 +11,28 @@
     {% endif %}
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicons-->
-    <link rel="apple-touch-icon" sizes="57x57" href="{{ static('icons/apple-touch-icon-57x57.png') }}">
-    <link rel="apple-touch-icon" sizes="60x60" href="{{ static('icons/apple-touch-icon-60x60.png') }}">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{ static('icons/apple-touch-icon-72x72.png') }}">
-    <link rel="apple-touch-icon" sizes="76x76" href="{{ static('icons/apple-touch-icon-76x76.png') }}">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{ static('icons/apple-touch-icon-114x114.png') }}">
-    <link rel="apple-touch-icon" sizes="120x120" href="{{ static('icons/apple-touch-icon-120x120.png') }}">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{ static('icons/apple-touch-icon-144x144.png') }}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{ static('icons/apple-touch-icon-152x152.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ static('icons/apple-touch-icon-180x180.png') }}">
-    <link rel="icon" type="image/png" href="{{ static('icons/favicon-32x32.png') }}" sizes="32x32">
-    <link rel="icon" type="image/png" href="{{ static('icons/android-chrome-192x192.png') }}" sizes="192x192">
-    <link rel="icon" type="image/png" href="{{ static('icons/favicon-96x96.png') }}" sizes="96x96">
-    <link rel="icon" type="image/png" href="{{ static('icons/favicon-16x16.png') }}" sizes="16x16">
+    <link rel="apple-touch-icon" sizes="57x57" href="{{ static('icons/apple-touch-icon-57x57.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="60x60" href="{{ static('icons/apple-touch-icon-60x60.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="72x72" href="{{ static('icons/apple-touch-icon-72x72.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ static('icons/apple-touch-icon-76x76.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="114x114" href="{{ static('icons/apple-touch-icon-114x114.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="120x120" href="{{ static('icons/apple-touch-icon-120x120.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="144x144" href="{{ static('icons/apple-touch-icon-144x144.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ static('icons/apple-touch-icon-152x152.png') }}?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static('icons/apple-touch-icon-180x180.png') }}?v=4">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-32x32.png') }}?v=4" sizes="32x32">
+    <link rel="icon" type="image/png" href="{{ static('icons/android-chrome-192x192.png') }}?v=4" sizes="192x192">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-96x96.png') }}?v=4" sizes="96x96">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-16x16.png') }}?v=4" sizes="16x16">
+    <link rel="shortcut icon" href="{{ static('icons/favicon.ico') }}?v=4">
     <meta name="msapplication-TileColor" content="#231F20">
-    <meta name="msapplication-TileImage" content="{{ static('icons/mstile-144x144.png') }}">
+    <meta name="msapplication-TileImage" content="{{ static('icons/mstile-144x144.png') }}?v=4">
     {# Chrome 39 for Android colour #}
     <meta name="theme-color" content="#231F20">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
-        {% with logo_url=misc_config.site_logo|default(static('icons/og_logo.png'), true) %}
+        {% with logo_url=misc_config.site_logo|default(request.build_absolute_uri(static('icons/og_logo.png')) ~ '?v=4', true) %}
         <meta property="og:image" content="{{ logo_url }}">
         {% endwith %}
     {% endif %}
@@ -58,6 +59,10 @@
         <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
     {% endcompress %}
+    {% if CBN_UI %}
+        <link rel="stylesheet" href="{{ static('be-vietnam-pro.css') }}?v={{ CBN_ASSET_V }}">
+        <link rel="stylesheet" href="{{ static('cbn-theme.css') }}?v={{ CBN_ASSET_V }}">
+    {% endif %}
     <link rel="canonical"
           href="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
     {% if request.user.is_impersonate %}
@@ -83,7 +88,7 @@
         <script src="{{ static('libs/moment.js') }}"></script>
         <script src="{{ static('libs/select2/select2.js') }}"></script>
         {% include "extra_js.html" %}
-        <script src="{{ static('common.js') }}"></script>
+        <script src="{{ static('common.js') }}?v={{ CBN_ASSET_V }}"></script>
         <script src="{{ static('event.js') }}"></script>
         <script>
             moment.locale('{{ LANGUAGE_CODE }}');
@@ -230,7 +235,7 @@
     </noscript>
 </head>
 {% set eyebrows = {'problems': _('PRACTICE'), 'contest': _('COMPETE'), 'user': _('LEADERBOARD'), 'submit': _('SUBMISSION HISTORY'), 'courses': _('LEARNING PATHS')} %}
-<body data-theme="{{ SITE_THEME_NAME }}"{% for k in nav_tab %}{% if k in eyebrows %} style="--eyebrow: '{{ eyebrows[k] }}'"{% endif %}{% endfor %}>
+<body data-theme="{{ SITE_THEME_NAME }}"{% if CBN_UI %} class="cbn-ui"{% endif %}{% for k in nav_tab %}{% if k in eyebrows %} style="--eyebrow: '{{ eyebrows[k] }}'"{% endif %}{% endfor %}>
 <svg width="0" height="0" style="display: block">
     <defs>
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
@@ -243,24 +248,65 @@
             {% if (request.in_contest and request.participation.contest.logo_override_image) or (logo_override_image is defined and logo_override_image) %}
                 {% include "site-logo-fragment.html" %}
             {% else %}
-                <span class="nav-brand-chip">{{ SITE_NAME[:2]|upper }}</span><span class="nav-brand-name">{{ SITE_NAME }}</span>
+                <img class="nav-brand-mark" src="{{ static('icons/logo-white.svg' if CBN_UI else 'icons/logo-color.svg') }}" alt="{{ SITE_NAME }}">
             {% endif %}
         </a>
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
         <ul id="nav-list">
             {% if request.organization is not defined %}
                 <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home{% if request.path == '/' %} active{% endif %}">{{ _('Study') }}</a></li>
+                {% set nm_rich = CBN_UI %}
                 {% for node in mptt_tree(nav_bar) recursive %}
                     {% if node.key != 'server' or can_view_server_status %}
+                    {% set nm_child = nm_rich and loop.depth > 1 %}
                     <li>
+                        {% if nm_child and node.path.startswith('/practice') %}
+                            <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %} nm-foot">{{ _(node.label) }}</a>
+                        {% elif nm_child %}
+                            {% if node.path.startswith('/problems') %}{% set nm_ic, nm_cl, nm_ds = '&lt;/&gt;', 'blue', _('%(n)s problems, auto-graded', n=nav_problem_count()) %}
+                            {% elif node.path.startswith('/quizzes') %}{% set nm_ic, nm_cl, nm_ds = '&#10003;', 'green', _('By subject, with practice') %}
+                            {% elif node.path.startswith('/contests') %}{% set nm_ic, nm_cl, nm_ds = '&#9202;', 'gold', _('Timed programming contests') %}
+                            {% elif node.path.startswith('/submissions') %}{% set nm_ic, nm_cl, nm_ds = '&#8593;', 'blue', _('Your submissions and verdicts') %}
+                            {% else %}{% set nm_ic, nm_cl, nm_ds = (_(node.label)[:1]|upper|e), 'blue', '' %}{% endif %}
+                            <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %} nm-item">
+                                <span class="nm-ico nm-ico-{{ nm_cl }}" aria-hidden="true">{{ nm_ic|safe }}</span>
+                                <span class="nm-txt"><b>{{ _(node.label) }}</b>{% if nm_ds %}<span>{{ nm_ds }}</span>{% endif %}</span>
+                            </a>
+                        {% else %}
                         <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
                             {{ _(node.label) }}
                             {% if not node.is_leaf_node() %}
                                 <div class="nav-expand">&gt;</div>
                             {% endif %}
                         </a>
+                        {% endif %}
                         {% with children=node.get_children() %}
-                            {% if children %}<ul>{{ loop(children) }}</ul>{% endif %}
+                            {% if nm_rich and loop.depth == 1 and node.path == '/organizations/' and request.user.is_authenticated %}
+                                {% set nm_orgs = nav_menu_orgs(request.user) %}
+                                <ul class="nm-menu nm-menu-wide">
+                                    <li class="nm-head">{{ _('My organizations') }}</li>
+                                    {% for o in nm_orgs %}
+                                        <li><a class="nm-item" href="{{ o.org.get_absolute_url() }}">
+                                            <span class="nm-ico nm-ico-navy" aria-hidden="true">{{ o.initials }}</span>
+                                            <span class="nm-txt"><b>{{ o.org.name }}</b><span>{{ _('Administrator') if o.is_admin else _('Member') }}</span></span>
+                                        </a></li>
+                                    {% endfor %}
+                                    <li class="nm-links">
+                                        {% if nm_orgs %}
+                                            <a href="{{ nm_orgs[0].org.get_users_url() }}">{{ _('Member') }}</a>
+                                            <a href="{{ url('organization_exams', nm_orgs[0].org.slug) }}">{{ _('Exam list') }}</a>
+                                        {% endif %}
+                                        <a href="{{ url('class_list') }}">{{ _('My classes') }}</a>
+                                    </li>
+                                    <li><a class="nm-foot" href="{{ node.path }}">{{ _('Join another organization') if nm_orgs else _('Browse organizations') }}</a></li>
+                                    {% if children %}{{ loop(children) }}{% endif %}
+                                </ul>
+                            {% elif children %}
+                                <ul{% if nm_rich and loop.depth == 1 %} class="nm-menu"{% endif %}>
+                                    {% if nm_rich and loop.depth == 1 %}<li class="nm-head">{{ _(node.label) }}</li>{% endif %}
+                                    {{ loop(children) }}
+                                </ul>
+                            {% endif %}
                         {% endwith %}
                     </li>
                     {% endif %}
@@ -278,10 +324,16 @@
                 {{ make_navbar_item('submission-list', url('submission_list_organization', org.slug), _('Submissions')) }}
                 {{ make_navbar_item('contest-list',  url('contest_list_organization', org.slug), _('Contests')) }}
                 {{ make_navbar_item('users',org.get_users_url(), _('Users')) }}
+                {{ make_navbar_item('classes', url('class_list'), _('My classes')) }}
             {% endif %}
         </ul>
 
         <span id="user-links">
+            {% if CBN_UI %}
+                <a id="cbn-search" href="{{ url('problem_list') }}" title="{{ _('Search problems') }}" aria-label="{{ _('Search problems') }}">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+                </a>
+            {% endif %}
             {% if request.user.is_authenticated %}
                 <a id="report-issue" href=
                     {% if request.resolver_match.view_name == "problem_detail" and problem %}
@@ -307,11 +359,11 @@
             </a>
             {% if LANGUAGE_CODE == 'vi' %}
                 <a id="flag_en" href="#" onclick="submmit_language('en'); return false;" title="English" style="margin-right: 5px; margin-top: 4px;">
-                    <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">
+                    <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">{% if CBN_UI %}<span class="cbn-lang">VI</span>{% endif %}
                 </a>
             {% else %}
                 <a id="flag_vi" href="#" onclick="submmit_language('vi'); return false;" title="Tiếng Việt" style="margin-right: 5px; margin-top: 4px;">
-                    <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
+                    <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">{% if CBN_UI %}<span class="cbn-lang">EN</span>{% endif %}
                 </a>
             {% endif %}
             <span class="nav-divider"></span>
@@ -455,5 +507,28 @@
         </span>
     </footer>
 </div>
+{% if MAINTENANCE %}
+<div id="cbn-maint" role="dialog" aria-modal="true" aria-labelledby="cbn-maint-title" style="position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(15,26,68,.72);font-family:'Be Vietnam Pro','Nunito',system-ui,sans-serif">
+    <div style="max-width:460px;width:100%;background:#fff;color:#15171C;border-radius:8px;border-top:6px solid #F2B705;padding:28px 28px 24px;text-align:left">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;color:#8A5300;margin-bottom:8px">{{ _('MAINTENANCE') }}</div>
+        <h2 id="cbn-maint-title" style="margin:0 0 10px;font-size:24px;font-weight:700;line-height:1.25">{{ _('The site is under maintenance') }}</h2>
+        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#3B404B">{% if MAINTENANCE is string %}{{ MAINTENANCE }}{% else %}{{ _('Some pages may look broken or work slowly for a while. Your data is safe. Thank you for your patience.') }}{% endif %}</p>
+        <button type="button" id="cbn-maint-ok" style="height:44px;padding:0 24px;border:0;border-radius:6px;background:#1F3FBF;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ _('I understand') }}</button>
+    </div>
+</div>
+<script>
+    (function () {
+        var box = document.getElementById('cbn-maint');
+        if (!box) return;
+        var seen = false;
+        try { seen = sessionStorage.getItem('cbn-maint-seen') === '1'; } catch (e) {}
+        if (!seen) box.style.display = 'flex';
+        document.getElementById('cbn-maint-ok').addEventListener('click', function () {
+            box.style.display = 'none';
+            try { sessionStorage.setItem('cbn-maint-seen', '1'); } catch (e) {}
+        });
+    })();
+</script>
+{% endif %}
 </body>
 </html>

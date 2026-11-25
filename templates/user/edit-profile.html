@@ -328,7 +328,6 @@
                 $select.on('change', paint); paint();
             }
             bind($('#id_site_theme'), $('#ep-theme'));
-            bind($('#id_problem_ui'), $('#ep-ui'));
 
             // code templates: one editor, four tabs
             var SAMPLES = {
@@ -472,23 +471,6 @@
                                         <button type="button" role="radio" data-v="{{ value }}" aria-checked="false">{{ 'Tự động' if value == 'auto' else label }}</button>
                                     {% endfor %}
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="ep-field" style="margin-top: 20px">
-                            <span>{{ _('Problem page:') }}</span>
-                            <div class="ep-hidden">{{ form.problem_ui }}</div>
-                            <div class="ep-ui" id="ep-ui" role="radiogroup" aria-label="{{ _('Problem page:') }}">
-                                <button type="button" role="radio" data-v="old" aria-checked="false">
-                                    <span class="pv" aria-hidden="true"><i style="flex: 1 1 0"></i><i style="flex: 0 0 26%"></i></span>
-                                    <span><b>Giao diện cũ</b><span class="tg">Mặc định</span></span>
-                                    <small>Đề bài bên trái, thông tin bài bên phải. Nộp bài ở tab bên dưới.</small>
-                                </button>
-                                <button type="button" role="radio" data-v="new" aria-checked="false">
-                                    <span class="pv" aria-hidden="true"><i style="flex: 0 0 34%"></i><span style="flex: 1 1 0; display: flex; flex-direction: column; gap: 6px"><i class="dk" style="flex: 1 1 0"></i><i style="flex: 0 0 24%"></i></span></span>
-                                    <span><b>Giao diện mới</b><span class="tg">Có chạy thử</span></span>
-                                    <small>Đề bài và khung code chia đôi màn hình, kéo để đổi kích thước, chạy thử ngay trên trang.</small>
-                                </button>
                             </div>
                         </div>
 

@@ -18,6 +18,7 @@
         </div>
         <div class="course-hero-side bk-hero-side">
             <a class="course-join" href="{{ url('bank_import') }}"><i class="fa fa-upload"></i> {{ _('Import questions') }}</a>
+            <a class="lesson-nav-btn" href="{{ url('bank_import_plain') }}"><i class="fa fa-file-word-o"></i> {{ _('Import an exam paper') }}</a>
             <a class="lesson-nav-btn" href="{{ url('bank_compose') }}"><i class="fa fa-magic"></i> {{ _('Build a quiz') }}{% if compose_count %} ({{ compose_count }}){% endif %}</a>
         </div>
     </section>

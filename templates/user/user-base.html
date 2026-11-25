@@ -9,79 +9,9 @@
 {% endblock %}
 
 {% block body %}
-    <div class="up">
-        <header class="up-hero">
-            <img src="{{ gravatar(user, 192) }}" class="up-avatar" alt="">
-            <div class="up-id">
-                <h1>{{ user.user.first_name or user.user.username }}{% if user.display_rank != 'user' %} <span class="up-tag up-tag-{{ user.display_rank }}">{{ user.get_display_rank_display() }}</span>{% endif %}</h1>
-                <div class="up-handle {{ user.css_class }}"><a href="{{ url('user_page', user.user.username) }}">@{{ user.user.username }}</a></div>
-                <div class="up-facts">
-                    {% with orgs=user.organizations.filter(is_unlisted=False) %}
-                        {% for org in orgs %}<a href="{{ org.get_absolute_url() }}"><i class="fa fa-university"></i> {{ org.name }}</a>{% endfor %}
-                    {% endwith %}
-                    <span><i class="fa fa-clock-o"></i> {{ _('Member since') }} {{ user.user.date_joined|date('m/Y') }}</span>
-                    {% if user.user == request.user or request.user.is_superuser %}
-                        <span><i class="fa fa-envelope-o"></i> {{ user.user.email }}</span>
-                    {% endif %}
-                </div>
-            </div>
-            {% if streak is defined and streak %}
-                <div class="up-streak">
-                    <div class="up-eyebrow">{{ _('STREAK OF') }} {{ user.user.username|upper }}</div>
-                    <div class="up-streak-cells">
-                        <div><span><i class="fa fa-fire"></i><b>{{ streak.current }}</b></span><small>{{ _('Current') }}</small></div>
-                        <div><span><i class="fa fa-trophy"></i><b>{{ streak.best }}</b></span><small>{{ _('Record') }}</small></div>
-                    </div>
-                </div>
-            {% endif %}
-        </header>
-
-        <div class="up-grid">
-            <aside class="up-side">
-                <section class="up-card">
-                    <div class="up-eyebrow">{{ _('STATISTICS') }}</div>
-                    <div class="up-tiles">
-                        <div class="up-tile up-tile-ok"><i class="fa fa-check-circle-o"></i><b>{{ user.problem_count }}</b><span>{{ _('Problems solved') }}</span></div>
-                        <div class="up-tile up-tile-sub"><i class="fa fa-paper-plane-o"></i><b>{{ submission_count if submission_count is defined else '-' }}</b><span>{{ _('Submissions') }}</span></div>
-                        <div class="up-tile up-tile-pts"><i class="fa fa-trophy"></i><b title="{{ user.performance_points|floatformat(2) }}">{{ user.performance_points|floatformat(0) }}</b><span>{{ _('Points') }}</span></div>
-                        <div class="up-tile up-tile-rank"><i class="fa fa-star-o"></i><b>{% if rank is defined and not user.is_unlisted %}#{{ rank }}{% else %}-{% endif %}</b><span>{{ _('Rank by points') }}</span></div>
-                    </div>
-                </section>
-
-                <section class="up-card">
-                    <div class="up-eyebrow">RATING</div>
-                    <div class="up-rating">
-                        <div class="up-rating-main">
-                            <small>{{ _('Rating') }}</small>
-                            <b>{% if rating %}{{ rating_number(rating) }}{% else %}&mdash;{% endif %}</b>
-                        </div>
-                        <div class="up-rating-main">
-                            <small>{{ _('Rank by rating') }}</small>
-                            <b>{% if ratings and not user.is_unlisted and rating_rank is defined %}#{{ rating_rank }}{% else %}#--{% endif %}</b>
-                        </div>
-                        <div><small>{{ _('Min. rating') }}</small><b>{% if ratings %}{{ rating_number(min_rating) }}{% else %}&mdash;{% endif %}</b></div>
-                        <div><small>{{ _('Max rating') }}</small><b>{% if ratings %}{{ rating_number(max_rating) }}{% else %}&mdash;{% endif %}</b></div>
-                    </div>
-                    <div class="up-line"><span>{{ _('Contests written') }}</span><b>{{ ratings|length if ratings else 0 }}</b></div>
-                    <div class="up-line"><span>{{ _('Contribution points:') }}</span><b>{{ user.contribution_points }}</b></div>
-                    <a class="up-btn" href="{{ url('all_user_submissions', user.user.username) }}"><i class="fa fa-paper-plane-o"></i> {{ _('View submissions') }}</a>
-                </section>
-
-                {% if streak is defined and streak %}
-                    <section class="up-card">
-                        <div class="up-eyebrow">{{ _('ACTIVITY STREAK') }}</div>
-                        <div class="up-streak-cells up-streak-cells-light">
-                            <div><span><i class="fa fa-fire"></i><b>{{ streak.current }}</b></span><small>{{ _('Current') }}</small></div>
-                            <div><span><i class="fa fa-trophy"></i><b>{{ streak.best }}</b></span><small>{{ _('Record') }}</small></div>
-                        </div>
-                        <div class="up-last">{{ _('Last 30 days') }}</div>
-                        <div class="up-days">
-                            {% for d in streak.recent %}<i class="{% if d.ok %}ok{% endif %}" title="{{ d.day.strftime('%d/%m') }}"></i>{% endfor %}
-                        </div>
-                    </section>
-                {% endif %}
-            </aside>
-            <div class="up-main user-content">{% block user_content %}{% endblock %}</div>
-        </div>
+    <div class="pf neo-flat">
+        {% block user_body %}
+            <div class="pf-single user-content">{% block user_content %}{% endblock %}</div>
+        {% endblock %}
     </div>
 {% endblock %}

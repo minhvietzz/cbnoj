@@ -10,6 +10,7 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseRedirect)
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, ListView, UpdateView
 from django.views.generic.detail import SingleObjectMixin, View
@@ -278,25 +279,11 @@ class PostList(PostListBase):
 
     def get_dashboard_context(self, context):
         # Data for the dashboard-style home page. Everything here is small and cached or cheap.
-        from datetime import timedelta
-
-        from django.core.cache import cache
-        from django.db.models.functions import TruncDate
-
-        from judge.models import Course, CourseLesson, CourseRole
-        from judge.views.course import lesson_progress
-
         user = self.request.user
         profile = self.request.profile if user.is_authenticated else None
         data = {}
-
-        featured = None
-        for group in (context['current_contests'], context['future_contests']):
-            featured = next(iter(group), None)
-            if featured:
-                data['home_featured_state'] = 'live' if group is context['current_contests'] else 'upcoming'
-                break
-        data['home_featured_contest'] = featured
+        today = timezone.localdate()
+        data['home_today'] = '%s · %s' % (date_format(today, 'l').upper(), date_format(today, 'd/m/Y'))
 
         if profile is not None:
             data['home_rank'] = Profile.objects.filter(
@@ -306,68 +293,28 @@ class PostList(PostListBase):
             data['home_solved'] = profile.problem_count
 
         data['home_dashboard'] = True
+        from judge.utils import classroom as class_stats
+        from judge.utils import learning
+        data['home_todo'] = class_stats.todo_for(profile) if profile is not None else []
+        data['home_exams'] = class_stats.upcoming_exams(user)
         if profile is not None:
             from judge.utils.streak import streak_info
             streak = streak_info(profile)
-            today = timezone.localdate()
-            goal = getattr(settings, 'VNOJ_DAILY_GOAL', 3)
-            done = (Submission.objects.filter(user=profile, result='AC', date__date=today)
-                    .values('problem_id').distinct().count())
             data.update({
                 'home_streak': streak['current'],
                 'home_streak_today': streak['today'],
-                'home_goal': goal,
-                'home_goal_done': min(done, goal),
-                'home_goal_left': max(goal - done, 0),
-                'home_goal_pct': int(round(100.0 * min(done, goal) / goal)) if goal else 100,
+                'home_week_avg': learning.week_average(profile),
+                'home_heat': learning.heat_grid(profile, weeks=12),
+                'home_courses': learning.continue_courses(profile),
             })
+        if not data.get('home_courses'):
+            data['home_open_courses'] = learning.open_courses()
 
         data['home_top_users'] = list(
             Profile.objects.filter(is_unlisted=False).order_by('-performance_points', '-problem_count')
                    .select_related('user')[:5],
         )
 
-        course = None
-        if profile is not None:
-            role = (CourseRole.objects.filter(user=profile).select_related('course')
-                    .order_by('-id').first())
-            course = role.course if role else None
-        if course is None:
-            course = (Course.objects.filter(is_public=True, is_open=True)
-                            .annotate(n_lessons=Count('lessons', filter=Q(lessons__is_visible=True)))
-                            .order_by('-n_lessons', '-created').first())
-        if course is not None:
-            lessons = list(CourseLesson.objects.filter(course=course, is_visible=True).order_by('order', 'id')
-                           .prefetch_related('lesson_problems__problem')[:12])
-            progress = lesson_progress(profile, lessons) if profile is not None else {}
-            data['home_course'] = course
-            data['home_lessons'] = [{
-                'lesson': lesson,
-                'percent': progress.get(lesson.id, {}).get('percent'),
-                'solved': progress.get(lesson.id, {}).get('solved'),
-                'total': progress.get(lesson.id, {}).get('total'),
-            } for lesson in lessons]
-
-        def week_activity():
-            today = timezone.localdate()
-            start = today - timedelta(days=6)
-            rows = (Submission.objects.filter(date__date__gte=start)
-                    .annotate(day=TruncDate('date'))
-                    .values('day').annotate(total=Count('id'), ok=Count('id', filter=Q(result='AC')))
-                    .order_by('day'))
-            by_day = {r['day']: r for r in rows}
-            out = []
-            for i in range(7):
-                day = start + timedelta(days=i)
-                r = by_day.get(day, {'total': 0, 'ok': 0})
-                out.append({'day': day, 'ok': r['ok'], 'bad': r['total'] - r['ok']})
-            peak = max([d['ok'] + d['bad'] for d in out] + [1])
-            for d in out:
-                d['ok_h'] = int(round(130.0 * d['ok'] / peak))
-                d['bad_h'] = int(round(130.0 * d['bad'] / peak))
-            return out
-
-        data['home_activity'] = cache.get_or_set('home_week_activity', week_activity, 300)
         return data
 
     def get_top_rated_users(self):

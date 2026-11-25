@@ -3,27 +3,80 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% set tab = 'list' %}
-    {% include "user/user-list-tabs.html" %}
-{% endblock %}
-
-{% block users_table %}
-    {% include "user/users-table.html" %}
-{% endblock %}
-
-{% block before_users_table %}
-    {% if users and (not page_obj or page_obj.number == 1) and users|length >= 3 %}
-        <div class="rk-podium">
-            {% for idx in [1, 0, 2] %}
-                {% set entry = users[idx] %}
-                <a class="rk-pod rk-pod-{{ idx + 1 }}" href="{{ url('user_page', entry[1].user.username) }}">
-                    <img class="rk-pod-av" src="{{ gravatar(entry[1], 88) }}" alt="" width="88" height="88">
-                    <b class="rk-pod-name">{{ entry[1].user.first_name or entry[1].user.username }}</b>
-                    <span class="rk-pod-user">{{ entry[1].user.username }}</span>
-                    <span class="rk-pod-pts">{{ entry[1].performance_points|floatformat(0) }}</span>
-                    <span class="rk-pod-block">{{ entry[0] }}</span>
-                </a>
-            {% endfor %}
+    <header class="bp-head">
+        <h1>{{ _('Ranking') }}</h1>
+        <div class="bp-tabs">
+            <a class="on" href="{{ url('user_list') }}">{{ _('School-wide') }}</a>
+            <a href="{{ url('organization_list') }}">{{ _('By organization') }}</a>
+            <a href="{{ url('class_list') }}">{{ _('By class') }}</a>
+            <a href="{{ url('contributors_list') }}">{{ _('Contributors') }}</a>
         </div>
-    {% endif %}
+    </header>
+{% endblock %}
+
+{% block body %}
+    <div class="bp-wrap lb-page">
+        {% if users and (not page_obj or page_obj.number == 1) and users|length >= 3 %}
+            <div class="lb-podium">
+                {% for idx in [0, 1, 2] %}
+                    {% set entry = users[idx] %}
+                    {% set prof = entry[1] %}
+                    <div class="lb-pod lb-pod-{{ idx + 1 }}">
+                        <span class="lb-pod-rank">{{ entry[0] }}</span>
+                        <img class="lb-av lb-av-pod" src="{{ gravatar(prof, 96) }}" width="44" height="44" alt="" loading="lazy">
+                        <span class="lb-pod-who">
+                            <a href="{{ url('user_page', prof.user.username) }}">{{ prof.user.username }}</a>
+                            <span>{% if class_names.get(prof.id) %}{{ class_names[prof.id] }} · {% endif %}{{ prof.performance_points|floatformat(0) }} {{ _('points (short)') }}</span>
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="bp-card">
+            <div class="lb-bar">
+                <form id="search-form" name="form" action="{{ url('user_ranking_redirect') }}" method="get">
+                    <input id="search-handle" type="text" name="search" placeholder="{{ _('Search by handle...') }}">
+                </form>
+            </div>
+            <div class="bp-scroll">
+                <table class="bp-table lb-table">
+                    <thead>
+                        <tr>
+                            <th class="lb-rank">{{ _('Rank') }}</th>
+                            <th>{{ _('Member') }}</th>
+                            {% if class_names %}<th>{{ _('Class') }}</th>{% endif %}
+                            <th class="bp-r">{% if sort_links %}<a href="{{ sort_links.problem_count }}">{% endif %}{{ _('Problems solved') }}{% if sort_links %}{{ sort_order.problem_count }}</a>{% endif %}</th>
+                            <th class="bp-r">{% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}{{ _('Points') }}{% if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rank, user in users %}
+                            <tr id="user-{{ user.user.username }}" class="{{ 'lb-me' if user.id == my_id }}">
+                                <td class="lb-rank">{{ rank }}</td>
+                                <td>
+                                    <div class="lb-who">
+                                        <img class="lb-av" src="{{ gravatar(user, 72) }}" width="36" height="36" alt="" loading="lazy">
+                                        <div class="lb-who-text">
+                                            <a class="lb-name" href="{{ url('user_page', user.user.username) }}">{{ user.user.username }}</a>{{ user_tag(user) }}
+                                            {% if user.rating %}<span class="lb-rate">{{ rating_number(user) }}</span>{% endif %}
+                                            {% if user.user.first_name %}<div class="lb-full">{{ user.user.first_name }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                {% if class_names %}<td class="bp-mute">{{ class_names.get(user.id, '') }}</td>{% endif %}
+                                <td class="bp-r">{{ user.problem_count }}</td>
+                                <td class="bp-r lb-pts" title="{{ user.performance_points|floatformat(2) }}">{{ user.performance_points|floatformat(0) }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" class="bp-empty">{{ _('No users found.') }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page_obj and page_obj.has_other_pages() %}
+                <div class="bp-pages">{% include "list-pages.html" %}</div>
+            {% endif %}
+        </section>
+    </div>
 {% endblock %}

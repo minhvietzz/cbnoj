@@ -118,8 +118,12 @@ class CourseList(TitleMixin, ListView):
 
     @cached_property
     def tab(self):
-        tab = self.request.GET.get('tab', 'all')
-        return 'mine' if tab == 'mine' and self.request.user.is_authenticated else 'all'
+        user = self.request.user
+        tab = self.request.GET.get('tab')
+        if tab is None:
+            # people who study something land on their own courses
+            tab = 'mine' if user.is_authenticated and CourseRole.objects.filter(user=user.profile).exists() else 'all'
+        return 'mine' if tab == 'mine' and user.is_authenticated else 'all'
 
     def get_queryset(self):
         user = self.request.user
@@ -149,10 +153,14 @@ class CourseList(TitleMixin, ListView):
         for role in (CourseRole.objects.filter(course__in=courses, role=RoleInCourse.TEACHER)
                      .select_related('user__user')):
             teachers[role.course_id].append(role.user)
+        from judge.utils.learning import course_progress_map
+        progress = course_progress_map(user.profile, [c for c in courses if c.id in enrolled]) \
+            if user.is_authenticated else {}
         for course in courses:
             course.color = course_color(course)
             course.teacher_list = teachers[course.id]
             course.my_role = enrolled.get(course.id)
+            course.progress = progress.get(course.id)
         context['courses'] = courses
         context['tab'] = self.tab
         context['search'] = self.request.GET.get('search', '')

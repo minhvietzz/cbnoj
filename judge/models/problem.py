@@ -255,6 +255,8 @@ class Problem(models.Model):
                                      on_delete=SET_NULL,
                                      help_text=_('If private, only this organization may see the problem.'))
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
+    subject = models.ForeignKey('judge.Subject', verbose_name=_('subject'), null=True, blank=True,
+                                on_delete=SET_NULL, related_name='problems')
 
     allow_view_feedback = models.BooleanField(
         help_text=_('Allow user to view checker feedback.'),

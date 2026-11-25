@@ -44,6 +44,13 @@ app.conf.beat_schedule = {
             'expires': 10 * 60,
         },
     },
+    'remind-due-assignments': {
+        'task': 'judge.tasks.classroom.remind_due_assignments',
+        'schedule': crontab(minute='*/30'),
+        'options': {
+            'expires': 30 * 60,
+        },
+    },
     'notify-upcoming-quizzes': {
         'task': 'judge.tasks.quiz.notify_upcoming_quizzes',
         'schedule': crontab(minute='*/5'),

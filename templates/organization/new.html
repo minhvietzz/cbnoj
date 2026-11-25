@@ -4,9 +4,15 @@
 {% block media %}{{ form.media.css }}{% endblock %}
 
 {% block body %}
-    <form action="" method="post" class="form-area">
+    <form action="" method="post" class="og-card og-form">
         {% csrf_token %}
-        <table border="0" style="text-align:left">{{ form.as_table() }}</table>
-        <button type="submit">{{ _('Create') }}</button>
+        {% for field in form %}
+            <div class="og-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+                {% if field.help_text %}<span class="og-hint">{{ field.help_text }}</span>{% endif %}
+                {% for e in field.errors %}<span class="og-err">{{ e }}</span>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="og-form-foot"><button type="submit" class="og-btn">{{ _('Create') }}</button></div>
     </form>
 {% endblock %}

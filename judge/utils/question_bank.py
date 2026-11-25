@@ -33,9 +33,10 @@ def split_tags(text):
 
 
 @transaction.atomic
-def add_to_bank(questions, profile, source='', extra_tags=()):
+def add_to_bank(questions, profile, source='', extra_tags=(), subject=None):
     """
     Add parsed questions (see quiz_parser) to the bank, skipping duplicates.
+    `subject` (a Subject) is set on new rows, and on existing ones that have none yet.
     Returns (banks, added, skipped): `banks` is aligned with `questions` (new or already-existing rows).
     """
     banks, added, skipped = [], 0, 0
@@ -47,10 +48,13 @@ def add_to_bank(questions, profile, source='', extra_tags=()):
             bank = BankQuestion.objects.create(
                 kind=q['kind'], text=q['text'], options=q['options'], accepted_answers='\n'.join(q['answers']),
                 explanation=q['explanation'], points=q['points'], level=q.get('level', 0), source_name=source,
-                creator=profile, content_hash=digest)
+                creator=profile, content_hash=digest, subject=subject)
             added += 1
         else:
             skipped += 1
+            if subject is not None and bank.subject_id is None:
+                bank.subject = subject
+                bank.save(update_fields=['subject'])
         if names:
             bank.tags.add(*get_tags(names))
         banks.append(bank)

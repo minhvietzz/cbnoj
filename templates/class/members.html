@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    {% if can_manage %}
+        <form method="post" action="{{ url('class_members', classroom.slug) }}" class="cx-card" style="padding:18px 22px">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <div class="cx-field"><label for="usernames">{{ _('Add members by username') }}</label>
+                <textarea id="usernames" name="usernames" rows="2" class="cx-input" placeholder="{{ _('One username per line') }}"></textarea></div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                <select name="role" class="cx-input" style="width:auto">{% for value, label in role_choices %}<option value="{{ value }}"{% if value == 'ST' %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                <button class="cx-btn" type="submit">{{ _('Add') }}</button>
+                <a class="cx-btn ghost" href="{{ url('class_import') }}">{{ _('Import a class list') }}</a>
+            </div>
+        </form>
+    {% endif %}
+    <section class="cx-card">
+        <h2>{{ _('Members') }} <span class="cx-hint">{{ members|length }}</span></h2>
+        {% if members %}
+        <table class="cx-table">
+            <thead><tr><th>{{ _('Member list') }}</th><th>{{ _('Username') }}</th><th>{{ _('Role') }}</th>{% if can_manage %}<th></th>{% endif %}</tr></thead>
+            <tbody>
+            {% for m in members %}
+                <tr>
+                    <td style="font-weight:600"><a href="{{ url('user_page', m.user.user.username) }}">{{ m.user.user.first_name or m.user.user.username }}</a>{{ user_tag(m.user) }}</td>
+                    <td class="cx-mono">{{ m.user.user.username }}</td>
+                    <td>
+                        {% if can_manage %}
+                            <form method="post" action="{{ url('class_members', classroom.slug) }}" style="display:inline">{% csrf_token %}
+                                <input type="hidden" name="action" value="role"><input type="hidden" name="member" value="{{ m.id }}">
+                                <select name="role" class="cx-input" style="width:auto;height:34px" onchange="this.form.submit()">{% for value, label in role_choices %}<option value="{{ value }}"{% if value == m.role %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                            </form>
+                        {% else %}<span class="cx-chip">{{ role_names[m.role] }}</span>{% endif %}
+                    </td>
+                    {% if can_manage %}
+                        <td class="r"><form method="post" action="{{ url('class_members', classroom.slug) }}" style="display:inline" data-confirm="{{ _('Remove this member from the class?') }}" onsubmit="return confirm(this.dataset.confirm)">{% csrf_token %}
+                            <input type="hidden" name="action" value="remove"><input type="hidden" name="member" value="{{ m.id }}"><button type="submit" class="cx-btn ghost sm">{{ _('Remove') }}</button></form></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<div class="cx-empty">{{ _('No members yet') }}</div>{% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -24,20 +24,14 @@
         </div>
     </section>
     {% else %}
-    <section class="course-hero tone-{{ 'mint' if attempt.percent >= 80 else ('butter' if attempt.percent >= 50 else 'peach') }}">
-        <div class="course-hero-main">
-            <h3 class="course-section-title" style="margin: 0">{{ _('Result') }}{% if owner.id != request.user.profile.id %} — {{ link_user(owner) }}{% endif %}</h3>
-            <div class="qz-score">{{ attempt.score|round(2) }}<small>/{{ attempt.max_score|round(2) }} {{ _('points') }}</small></div>
-            <div class="course-meta">
-                <span><i class="fa fa-check"></i> {{ attempt.correct_count }}/{{ attempt.question_count }} {{ _('correct') }}</span>
-                <span><i class="fa fa-clock-o"></i> {{ attempt.started|date('d/m/Y H:i') }}</span>
-            </div>
-        </div>
-        <div class="course-hero-side">
-            <div class="course-ring" style="--p: {{ attempt.percent }}"><b>{{ attempt.percent }}%</b></div>
-        </div>
-    </section>
-
+    {% set wrong_n = review|rejectattr('correct')|list|length %}
+    {% set secs = ([((attempt.finished - attempt.started).total_seconds()|int), 0]|max) if attempt.finished and attempt.started else 0 %}
+    <div class="rs-head">
+        <span class="rs-who">{% if owner.id != request.user.profile.id %}{{ link_user(owner) }}{% else %}{{ _('Result') }}{% endif %}</span>
+        <span class="rs-score"><b>{{ attempt.score|round(2) }}</b><span>/{{ attempt.max_score|round(2) }} {{ _('points') }}</span></span>
+    </div>
+    <div class="rs-grid">
+    <div class="rs-main">
     {% if answers_pending %}
         <div class="course-empty course-empty-small"><p><i class="fa fa-lock"></i> {{ _('The correct answers and explanations will be shown once the exam has closed for everyone.') }}</p></div>
     {% elif not reveal %}
@@ -90,6 +84,22 @@
             {% endif %}
         </section>
     {% endfor %}
+    </div>
+    <div class="rs-side">
+        <section class="rs-sum">
+            <h2>{{ _('Summary') }}</h2>
+            <span><span>{{ _('Correct') }}</span><b class="ok">{{ attempt.correct_count }}/{{ attempt.question_count }}</b></span>
+            <span><span>{{ _('Wrong or skipped') }}</span><b class="bad">{{ wrong_n }}</b></span>
+            <span><span>{{ _('Time') }}</span><b>{{ secs // 60 }}:{{ '%02d'|format(secs % 60) }}</b></span>
+            <span><span>{{ _('Score') }}</span><b>{{ attempt.percent }}%</b></span>
+            <span><span>{{ _('Started') }}</span><b>{{ attempt.started|date('d/m/Y H:i') }}</b></span>
+        </section>
+        {% if owner.id == request.user.profile.id and not quiz.is_exam %}
+            {% if wrong_n %}<a class="rs-btn pri" href="{{ url('practice_mistakes') }}">{{ _('Review wrong answers') }}</a>{% endif %}
+            <a class="rs-btn" href="{{ quiz.get_absolute_url() }}">{{ _('Back to quiz') }}</a>
+        {% endif %}
+    </div>
+    </div>
     {% endif %}
 {% endblock %}
 

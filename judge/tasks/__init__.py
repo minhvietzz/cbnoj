@@ -1,3 +1,4 @@
+from judge.tasks.classroom import *
 from judge.tasks.contest import *
 from judge.tasks.demo import *
 from judge.tasks.email import *

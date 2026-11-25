@@ -26,77 +26,90 @@
 
 {% block media %}
     {{ form.media.css }}
-    <style>
-        #id_name, #id_slug, #id_about, #id_logo_override_image {
-            width: 100%;
-        }
-        .django-as-table th {
-            width: 10em;
-        }
-    </style>
 {% endblock %}
 
+{% macro og_fields(f) %}
+    {% for field in f %}
+        <div class="og-field{% if field.errors %} has-error{% endif %}">
+            {% if field.field.widget.input_type == 'checkbox' %}
+                <label class="og-check" for="{{ field.id_for_label }}">{{ field }} <span>{{ field.label }}</span></label>
+            {% else %}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            {% endif %}
+            {% if field.help_text %}<span class="og-hint">{{ field.help_text }}</span>{% endif %}
+            {% for e in field.errors %}<span class="og-err">{{ e }}</span>{% endfor %}
+        </div>
+    {% endfor %}
+{% endmacro %}
+
+{% block title_row %}
+    {% if organization is defined and organization %}
+        {% set tab = 'edit' %}
+        {% include "organization/tabs.html" %}
+    {% else %}
+        <div class="og-head og-plain"><div class="og-id"><div class="og-name"><h1>{{ content_title or title }}</h1></div></div></div>
+    {% endif %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
 {% block body %}
-    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+<div class="og neo-flat">
+    <form action="" method="post" class="og-card og-form">
         {% csrf_token %}
-        <table border="0" class="django-as-table">{{ form.as_table() }}</table>
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="submit-bar" type="submit">
-                {% if request.resolver_match.url_name == 'organization_create' %}
-                    {{ _('Create') }}
-                {% else %}
-                    {{ _('Update') }}
-                {% endif %}
+        {% if form.non_field_errors() %}<div class="og-err">{{ form.non_field_errors() }}</div>{% endif %}
+        {{ og_fields(form) }}
+        <div class="og-form-foot">
+            <button class="og-btn" type="submit">
+                {% if request.resolver_match.url_name == 'organization_create' %}{{ _('Create') }}{% else %}{{ _('Update') }}{% endif %}
             </button>
         </div>
     </form>
 
     {% if quota_form %}
-    <hr>
-    <h3>{{ _('Quota Grants') }}</h3>
-
-    {% if existing_quotas %}
-    <table class="table" style="width: auto; margin-bottom: 1em;">
-        <thead>
-            <tr>
-                <th>{{ _('Start') }}</th>
-                <th>{{ _('End') }}</th>
-                <th>{{ _('+ Problems') }}</th>
-                <th>{{ _('+ Storage') }}</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for q in existing_quotas %}
-            <tr>
-                <td>{{ q.start_date }}</td>
-                <td>{{ q.end_date }}</td>
-                <td>+{{ q.added_problems }}</td>
-                <td>+{{ q.added_storage|filesizeformat }}</td>
-                <td>
-                    <form method="post" action="{{ url('organization_quota_delete', organization.slug, q.id) }}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-xs btn-danger"
-                                onclick="return confirm('{{ _('Delete this quota grant?') }}')">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="color: #999;">{{ _('No quota grants yet.') }}</p>
-    {% endif %}
-
-    <h4>{{ _('Add Quota Grant') }}</h4>
-    <form method="post" action="{{ url('organization_quota_add', organization.slug) }}" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
-        {% csrf_token %}
-        <table class="django-as-table">{{ quota_form.as_table() }}</table>
-        <div style="display: flex; justify-content: flex-end; margin-top: 0.5em;">
-            <button class="submit-bar" type="submit">{{ _('Add') }}</button>
+    <section class="og-card og-flush" style="margin-top:24px">
+        <div class="og-card-pad"><h2 class="og-h2" style="margin:0">{{ _('Quota Grants') }}</h2></div>
+        {% if existing_quotas %}
+        <div class="og-scroll">
+        <table class="og-table">
+            <thead>
+                <tr>
+                    <th>{{ _('Start') }}</th>
+                    <th>{{ _('End') }}</th>
+                    <th>{{ _('+ Problems') }}</th>
+                    <th>{{ _('+ Storage') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in existing_quotas %}
+                <tr>
+                    <td>{{ q.start_date }}</td>
+                    <td>{{ q.end_date }}</td>
+                    <td>+{{ q.added_problems }}</td>
+                    <td>+{{ q.added_storage|filesizeformat }}</td>
+                    <td class="r">
+                        <form method="post" action="{{ url('organization_quota_delete', organization.slug, q.id) }}" class="og-inline" data-confirm="{{ _('Delete this quota grant?') }}" onsubmit="return confirm(this.dataset.confirm)">
+                            {% csrf_token %}
+                            <button type="submit" class="og-linkbtn">{{ _('Delete') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         </div>
+        {% else %}
+        <div class="og-empty">{{ _('No quota grants yet.') }}</div>
+        {% endif %}
+    </section>
+
+    <form method="post" action="{{ url('organization_quota_add', organization.slug) }}" class="og-card og-form" style="margin-top:24px">
+        {% csrf_token %}
+        <h2 class="og-h2">{{ _('Add Quota Grant') }}</h2>
+        {{ og_fields(quota_form) }}
+        <div class="og-form-foot"><button class="og-btn" type="submit">{{ _('Add') }}</button></div>
     </form>
     {% endif %}
+</div>
 {% endblock %}

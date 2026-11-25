@@ -4,6 +4,7 @@
 {% block title_row %}{% endblock %}
 
 {% block body %}
+<div class="crs neo-flat crs-lesson-page">
     <div class="lesson-tools" id="lesson-tools" role="toolbar" aria-label="{{ _('Lesson tools') }}">
         <a class="lt-btn lt-main" href="{{ course.get_absolute_url() }}" aria-label="{{ _('Course home') }}"><i class="fa fa-home"></i><span class="lt-tip">{{ _('Course home') }}</span></a>
         <button type="button" class="lt-btn" id="lt-list" aria-label="{{ _('All lessons') }}" aria-controls="lesson-panel" aria-expanded="false"><i class="fa fa-list-ol"></i><span class="lt-tip">{{ _('All lessons') }}</span></button>
@@ -38,67 +39,64 @@
         </div>
     </aside>
 
-    <article class="lesson-doc tone-{{ course_color }}">
-        <header class="lesson-doc-head">
-            <span class="lesson-chip">{{ _('Lesson') }} {{ lesson_index }}/{{ lesson_total }}</span>
-            <h1 class="lesson-doc-title">{{ lesson.title }}</h1>
-        </header>
+    <header class="crs-lhead">
+        <div class="crs-lhead-top">
+            <a class="crs-crumb" href="{{ course.get_absolute_url() }}">{{ course.name }}</a>
+            <span class="crs-chip">{{ _('Lesson') }} {{ lesson_index }}/{{ lesson_total }}</span>
+        </div>
+        <h1>{{ lesson.title }}</h1>
+    </header>
+
+    <article class="crs-doc">
         {% if lesson.content %}
             <div class="content-description lesson-content" id="lesson-content">{{ lesson.content|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
         {% else %}
-            <p class="lesson-empty">{{ _('This lesson has no reading material.') }}</p>
+            <p class="crs-muted">{{ _('This lesson has no reading material.') }}</p>
         {% endif %}
     </article>
 
     {% if progress.problems %}
-        <h3 class="course-section-title">
-            {{ _('Practice problems') }}
-            <span class="lesson-score">{{ progress.score }}/{{ progress.max }} {{ _('points') }}</span>
-            <a class="lesson-rank-link" href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}"><i class="fa fa-trophy"></i> {{ _('Ranking') }}</a>
-        </h3>
-        <div class="problem-rows lesson-problems">
-            {% for item in progress.problems %}
-                <div class="pr-row">
-                    <span class="pr-solved">
-                        {% if item.solved %}
-                            <span class="pr-bubble pr-done"><i class="fa fa-check"></i></span>
-                        {% elif item.tried %}
-                            <span class="pr-bubble pr-tried"><i class="fa fa-frown-o"></i></span>
-                        {% else %}
-                            <span class="pr-bubble pr-todo"></span>
-                        {% endif %}
-                    </span>
-                    <span class="pr-main">
-                        <span class="pr-line">
-                            <a class="pr-name" href="{{ url('problem_detail', item.problem.code) }}">{{ item.problem.name }}</a>
-                            <a class="pr-code" href="{{ url('problem_detail', item.problem.code) }}">{{ item.problem.code }}</a>
-                        </span>
-                    </span>
-                    <span class="pr-pts"><span class="pr-pbubble {{ 'pb-a' if item.solved else 'pb-c' }}">{{ item.score|round|int }}/{{ item.max }}</span></span>
-                </div>
-            {% endfor %}
-        </div>
+        <section class="crs-panel">
+            <div class="crs-panel-head">
+                <h2>{{ _('Practice problems') }}</h2>
+                <span>{{ progress.score }}/{{ progress.max }} {{ _('points') }} · <a href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}">{{ _('Ranking') }}</a></span>
+            </div>
+            <ul class="crs-items">
+                {% for item in progress.problems %}
+                    <li>
+                        <a href="{{ url('problem_detail', item.problem.code) }}">
+                            <i class="crs-dot crs-dot-{{ 'done' if item.solved else ('part' if item.tried else 'todo') }}" aria-hidden="true"></i>
+                            <span class="crs-lesson-main"><b>{{ item.problem.name }}</b><span class="crs-sub crs-mono">{{ item.problem.code }}</span></span>
+                            <span class="crs-score {% if item.solved %}crs-score-ok{% endif %}">{{ item.score|round|int }}/{{ item.max }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
     {% endif %}
 
     {% if quizzes %}
-        <h3 class="course-section-title">{{ _('Quizzes') }}</h3>
-        <div class="problem-rows">
-            {% for quiz in quizzes %}
-                <a class="pr-row quiz-attempt-row" href="{{ quiz.get_absolute_url() }}">
-                    <span class="pr-main">
-                        <span class="pr-line"><span class="pr-name">{{ quiz.title }}</span></span>
-                        <span class="lesson-sub">{{ quiz.qcount }} {{ _('questions') }}{% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}</span>
-                    </span>
-                    <span class="pr-pts"><span class="pr-pbubble {{ ('pb-a' if quiz.my_best.percent >= 80 else ('pb-b' if quiz.my_best.percent >= 50 else 'pb-d')) if quiz.my_best else 'pb-c' }}">{% if quiz.my_best %}{{ quiz.my_best.percent }}%{% else %}<i class="fa fa-play"></i>{% endif %}</span></span>
-                </a>
-            {% endfor %}
-        </div>
+        <section class="crs-panel">
+            <div class="crs-panel-head"><h2>{{ _('Quizzes') }}</h2></div>
+            <ul class="crs-items">
+                {% for quiz in quizzes %}
+                    <li>
+                        <a href="{{ quiz.get_absolute_url() }}">
+                            <i class="crs-dot crs-dot-{{ 'done' if (quiz.my_best and quiz.my_best.percent >= 80) else ('part' if quiz.my_best else 'todo') }}" aria-hidden="true"></i>
+                            <span class="crs-lesson-main"><b>{{ quiz.title }}</b><span class="crs-sub">{{ quiz.qcount }} {{ _('questions') }}{% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}</span></span>
+                            <span class="crs-score {% if quiz.my_best and quiz.my_best.percent >= 80 %}crs-score-ok{% endif %}">{% if quiz.my_best %}{{ quiz.my_best.percent }}%{% else %}{{ _('Start') }}{% endif %}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
     {% endif %}
 
-    <div class="lesson-nav">
-        {% if prev_lesson %}<a class="lesson-nav-btn" href="{{ prev_lesson.get_absolute_url() }}"><i class="fa fa-arrow-left"></i> {{ prev_lesson.title }}</a>{% else %}<span></span>{% endif %}
-        {% if next_lesson %}<a class="lesson-nav-btn lesson-nav-next" href="{{ next_lesson.get_absolute_url() }}">{{ next_lesson.title }} <i class="fa fa-arrow-right"></i></a>{% endif %}
+    <div class="crs-pager">
+        {% if prev_lesson %}<a class="crs-btn" href="{{ prev_lesson.get_absolute_url() }}">&larr; {{ prev_lesson.title }}</a>{% else %}<span></span>{% endif %}
+        {% if next_lesson %}<a class="crs-btn crs-btn-fill" href="{{ next_lesson.get_absolute_url() }}">{{ next_lesson.title }} &rarr;</a>{% endif %}
     </div>
+</div>
 {% endblock %}
 
 {% block js_media %}

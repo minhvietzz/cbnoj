@@ -39,7 +39,6 @@ from judge.utils.organization import add_admin_to_group, add_quota_context, arch
     quota_error_response
 from judge.utils.problem_archive import restore_problem_from_archive
 from judge.utils.problems import user_completed_ids
-from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
     paginate_query_context
@@ -69,7 +68,24 @@ class OrganizationMixin(object):
         context['organization'] = self.organization
         context['logo_override_image'] = self.organization.logo_override_image
         context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
+        context.update(self.get_header_context())
         return context
+
+    def get_header_context(self):
+        """Numbers shown in the header band of every organization page (class count and pending requests)."""
+        from judge.models import Classroom
+        org = self.organization
+        user = self.request.user
+        profile = self.request.profile if user.is_authenticated else None
+        is_member = profile is not None and profile in org
+        can_edit = self.can_edit_organization(org)
+        header = {'org_is_member': is_member, 'org_can_edit': can_edit, 'org_class_count': None,
+                  'org_pending_requests': 0}
+        if is_member or can_edit:
+            header['org_class_count'] = Classroom.objects.filter(organization=org, is_archived=False).count()
+        if can_edit and not org.is_open:
+            header['org_pending_requests'] = OrganizationRequest.objects.filter(organization=org, state='P').count()
+        return header
 
     @cached_property
     def organization(self):
@@ -226,21 +242,90 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
     paginate_by = 100
     context_object_name = 'users'
 
+    @cached_property
+    def show_classes(self):
+        """Class names and class roles are private to the organization."""
+        return self.request.user.is_authenticated and (self.request.profile in self.organization or
+                                                       self.can_edit_organization())
+
+    def get_filters(self):
+        role = self.request.GET.get('role', '')
+        return {
+            'q': self.request.GET.get('q', '').strip(),
+            'class': self.request.GET.get('class', '') if self.show_classes else '',
+            'role': role if role in ('student', 'teacher', 'admin') else '',
+        }
+
     def get_queryset(self):
-        return self.object.members.filter(is_unlisted=False).order_by(self.order, self.id_tiebreak) \
+        from judge.models import ClassMember, RoleInClass
+        filters = self.get_filters()
+        queryset = self.object.members.filter(is_unlisted=False)
+        if filters['q']:
+            queryset = queryset.filter(Q(user__username__icontains=filters['q']) |
+                                       Q(user__first_name__icontains=filters['q']))
+        if filters['class']:
+            queryset = queryset.filter(class_roles__classroom__slug=filters['class'],
+                                       class_roles__classroom__organization=self.object)
+        admins = self.object.admins.values('id')
+        if filters['role'] == 'admin':
+            queryset = queryset.filter(id__in=admins)
+        elif filters['role'] and self.show_classes:
+            staff = ClassMember.objects.filter(classroom__organization=self.object) \
+                .exclude(role=RoleInClass.STUDENT).values('user_id')
+            if filters['role'] == 'teacher':
+                queryset = queryset.filter(id__in=staff).exclude(id__in=admins)
+            else:
+                queryset = queryset.exclude(id__in=staff).exclude(id__in=admins)
+        return queryset.distinct().order_by(self.order, self.id_tiebreak) \
             .select_related('user', 'display_badge').defer('about', 'user_script', 'notes')
 
+    def annotate_rows(self, users):
+        """Class names and a role label for each member of the current page."""
+        from judge.models import ClassMember, RoleInClass
+        ids = [u.id for u in users]
+        admin_ids = set(self.object.admins.values_list('id', flat=True))
+        classes = defaultdict(list)
+        staff = set()
+        if self.show_classes:
+            memberships = ClassMember.objects.filter(classroom__organization=self.object, user_id__in=ids,
+                                                     classroom__is_archived=False) \
+                .select_related('classroom').order_by('classroom__name')
+            for m in memberships:
+                classes[m.user_id].append(m.classroom.name)
+                if m.role != RoleInClass.STUDENT:
+                    staff.add(m.user_id)
+        rows = []
+        for u in users:
+            if u.id in admin_ids:
+                role = ('admin', _('Administrator'))
+            elif u.id in staff:
+                role = ('teacher', _('Teacher'))
+            elif self.show_classes:
+                role = ('student', _('Pupil'))
+            else:
+                role = ('member', _('Member'))
+            name = (u.user.first_name or '').strip()
+            rows.append({'profile': u, 'name': name or u.user.username, 'username': u.user.username,
+                         'classes': ', '.join(classes.get(u.id, [])), 'role_key': role[0], 'role': role[1]})
+        return rows
+
     def get_context_data(self, **kwargs):
+        from judge.models import Classroom
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
         else:
             context['title'] = _('Members')
-        context['users'] = ranker(context['users'])
+        context['rows'] = self.annotate_rows(list(context['users']))
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
         context['kick_url'] = reverse('organization_user_kick', args=[self.object.slug])
         context['first_page_href'] = '.'
+        context['filters'] = self.get_filters()
+        context['show_classes'] = self.show_classes
+        context['filter_classes'] = list(Classroom.objects.filter(
+            organization=self.object, is_archived=False).order_by('name').values_list('slug', 'name')) \
+            if self.show_classes else []
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
@@ -700,6 +785,24 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
             context['num_requests'] = OrganizationRequest.objects.filter(
                 state='P',
                 organization=self.object).count()
+
+        context['org_admins'] = [
+            {'name': (a.user.first_name or '').strip() or a.user.username, 'profile': a}
+            for a in self.object.admins.select_related('user').order_by('user__username')
+        ]
+        if context['is_member'] or context['can_edit']:
+            from judge.models import ClassMember, Classroom, RoleInClass
+            exams = organization_exam_items(self.object, self.request.user)
+            context['org_exams'] = [e for e in exams if e['state'] != 'ended'][:4]
+            mine = Classroom.objects.filter(organization=self.object, is_archived=False)
+            if not context['can_edit']:
+                mine = mine.filter(members__user=self.request.profile)
+            mine = list(mine.annotate(student_count=Count('members', filter=Q(members__role=RoleInClass.STUDENT),
+                                                          distinct=True)).order_by('name').distinct())
+            roles = dict(ClassMember.objects.filter(user=self.request.profile).values_list('classroom_id', 'role'))
+            for c in mine:
+                c.my_role = roles.get(c.id)
+            context['org_classes'] = mine
 
         user = self.request.user
         if context['is_member'] or \
@@ -1279,3 +1382,90 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
             messages.error(request, _('Could not restore %s from the archive. Please try again later.')
                            % problem.code)
         return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
+
+
+def organization_exam_items(organization, user):
+    """Every contest and timed quiz of the organization the user may see, sorted live / upcoming / ended."""
+    from judge.models import Quiz
+    now = timezone.now()
+    items = []
+    for contest in Contest.get_visible_contests(user).filter(organization=organization):
+        items.append({'name': contest.name, 'url': contest.get_absolute_url(), 'kind': 'contest',
+                      'start': contest.start_time, 'end': contest.end_time, 'audience': [], 'class_ids': [],
+                      'minutes': int((contest.end_time - contest.start_time).total_seconds() // 60)})
+    quizzes = Quiz.objects.filter(Q(organizations=organization) | Q(classes__organization=organization),
+                                  mode='exam').distinct().prefetch_related('classes')
+    for quiz in quizzes:
+        if quiz.is_accessible_by(user):
+            mine = [c for c in quiz.classes.all() if c.organization_id == organization.id]
+            items.append({'name': quiz.title, 'url': quiz.get_absolute_url(), 'kind': 'quiz',
+                          'start': quiz.start_time, 'end': quiz.end_time, 'minutes': quiz.time_limit,
+                          'audience': [c.name for c in mine], 'class_ids': [c.slug for c in mine]})
+    for item in items:
+        if item['start'] and item['start'] > now:
+            item['state'] = 'upcoming'
+        elif item['end'] and item['end'] < now:
+            item['state'] = 'ended'
+        else:
+            item['state'] = 'live'
+    order = {'live': 0, 'upcoming': 1, 'ended': 2}
+
+    def sort_key(item):
+        stamp = (item['start'] or now).timestamp()
+        return order[item['state']], (-stamp if item['state'] == 'ended' else stamp)
+
+    items.sort(key=sort_key)
+    return items
+
+
+class OrganizationExams(PrivateOrganizationMixin, TitleMixin, TemplateView):
+    """Every contest and timed quiz of the organization in one list, filterable by type / class / state."""
+    template_name = 'organization/exams.html'
+
+    def get_title(self):
+        return _('Exams of %s') % self.organization.name
+
+    def get_context_data(self, **kwargs):
+        from judge.models import Classroom
+        context = super().get_context_data(**kwargs)
+        items = organization_exam_items(self.organization, self.request.user)
+        kind = self.request.GET.get('kind', '')
+        class_slug = self.request.GET.get('class', '')
+        state = self.request.GET.get('state', '')
+        if kind in ('quiz', 'contest'):
+            items = [i for i in items if i['kind'] == kind]
+        if state in ('live', 'upcoming', 'ended'):
+            items = [i for i in items if i['state'] == state]
+        if class_slug:
+            items = [i for i in items if class_slug in i['class_ids']]
+        classes = Classroom.objects.filter(organization=self.organization, is_archived=False).order_by('name')
+        context.update(exams=items, tab='exams', filter_kind=kind, filter_class=class_slug, filter_state=state,
+                       filter_classes=list(classes.values_list('slug', 'name')),
+                       can_create_exam=self.request.user.has_perm('judge.create_private_contest'))
+        return context
+
+
+class OrganizationClasses(PrivateOrganizationMixin, TitleMixin, TemplateView):
+    """Classes of the organization the user may see (all of them for an administrator)."""
+    template_name = 'organization/classes.html'
+
+    def get_title(self):
+        return _('Classes of %s') % self.organization.name
+
+    def get_context_data(self, **kwargs):
+        from judge.models import Classroom, RoleInClass
+        from judge.views.classroom import class_role_names
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        classes = Classroom.objects.filter(organization=self.organization, is_archived=False)
+        if not (user.is_superuser or self.can_edit_organization()):
+            classes = classes.filter(members__user=self.request.profile)
+        classes = list(classes.select_related('subject').annotate(
+            student_count=Count('members', filter=Q(members__role=RoleInClass.STUDENT), distinct=True))
+            .order_by('-school_year', 'name').distinct())
+        mine = dict(self.request.profile.class_roles.values_list('classroom_id', 'role'))
+        for c in classes:
+            c.my_role = mine.get(c.id)
+        context.update(classes=classes, tab='classes', role_names=class_role_names(),
+                       can_create_class=self.can_edit_organization())
+        return context

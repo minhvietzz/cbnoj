@@ -1,0 +1,845 @@
+"""Classes ("lớp"): my classes, a class page, members, joining, and importing a class list from a sheet."""
+import csv
+import io
+from datetime import timedelta
+
+from django import forms
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.db.models import Count, Q
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.functional import cached_property
+from django.utils.text import slugify
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
+from django.views.generic import DetailView, FormView, TemplateView, View
+
+from judge.models import ClassAnnouncement, ClassAssignment, ClassMember, Classroom, Organization, Problem, Profile, \
+    Quiz, RoleInClass, Subject, make_notification
+from judge.utils import classroom as stats
+from judge.utils import xlsx
+from judge.utils.views import TitleMixin, generic_message
+
+__all__ = ['MyClasses', 'ClassCreate', 'ClassEdit', 'ClassDetail', 'ClassMembers', 'ClassJoin', 'ClassImport',
+           'ClassImportTemplate', 'ClassAssignments', 'ClassAssignmentDelete', 'ClassAnnouncementPost',
+           'ClassRanking', 'ClassGrades', 'ClassExams', 'ClassReportPrint']
+
+COLORS = ('mint', 'sky', 'lilac', 'peach', 'butter', 'pink')
+TILE_COLORS = ('#1F3FBF', '#1E7A4D', '#A15C00', '#7A2F8F', '#0F1A44', '#B3261E')
+MAX_IMPORT_BYTES = 2 * 1024 * 1024
+MAX_IMPORT_ROWS = 5000
+
+USERNAME_HEADERS = {'username', 'user', 'tên truy cập', 'ten truy cap', 'tài khoản', 'tai khoan', 'tên đăng nhập',
+                    'ten dang nhap'}
+EMAIL_HEADERS = {'email', 'e-mail', 'địa chỉ email', 'dia chi email', 'thư điện tử'}
+CLASS_HEADERS = {'class', 'lớp', 'lop', 'tên lớp', 'ten lop'}
+ROLE_HEADERS = {'role', 'vai trò', 'vai tro'}
+NAME_HEADERS = {'họ tên', 'họ và tên', 'ho ten', 'ho va ten', 'name', 'full name', 'tên', 'ten'}
+
+ROLE_WORDS = {
+    'hs': RoleInClass.STUDENT, 'học sinh': RoleInClass.STUDENT, 'hoc sinh': RoleInClass.STUDENT,
+    'student': RoleInClass.STUDENT, 'st': RoleInClass.STUDENT, '': RoleInClass.STUDENT,
+    'gv': RoleInClass.TEACHER, 'giáo viên': RoleInClass.TEACHER, 'giao vien': RoleInClass.TEACHER,
+    'gvbm': RoleInClass.TEACHER, 'teacher': RoleInClass.TEACHER, 'te': RoleInClass.TEACHER,
+    'gvcn': RoleInClass.HOMEROOM, 'chủ nhiệm': RoleInClass.HOMEROOM, 'homeroom': RoleInClass.HOMEROOM,
+    'hr': RoleInClass.HOMEROOM,
+    'tg': RoleInClass.ASSISTANT, 'trợ giảng': RoleInClass.ASSISTANT, 'tro giang': RoleInClass.ASSISTANT,
+    'assistant': RoleInClass.ASSISTANT, 'as': RoleInClass.ASSISTANT,
+}
+
+
+def class_color(classroom):
+    return COLORS[classroom.id % len(COLORS)]
+
+
+def class_role_names():
+    """Role labels as the drawings write them ("Học sinh", not "Học viên")."""
+    names = dict(RoleInClass.choices)
+    names[RoleInClass.STUDENT] = _('Pupil')
+    return names
+
+
+def display_name(profile):
+    """Real name when the account has one, else the username."""
+    return (profile.user.first_name or '').strip() or profile.user.username
+
+
+def class_badge(classroom):
+    """Up to three characters shown on the class tile: a leading number, or the initials of the first words."""
+    words = classroom.name.split()
+    if not words:
+        return '?'
+    if words[0][:1].isdigit():
+        return words[0][:3]
+    return ''.join(w[0] for w in words[:3]).upper()
+
+
+def administered_orgs(user):
+    if not user.is_authenticated:
+        return Organization.objects.none()
+    if user.is_superuser:
+        return Organization.objects.all()
+    return Organization.objects.filter(admins=user.profile)
+
+
+def can_create_class(user):
+    return user.is_authenticated and (user.is_superuser or user.has_perm('judge.add_classroom') or
+                                      administered_orgs(user).exists())
+
+
+def visible_classes(user):
+    if user.is_superuser:
+        return Classroom.objects.all()
+    return Classroom.objects.filter(Q(members__user=user.profile) | Q(organization__admins=user.profile)).distinct()
+
+
+class ClassMixin(object):
+    @cached_property
+    def classroom(self):
+        classroom = get_object_or_404(Classroom.objects.select_related('organization', 'subject'),
+                                      slug=self.kwargs['slug'])
+        if not classroom.is_visible_to(self.request.user):
+            raise Http404()
+        return classroom
+
+    def get_class_context(self):
+        user = self.request.user
+        members = ClassMember.objects.filter(classroom=self.classroom).select_related('user__user')
+        homeroom = [m.user for m in members if m.role == RoleInClass.HOMEROOM]
+        return {
+            'classroom': self.classroom,
+            'class_color': class_color(self.classroom),
+            'can_manage': self.classroom.is_managed_by(user),
+            'can_staff': self.classroom.is_staffed_by(user),
+            'my_role': self.classroom.get_role(user.profile) if user.is_authenticated else None,
+            'role_names': class_role_names(),
+            'head_student_count': sum(1 for m in members if m.role == RoleInClass.STUDENT),
+            'head_homeroom': [display_name(p) for p in homeroom],
+        }
+
+
+class ClassForm(forms.ModelForm):
+    class Meta:
+        model = Classroom
+        fields = ('name', 'organization', 'school_year', 'subject', 'about', 'join_code', 'is_archived')
+        widgets = {'about': forms.Textarea(attrs={'rows': 4})}
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['organization'].queryset = administered_orgs(user)
+        self.fields['organization'].required = False
+        self.fields['subject'].queryset = Subject.objects.filter(is_active=True)
+        self.fields['subject'].required = False
+        if not self.instance.pk:
+            del self.fields['is_archived']
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not instance.pk:
+            base = slugify(instance.name) or 'lop'
+            slug, n = base, 1
+            while Classroom.objects.filter(slug=slug).exists():
+                n += 1
+                slug = '%s-%d' % (base, n)
+            instance.slug = slug
+        if commit:
+            instance.save()
+        return instance
+
+
+class MyClasses(LoginRequiredMixin, TitleMixin, TemplateView):
+    template_name = 'class/list.html'
+
+    def get_title(self):
+        return _('My classes')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        tab = self.request.GET.get('tab', 'mine')
+        can_see_all = user.is_superuser or administered_orgs(user).exists()
+        if tab == 'all' and can_see_all:
+            base = visible_classes(user)
+        else:
+            tab = 'mine'
+            base = Classroom.objects.filter(members__user=user.profile)
+        show_archived = self.request.GET.get('archived') == '1'
+        if not show_archived:
+            base = base.filter(is_archived=False)
+        now = timezone.now()
+        soon = Q(assignments__due__gte=now, assignments__due__lte=now + timedelta(days=7))
+        classes = list(Classroom.objects.filter(id__in=base.values('id')).select_related('organization', 'subject')
+                       .annotate(student_count=Count('members', filter=Q(members__role=RoleInClass.STUDENT),
+                                                     distinct=True),
+                                 due_count=Count('assignments', filter=soon, distinct=True))
+                       .order_by('-school_year', 'name'))
+        mine = dict(ClassMember.objects.filter(user=user.profile).values_list('classroom_id', 'role'))
+        for c in classes:
+            c.color = class_color(c)
+            c.color_hex = TILE_COLORS[c.id % len(TILE_COLORS)]
+            c.badge = class_badge(c)
+            c.my_role = mine.get(c.id)
+        context.update({'classes': classes, 'tab': tab, 'can_see_all': can_see_all, 'show_archived': show_archived,
+                        'can_create': can_create_class(user), 'role_names': class_role_names()})
+        return context
+
+
+class ClassCreate(LoginRequiredMixin, TitleMixin, FormView):
+    template_name = 'class/form.html'
+    form_class = ClassForm
+
+    def get_title(self):
+        return _('Create class')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not can_create_class(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        classroom = form.save()
+        ClassMember.objects.get_or_create(classroom=classroom, user=self.request.profile,
+                                          defaults={'role': RoleInClass.HOMEROOM})
+        messages.success(self.request, _('Class created.'))
+        return HttpResponseRedirect(classroom.get_absolute_url())
+
+
+class ClassEdit(LoginRequiredMixin, ClassMixin, TitleMixin, FormView):
+    template_name = 'class/form.html'
+    form_class = ClassForm
+
+    def get_title(self):
+        return _('Edit class')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not self.classroom.is_managed_by(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(user=self.request.user, instance=self.classroom)
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        context['editing'] = True
+        return context
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, _('Class saved.'))
+        return HttpResponseRedirect(self.classroom.get_absolute_url())
+
+
+class ClassDetail(LoginRequiredMixin, ClassMixin, TitleMixin, DetailView):
+    template_name = 'class/detail.html'
+    context_object_name = 'classroom'
+
+    def get_object(self, queryset=None):
+        return self.classroom
+
+    def get_title(self):
+        return self.classroom.name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        classroom = self.classroom
+        ids = stats.student_ids(classroom)
+        members = ClassMember.objects.filter(classroom=classroom).select_related('user__user')
+        context['teachers'] = [m.user for m in members if m.role in (RoleInClass.HOMEROOM, RoleInClass.TEACHER)]
+        context['student_count'] = len(ids)
+        context['announcements'] = list(classroom.announcements.select_related('author__user')[:5])
+        context['upcoming'] = stats.upcoming_assignments(classroom)
+        rows, _weights, _start = stats.ranking(classroom, 'week')
+        profiles = Profile.objects.select_related('user').in_bulk([r['profile_id'] for r in rows])
+        me = self.request.profile.id
+        top = [dict(r, profile=profiles[r['profile_id']]) for r in rows[:5]]
+        if me in ids and all(r['profile_id'] != me for r in rows[:5]):
+            top += [dict(r, profile=profiles[r['profile_id']]) for r in rows if r['profile_id'] == me]
+        context['top'] = top
+        context['me_id'] = me
+        if context['can_staff']:
+            context['warnings'] = stats.needs_support(classroom, ids)
+        context['heat'] = stats.heat_levels(stats.activity_by_day(ids))
+        context['done_counts'] = {a.id: stats.assignment_progress(a, ids) for a in context['upcoming']}
+        context['done_counts'] = {aid: sum(1 for v in prog.values() if v['done'] >= 0.999)
+                                  for aid, prog in context['done_counts'].items()}
+        context['tab'] = 'home'
+        return context
+
+
+class ClassMembers(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
+    """GET: the member list. POST: add members by username, change a role, or remove a member."""
+    template_name = 'class/members.html'
+
+    def get_title(self):
+        return _('Members')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        members = list(ClassMember.objects.filter(classroom=self.classroom).select_related('user__user')
+                       .order_by('user__user__username'))
+        order = {RoleInClass.HOMEROOM: 0, RoleInClass.TEACHER: 1, RoleInClass.ASSISTANT: 2, RoleInClass.STUDENT: 3}
+        members.sort(key=lambda m: order.get(m.role, 9))
+        context.update(members=members, role_names=class_role_names(), role_choices=RoleInClass.choices,
+                       tab='members')
+        return context
+
+    def post(self, request, *args, **kwargs):
+        classroom = self.classroom
+        if not classroom.is_managed_by(request.user):
+            raise PermissionDenied()
+        action = request.POST.get('action')
+        back = HttpResponseRedirect(reverse('class_members', args=(classroom.slug,)))
+        role = request.POST.get('role') or RoleInClass.STUDENT
+        if role not in RoleInClass.values:
+            role = RoleInClass.STUDENT
+
+        if action == 'add':
+            names = [n.strip() for n in request.POST.get('usernames', '').replace(',', '\n').splitlines()]
+            names = [n for n in names if n]
+            profiles = {p.user.username.lower(): p for p in
+                        Profile.objects.filter(user__username__in=names).select_related('user')}
+            added, missing = 0, []
+            with transaction.atomic():
+                for name in names:
+                    profile = profiles.get(name.lower())
+                    if profile is None:
+                        missing.append(name)
+                        continue
+                    _member, created = ClassMember.objects.get_or_create(classroom=classroom, user=profile,
+                                                                         defaults={'role': role})
+                    added += created
+            if added:
+                messages.success(request, _('Added %d member(s).') % added)
+            if missing:
+                messages.warning(request, _('Accounts not found: %s') % ', '.join(missing[:20]))
+            return back
+
+        member = ClassMember.objects.filter(classroom=classroom, id=request.POST.get('member')).first()
+        if member is None:
+            return back
+        # Keep at least one person who can manage the class.
+        managers = ClassMember.objects.filter(classroom=classroom,
+                                              role__in=(RoleInClass.HOMEROOM, RoleInClass.TEACHER))
+        if member.role in (RoleInClass.HOMEROOM, RoleInClass.TEACHER) and managers.count() <= 1 \
+                and not (request.user.is_superuser or classroom.is_org_admin(request.user)):
+            messages.error(request, _('A class needs at least one teacher.'))
+            return back
+        if action == 'role':
+            member.role = role
+            member.save(update_fields=['role'])
+        elif action == 'remove':
+            member.delete()
+        return back
+
+
+class AssignmentForm(forms.Form):
+    title = forms.CharField(max_length=200, label=_l('Title'))
+    kind = forms.ChoiceField(choices=ClassAssignment.KINDS, label=_l('Type'))
+    problem_codes = forms.CharField(required=False, label=_l('Problem codes'), widget=forms.Textarea(attrs={'rows': 2}),
+                                    help_text=_l('Programming problems: codes separated by spaces, commas or lines.'))
+    quiz = forms.ModelChoiceField(queryset=Quiz.objects.none(), required=False, label=_l('Quiz'))
+    due = forms.DateTimeField(required=False, label=_l('Due'), input_formats=[
+        '%Y-%m-%dT%H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y'])
+    description = forms.CharField(required=False, label=_l('Description'), widget=forms.Textarea(attrs={'rows': 3}))
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['quiz'].queryset = Quiz.objects.exclude(mode='personal').order_by('title')
+        self.problems = []
+
+    def clean(self):
+        cleaned = super().clean()
+        kind = cleaned.get('kind')
+        if kind == ClassAssignment.KIND_QUIZ:
+            if not cleaned.get('quiz'):
+                self.add_error('quiz', _('Choose a quiz.'))
+            elif not cleaned['quiz'].is_accessible_by(self.user):
+                self.add_error('quiz', _('You cannot use this quiz.'))
+        elif kind == ClassAssignment.KIND_PROBLEM:
+            codes = [c for c in cleaned.get('problem_codes', '').replace(',', ' ').split() if c]
+            found = {p.code: p for p in Problem.objects.filter(code__in=codes)}
+            missing = [c for c in codes if c not in found or not found[c].is_accessible_by(self.user)]
+            if not codes:
+                self.add_error('problem_codes', _('Enter at least one problem code.'))
+            elif missing:
+                self.add_error('problem_codes', _('Unknown or inaccessible problems: %s') % ', '.join(missing[:10]))
+            else:
+                self.problems = [found[c] for c in dict.fromkeys(codes)]
+        return cleaned
+
+
+class ClassAssignments(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
+    template_name = 'class/assignments.html'
+
+    def get_title(self):
+        return _('Assignments')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        ids = stats.student_ids(self.classroom)
+        now = timezone.now()
+        items = []
+        for a in self.classroom.assignments.select_related('quiz').prefetch_related('problems'):
+            if a.opens > now and not context['can_staff']:
+                continue
+            progress = stats.assignment_progress(a, ids)
+            done = sum(1 for v in progress.values() if v['done'] >= 0.999)
+            mine = progress.get(self.request.profile.id)
+            items.append({'a': a, 'done': done, 'total': len(ids), 'pct': int(100 * done / len(ids)) if ids else 0,
+                          'mine': mine, 'problems': list(a.problems.all()),
+                          'overdue': a.due is not None and a.due < now})
+        items.sort(key=lambda i: (i['overdue'], i['a'].due is None, i['a'].due or now))
+        form = kwargs.get('form') or AssignmentForm(user=self.request.user)
+        context.update(items=items, tab='assignments', form=form)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        classroom = self.classroom
+        if not classroom.is_staffed_by(request.user):
+            raise PermissionDenied()
+        form = AssignmentForm(request.POST, user=request.user)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+        data = form.cleaned_data
+        with transaction.atomic():
+            assignment = ClassAssignment.objects.create(
+                classroom=classroom, title=data['title'], kind=data['kind'], description=data['description'],
+                quiz=data['quiz'] if data['kind'] == ClassAssignment.KIND_QUIZ else None, due=data['due'],
+                created_by=request.profile)
+            if data['kind'] == ClassAssignment.KIND_PROBLEM:
+                assignment.problems.set(form.problems)
+        make_notification(stats.student_ids(classroom), title=_('New assignment'),
+                          body='%s: %s' % (classroom.name, assignment.title),
+                          url=reverse('class_assignments', args=(classroom.slug,)))
+        messages.success(request, _('Assignment created.'))
+        return HttpResponseRedirect(reverse('class_assignments', args=(classroom.slug,)))
+
+
+class ClassAssignmentDelete(LoginRequiredMixin, ClassMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if not self.classroom.is_staffed_by(request.user):
+            raise PermissionDenied()
+        ClassAssignment.objects.filter(classroom=self.classroom, id=request.POST.get('assignment')).delete()
+        return HttpResponseRedirect(reverse('class_assignments', args=(self.classroom.slug,)))
+
+
+class ClassAnnouncementPost(LoginRequiredMixin, ClassMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        classroom = self.classroom
+        if not classroom.is_staffed_by(request.user):
+            raise PermissionDenied()
+        if request.POST.get('action') == 'delete':
+            ClassAnnouncement.objects.filter(classroom=classroom, id=request.POST.get('announcement')).delete()
+        else:
+            text = request.POST.get('text', '').strip()[:2000]
+            if text:
+                ClassAnnouncement.objects.create(classroom=classroom, author=request.profile, text=text,
+                                                 pinned=bool(request.POST.get('pinned')))
+                make_notification(stats.student_ids(classroom), title=_('Class announcement'),
+                                  body='%s: %s' % (classroom.name, text[:140]), url=classroom.get_absolute_url())
+        return HttpResponseRedirect(classroom.get_absolute_url())
+
+
+class ClassRanking(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
+    template_name = 'class/ranking.html'
+
+    def get_title(self):
+        return _('Ranking')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        period = self.request.GET.get('period', 'week')
+        rows, weights, start = stats.ranking(self.classroom, period)
+        profiles = Profile.objects.select_related('user').in_bulk([r['profile_id'] for r in rows])
+        context.update(rows=[dict(r, profile=profiles[r['profile_id']]) for r in rows], weights=weights,
+                       period=period if period in stats.PERIODS else 'week', period_start=start, tab='ranking',
+                       me=self.request.profile.id, periods=stats.PERIODS)
+        return context
+
+
+class ClassGrades(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
+    template_name = 'class/grades.html'
+
+    def get_title(self):
+        return _('Grade book')
+
+    def build(self):
+        classroom = self.classroom
+        ids = stats.student_ids(classroom)
+        if not classroom.is_staffed_by(self.request.user):
+            ids = [i for i in ids if i == self.request.profile.id]   # a student sees only their own row
+        assignments = list(classroom.assignments.select_related('quiz').order_by('created', 'id'))
+        book = stats.grade_book(classroom, assignments, ids)
+        profiles = Profile.objects.select_related('user').in_bulk(ids)
+        rows = [{'profile': profiles[pid], **book[pid]} for pid in sorted(ids, key=lambda i: profiles[i].user.username)]
+        return assignments, rows
+
+    def get(self, request, *args, **kwargs):
+        export = request.GET.get('export')
+        if export in ('csv', 'xlsx'):
+            if not self.classroom.is_staffed_by(request.user):
+                raise PermissionDenied()
+            assignments, rows = self.build()
+            header = [_('Username'), _('Full name')] + [a.title for a in assignments] + [_('Average')]
+            table = [[r['profile'].user.username, r['profile'].user.get_full_name()] +
+                     ['' if v is None else v for v in r['cells']] + ['' if r['average'] is None else r['average']]
+                     for r in rows]
+            if export == 'xlsx':
+                response = HttpResponse(xlsx.build_xlsx(header, table, self.classroom.name),
+                                        content_type='application/vnd.openxmlformats-officedocument.'
+                                                     'spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename="so-diem-%s.xlsx"' % self.classroom.slug
+                return response
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="so-diem-%s.csv"' % self.classroom.slug
+            response.write('\ufeff')
+            writer = csv.writer(response)
+            writer.writerow(header)
+            writer.writerows(table)
+            return response
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        assignments, rows = self.build()
+        context.update(assignments=assignments, rows=rows, tab='grades')
+        return context
+
+
+class ClassExams(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
+    template_name = 'class/exams.html'
+
+    def get_title(self):
+        return _('Exams')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_class_context())
+        exams = []
+        for q in self.classroom.quizzes.all():
+            exams.append({'name': q.title, 'kind': 'quiz', 'url': q.get_absolute_url(), 'when': q.start_time,
+                          'minutes': q.time_limit})
+        for c in self.classroom.contests.all():
+            exams.append({'name': c.name, 'kind': 'contest', 'url': c.get_absolute_url(), 'when': c.start_time,
+                          'minutes': int((c.end_time - c.start_time).total_seconds() // 60)})
+        exams.sort(key=lambda e: (e['when'] is None, e['when']), reverse=True)
+        context.update(exams=exams, tab='exams', now=timezone.now(),
+                       can_add_contest=self.request.user.has_perm('judge.add_contest'))
+        return context
+
+
+class ClassJoin(LoginRequiredMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        code = request.POST.get('code', '').strip()
+        classroom = Classroom.objects.filter(join_code=code, is_archived=False).first() if code else None
+        if classroom is None:
+            return generic_message(request, _('Join a class'), _('This class code is not valid.'), status=404)
+        member, created = ClassMember.objects.get_or_create(classroom=classroom, user=request.profile,
+                                                            defaults={'role': RoleInClass.STUDENT})
+        if created and classroom.organization_id:
+            request.profile.organizations.add(classroom.organization)
+        return HttpResponseRedirect(classroom.get_absolute_url())
+
+
+# ---- importing a class list -----------------------------------------------------------------------------------------
+
+def _normalize(value):
+    return ' '.join((value or '').strip().lower().split())
+
+
+def parse_sheet(upload):
+    """Return a list of dicts with username/email/class/role/name from an uploaded CSV or XLSX file."""
+    if upload.size > MAX_IMPORT_BYTES:
+        raise ValueError(_('The file is too large (max 2 MB).'))
+    data = upload.read()
+    if upload.name.lower().endswith('.xlsx'):
+        rows = xlsx.read_rows(data)
+    else:
+        text = data.decode('utf-8-sig', errors='replace')
+        try:
+            dialect = csv.Sniffer().sniff(text[:2000], delimiters=',;\t')
+        except csv.Error:
+            dialect = csv.excel
+        rows = [[c.strip() for c in r] for r in csv.reader(io.StringIO(text), dialect) if any(c.strip() for c in r)]
+    if len(rows) < 2:
+        raise ValueError(_('The file has no data rows.'))
+    if len(rows) > MAX_IMPORT_ROWS + 1:
+        raise ValueError(_('Too many rows (max %d).') % MAX_IMPORT_ROWS)
+    header = [_normalize(c) for c in rows[0]]
+
+    def find(names):
+        for i, h in enumerate(header):
+            if h in names:
+                return i
+        return None
+
+    cols = {'username': find(USERNAME_HEADERS), 'email': find(EMAIL_HEADERS), 'class': find(CLASS_HEADERS),
+            'role': find(ROLE_HEADERS), 'name': find(NAME_HEADERS)}
+    if cols['class'] is None or (cols['username'] is None and cols['email'] is None):
+        raise ValueError(_('The first row must name the columns: a username or email column and a class column.'))
+    out = []
+    for n, row in enumerate(rows[1:], start=2):
+        def cell(key):
+            i = cols[key]
+            return row[i].strip() if i is not None and i < len(row) else ''
+        out.append({'row': n, 'username': cell('username'), 'email': cell('email'), 'class': cell('class'),
+                    'role': cell('role'), 'name': cell('name')})
+    return out
+
+
+class ImportForm(forms.Form):
+    file = forms.FileField(label=_l('File (.csv or .xlsx)'))
+    organization = forms.ModelChoiceField(queryset=Organization.objects.none(), required=False,
+                                          label=_l('Organization'))
+    school_year = forms.CharField(required=False, max_length=16, label=_l('School year'))
+    create_missing = forms.BooleanField(required=False, label=_l('Create classes that do not exist yet'))
+    add_to_org = forms.BooleanField(required=False, initial=True,
+                                    label=_l('Also add the students to the organization of the class'))
+    dry_run = forms.BooleanField(required=False, initial=True, label=_l('Only check, do not save yet'))
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['organization'].queryset = administered_orgs(user)
+
+
+def run_import(rows, user, organization, school_year, create_missing, add_to_org, dry_run):
+    """Match rows to accounts and classes. Returns a report dict. Writes only when dry_run is false."""
+    report = {'matched': 0, 'added': 0, 'already': 0, 'unmatched': [], 'ambiguous': [], 'no_class': [],
+              'denied': [], 'created_classes': [], 'rows': len(rows), 'classes': set(), 'lines': []}
+    lines = {r['row']: {'row': r['row'], 'name': r['name'], 'username': r['username'] or r['email'],
+                        'class': r['class'], 'tone': 'bad', 'result': _('Not read')} for r in rows}
+
+    def mark(row, tone, result):
+        lines[row]['tone'] = tone
+        lines[row]['result'] = result
+    emails = {r['email'].lower() for r in rows if r['email']}
+    by_user = {p.user.username.lower(): p for p in
+               Profile.objects.filter(user__username__in=[r['username'] for r in rows if r['username']])
+               .select_related('user')}
+    by_email = {}
+    if emails:
+        for p in Profile.objects.filter(user__email__in=[r['email'] for r in rows if r['email']],
+                                        user__is_active=True).select_related('user'):
+            by_email.setdefault(p.user.email.lower(), []).append(p)
+
+    scope = Classroom.objects.all()
+    if organization:
+        scope = scope.filter(organization=organization)
+    classes = {}
+    for c in scope:
+        classes.setdefault(_normalize(c.name), []).append(c)
+    pending_new = {}
+
+    def resolve_class(name):
+        key = _normalize(name)
+        found = classes.get(key, [])
+        if len(found) == 1:
+            return found[0]
+        if len(found) > 1:
+            return None
+        if not create_missing:
+            return None
+        if key in pending_new:
+            return pending_new[key]
+        if organization is not None and not administered_orgs(user).filter(id=organization.id).exists():
+            return None
+        if organization is None and not user.is_superuser:
+            return None
+        new = Classroom(name=name.strip()[:64], organization=organization, school_year=school_year or '')
+        base = slugify(new.name) or 'lop'
+        slug, n = base, 1
+        while Classroom.objects.filter(slug=slug).exists() or any(c.slug == slug for c in pending_new.values()):
+            n += 1
+            slug = '%s-%d' % (base, n)
+        new.slug = slug
+        pending_new[key] = new
+        report['created_classes'].append(new.name)
+        return new
+
+    plan = []
+    for r in rows:
+        if not r['class']:
+            report['no_class'].append(r['row'])
+            mark(r['row'], 'bad', _('No class on this row'))
+            continue
+        profile = by_user.get(r['username'].lower()) if r['username'] else None
+        if profile is None and r['email']:
+            found = by_email.get(r['email'].lower(), [])
+            if len(found) == 1:
+                profile = found[0]
+            elif len(found) > 1:
+                report['ambiguous'].append('%s (dòng %d)' % (r['email'], r['row']))
+                mark(r['row'], 'bad', _('Several accounts share this email'))
+                continue
+        if profile is None:
+            report['unmatched'].append('%s (dòng %d)' % (r['username'] or r['email'], r['row']))
+            mark(r['row'], 'warn', _('No account yet'))
+            continue
+        classroom = resolve_class(r['class'])
+        if classroom is None:
+            report['no_class'].append(r['row'])
+            mark(r['row'], 'bad', _('No usable class'))
+            continue
+        if classroom.pk and not classroom.is_managed_by(user):
+            report['denied'].append('%s (dòng %d)' % (r['class'], r['row']))
+            mark(r['row'], 'bad', _('Not allowed to change this class'))
+            continue
+        role = ROLE_WORDS.get(_normalize(r['role']), RoleInClass.STUDENT)
+        plan.append((classroom, profile, role, r['row']))
+        report['matched'] += 1
+        report['classes'].add(classroom.name)
+
+    if dry_run:
+        for classroom, profile, _role, row in plan:
+            if classroom.pk and ClassMember.objects.filter(classroom=classroom, user=profile).exists():
+                report['already'] += 1
+                mark(row, 'gray', _('Already in the class'))
+            else:
+                report['added'] += 1
+                mark(row, 'ok', _('Will join the class'))
+    else:
+        with transaction.atomic():
+            saved = {}
+            for key, new in pending_new.items():
+                new.save()
+                saved[key] = new
+            for classroom, profile, role, row in plan:
+                if not classroom.pk:
+                    classroom = saved[_normalize(classroom.name)]
+                _m, created = ClassMember.objects.get_or_create(classroom=classroom, user=profile,
+                                                                defaults={'role': role})
+                if created:
+                    report['added'] += 1
+                    mark(row, 'ok', _('Added to the class'))
+                else:
+                    report['already'] += 1
+                    mark(row, 'gray', _('Already in the class'))
+                if add_to_org and classroom.organization_id and role == RoleInClass.STUDENT:
+                    profile.organizations.add(classroom.organization)
+    report['classes'] = sorted(report['classes'])
+    report['lines'] = [lines[key] for key in sorted(lines)]
+    report['error_rows'] = sum(1 for line in report['lines'] if line['tone'] == 'bad')
+    return report
+
+
+class ClassImport(LoginRequiredMixin, TitleMixin, FormView):
+    template_name = 'class/import.html'
+    form_class = ImportForm
+
+    def get_title(self):
+        return _('Import a class list')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not can_create_class(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        try:
+            rows = parse_sheet(form.cleaned_data['file'])
+        except ValueError as e:
+            form.add_error('file', str(e))
+            return self.form_invalid(form)
+        report = run_import(rows, self.request.user, form.cleaned_data['organization'],
+                            form.cleaned_data['school_year'], form.cleaned_data['create_missing'],
+                            form.cleaned_data['add_to_org'], form.cleaned_data['dry_run'])
+        context = self.get_context_data(form=form)
+        context.update(report=report, dry_run=form.cleaned_data['dry_run'])
+        return self.render_to_response(context)
+
+
+class ClassImportTemplate(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        if not can_create_class(request.user):
+            raise PermissionDenied()
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="danh-sach-lop-mau.csv"'
+        response.write('﻿')
+        writer = csv.writer(response)
+        writer.writerow(['Họ tên', 'Tên truy cập', 'Email', 'Lớp', 'Vai trò'])
+        writer.writerow(['Nguyễn Văn A', 'nguyenvana', 'a@example.com', '10A1', 'Học sinh'])
+        writer.writerow(['Trần Thị B', 'tranthib', '', '10A1', 'Học sinh'])
+        return response
+
+
+class ClassReportPrint(LoginRequiredMixin, ClassMixin, TemplateView):
+    """Printable A4 report of the class (use the browser's Print -> Save as PDF): summary, distribution, grade table
+    and, with ?students=1, one result sheet per student."""
+    template_name = 'class/report_print.html'
+
+    TIERS = ((8.0, _l('Excellent')), (6.5, _l('Good')), (5.0, _l('Average')), (0.0, _l('Weak')))
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not self.classroom.is_staffed_by(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from statistics import median
+        context = super().get_context_data(**kwargs)
+        classroom = self.classroom
+        ids = stats.student_ids(classroom)
+        assignments = list(classroom.assignments.select_related('quiz').order_by('created', 'id'))
+        book = stats.grade_book(classroom, assignments, ids)
+        profiles = Profile.objects.select_related('user').in_bulk(ids)
+        rows = []
+        for pid in sorted(ids, key=lambda i: (-(book[i]['average'] or 0), profiles[i].user.username)):
+            rows.append({'profile': profiles[pid], **book[pid]})
+        averages = [r['average'] for r in rows if r['average'] is not None]
+        bins = [0] * 10
+        for value in averages:
+            bins[min(int(value), 9)] += 1
+        tiers = []
+        for low, label in self.TIERS:
+            tiers.append({'label': label, 'low': low, 'count': 0})
+        for value in averages:
+            for tier in tiers:
+                if value >= tier['low']:
+                    tier['count'] += 1
+                    break
+        total = len(averages) or 1
+        for tier in tiers:
+            tier['pct'] = int(round(100 * tier['count'] / total))
+        context.update(
+            classroom=classroom, assignments=assignments, rows=rows, bins=bins, bin_max=max(bins) or 1, tiers=tiers,
+            summary={'students': len(ids), 'average': round(sum(averages) / len(averages), 2) if averages else None,
+                     'median': round(median(averages), 2) if averages else None,
+                     'top': max(averages) if averages else None,
+                     'pass_pct': int(round(100 * sum(1 for v in averages if v >= 5) / len(averages)))
+                     if averages else None},
+            per_student=bool(self.request.GET.get('students')), today=timezone.localdate(),
+            school=classroom.organization.name if classroom.organization_id else '')
+        return context

@@ -9,6 +9,7 @@
             <li class="tab"><a href="{{ quiz.get_absolute_url() }}"><i class="tab-icon fa fa-eye"></i> {{ _('View quiz') }}</a></li>
             <li class="tab active"><span><i class="tab-icon fa fa-pencil"></i> {{ _('Manage') }}</span></li>
             <li class="tab"><a href="{{ url('quiz_results', quiz.slug) }}"><i class="tab-icon fa fa-trophy"></i> {{ _('Results') }}</a></li>
+            <li class="tab"><a href="{{ url('quiz_variants', quiz.slug) }}"><i class="tab-icon fa fa-files-o"></i> {{ _('Exam codes') }}</a></li>
         </ul>
     </div>
 {% endblock %}

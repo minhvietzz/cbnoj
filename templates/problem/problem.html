@@ -1,4 +1,8 @@
 {% extends "common-content.html" %}
+{% from "bp/macros.html" import chip_class %}
+{# Problem page: one layout for everybody. Left: statement card (tabs: statement / comments / ...). Right: submit card with the
+   Ace editor, the try-run results card and the viewer's recent submissions. #}
+
 {% block content_media %}
     {% if not comment_lock %}
         {% include "comments/media-css.html" %}
@@ -6,75 +10,10 @@
     {% if request.user.is_authenticated and form %}
         {{ form.media.css }}
     {% endif %}
-    <style>
-        .title-state {
-            font-size: 2em;
-            float: left;
-            width: 1.1em;
-            display: block;
-            margin-top: 0.16em;
-        }
-
-        .info-float a {
-            vertical-align: middle;
-        }
-
-        .problem-clarification {
-            border-bottom: 1px solid #ccc;
-            margin-top: 1em;
-            margin-bottom: 1em;
-        }
-
-        .clarifications-area h2 {
-            margin-bottom: 20px;
-        }
-
-        .problem-clarification .body {
-            display: inline-block;
-            padding-left: 3em;
-        }
-
-        #content-right {
-            max-width: 12.5em;
-            min-width: 12.5em;
-        }
-
-        #problem-types, #allowed-langs, #available-judges, #contest-problems-list {
-            padding-top: 1em;
-        }
-
-        .problem-info-entry {
-            padding-top: 0.5em;
-        }
-
-        #raw_problem {
-            visibility: hidden;
-            width: 0;
-            height: 0;
-            position: absolute;
-            left: -999em;
-        }
-
-        .button.clarify {
-            background: orange;
-            align-self: center;
-        }
-        
-        .highlighted {
-            background: #f7ef81;
-        }
-
-        td a {
-            display: block;
-            width: 100%;
-        }
-    </style>
 {% endblock %}
 
 {% block content_js_media %}
     {% if comment_form and comment_form.errors %}
-        {# comments/list.html is SSR'd directly below (not via the AJAX fragment) in
-           this case, so it needs its own media JS (martor editor, vote/hide/edit). #}
         {% include "comments/media-js.html" %}
     {% endif %}
     {% include "comments/lazy-load-js.html" %}
@@ -82,435 +21,564 @@
         {% include "problem/submit-js.html" %}
     {% endif %}
     <script type="text/javascript">
-        $(function() {
-            $('#ui-new').click(function(e) {
-                e.preventDefault();
-                $.post({{ url('set_problem_ui')|htmltojs }}, {ui: 'new'}).always(function () { location.reload(); });
-            });
+        $(function () {
+            var code = {{ problem.code|htmltojs }};
 
-            $('#pdf_button').click(async function(e) {
-                e.preventDefault();
-                if (!$('#raw_problem').attr("src"))
-                    $('#raw_problem').attr("src", "{{problem.code}}/raw");
-
-                while(!$('.math-loaded', frames['raw_problem'].document).length) {
-                    await new Promise(r => setTimeout(r, 200));
+            // ---- tabs of the statement card ---------------------------------------------------------------
+            $('.pd-tabs [data-pane]').on('click', function () {
+                var name = $(this).data('pane');
+                $('.pd-tabs [data-pane]').removeClass('on');
+                $(this).addClass('on');
+                $('.pd-doc .pd-pane').removeClass('on');
+                $('#pd-' + name).addClass('on');
+                if (name === 'comments') {
+                    var load = $('#comments').data('load-comments');
+                    if (load) load();
                 }
-                frames['raw_problem'].print();
+                if (history.replaceState) history.replaceState(null, '', name === 'comments' ? '#comments' : location.pathname + location.search);
             });
-
-            // Tab switching functionality
-            $('.problem-tabs a').click(function(e) {
-                e.preventDefault();
-                var target = $(this).attr('href');
-
-                // Update active tab
-                $('.problem-tabs a').removeClass('active');
-                $(this).addClass('active');
-
-                // Update active content
-                $('.tab-content').removeClass('active');
-                $(target).addClass('active');
-
-                if (target === '#comments') {
-                    var loadComments = $('#comments').data('load-comments');
-                    if (loadComments) loadComments();
-                }
-
-                // Update URL hash without scrolling
-                if (history.pushState) {
-                    history.pushState(null, null, target);
-                } else {
-                    location.hash = target;
-                }
-            });
-
-            // Handle initial hash in URL. A #comment-<id> permalink (e.g. from the
-            // recent-comments widget) isn't a tab id, so it needs its own handling:
-            // open the comments tab and let lazy-load-js.html scroll to it once loaded.
             var hash = window.location.hash;
             if (/^#comment-\d+$/.test(hash)) {
                 var setPendingScroll = $('#comments').data('set-pending-scroll');
                 if (setPendingScroll) setPendingScroll(hash);
-                $('.problem-tabs a[href="#comments"]').click();
-            } else if (hash && $(hash).length) {
-                $('.problem-tabs a[href="' + hash + '"]').click();
-            } else if ($('#comments').hasClass('active')) {
-                // No hash-driven tab switch happened, but the comments tab is
-                // already the default active tab (anonymous users have no
-                // "Submit Solution" tab) - load it now instead of waiting for a
-                // click that will never come.
+                $('.pd-tabs [data-pane="comments"]').click();
+            } else if (hash === '#comments') {
+                $('.pd-tabs [data-pane="comments"]').click();
+            } else if ($('#pd-comments').hasClass('on')) {
                 var loadComments = $('#comments').data('load-comments');
                 if (loadComments) loadComments();
             }
+
+            $('#pdf_button').click(async function (e) {
+                e.preventDefault();
+                if (!$('#raw_problem').attr('src')) $('#raw_problem').attr('src', '{{ problem.code }}/raw');
+                while (!$('.math-loaded', frames['raw_problem'].document).length) {
+                    await new Promise(function (r) { setTimeout(r, 200); });
+                }
+                frames['raw_problem'].print();
+            });
+            $('.pd-manage summary').on('click', function () { /* native toggle */ });
+
+            // ---- sample blocks: every <pre> after an "input"/"output" label becomes a titled box --------------
+            var kinds = [];
+            $('#pd-statement .pd-body pre').each(function () {
+                var $pre = $(this), label = '';
+                var $p = $pre.prev();
+                while ($p.length && ($p.hasClass('copy-clipboard') || !$.trim($p.text()))) $p = $p.prev();
+                if ($p.length) label = $.trim($p.text()).toLowerCase();
+                var kind = null;
+                if (/(output|dữ liệu ra|đầu ra|kết quả|xuất|stdout)/.test(label)) kind = 'out';
+                else if (/(input|dữ liệu vào|đầu vào|nhập|stdin)/.test(label)) kind = 'in';
+                kinds.push({kind: kind, text: $pre.text().replace(/\s+$/, ''), $pre: $pre});
+            });
+            var knownKinds = kinds.some(function (k) { return k.kind; });
+            kinds.forEach(function (k, i) { if (!knownKinds) k.kind = i % 2 === 0 ? 'in' : 'out'; });
+            (function decorate() {
+                var $row = null;
+                kinds.forEach(function (k) {
+                    if (!k.kind) { $row = null; return; }
+                    var $box = $('<div class="pd-sample">').append($('<div class="pd-sample-h">').text(k.kind === 'in' ? 'Input' : 'Output'));
+                    var $anchor = k.$pre.parent().hasClass('highlighter-rouge') ? k.$pre.parent() : k.$pre;
+                    // the little "Input" / "Output" caption in front of the block is now the box title
+                    var $cap = $anchor.prev();
+                    while ($cap.length && ($cap.hasClass('copy-clipboard') || !$.trim($cap.text()))) $cap = $cap.prev();
+                    if ($cap.length && $.trim($cap.text()).length <= 40 && !$cap.is('pre, .pd-samples, .pd-sample')) $cap.hide();
+                    if (k.kind === 'in' || !$row) {
+                        $row = $('<div class="pd-samples">');
+                        $row.insertBefore($anchor);
+                    }
+                    $box.appendTo($row);
+                    var $copy = $anchor.prev('.copy-clipboard');
+                    if ($copy.length) $box.children('.pd-sample-h').append($copy.children());
+                    $anchor.appendTo($box);
+                    if (k.kind === 'out') $row = null;
+                });
+            })();
+
+            {% if request.user.is_authenticated and form %}
+            // ---- editor: dark, fixed height; the file picker becomes a small button -------------------------
+            function fitAce() {
+                var $ace = $('#ace_source');
+                if (!$ace.length) return;
+                $ace.css('height', (window.innerWidth > 760 ? 340 : 280) + 'px');
+                if (window.ace_source && typeof window.ace_source.resize === 'function') window.ace_source.resize();
+            }
+            $(window).on('resize', fitAce);
+            setTimeout(fitAce, 0);
+            setTimeout(fitAce, 600);
+            $('#ace_source').on('ace_load', function () { setTimeout(fitAce, 0); });
+            $('.pd-sub-f').prepend($('<button type="button" class="pd-upload" id="pd-upload"></button>').text({{ _('Upload file')|htmltojs }}).on('click', function () { $('#file_select').click(); }));
+
+            {% if run_enabled and has_test_data and not no_judges %}
+            // ---- try-run ---------------------------------------------------------------------------------
+            var runUrl = {{ url('problem_run', problem.code)|htmltojs }};
+            var runKeys = {{ run_language_keys|htmltojs }}.split(',');
+            var storeKey = 'ws:tests:' + code;
+            var MAX_CUSTOM = 5, MAX_SAMPLES = 3;
+            var csrf = $('#problem_submit [name=csrfmiddlewaretoken]').val();
+
+            var samples = [];
+            var cur = null;
+            kinds.forEach(function (k) {
+                if (k.kind === 'in') cur = {input: k.text, expected: ''};
+                else if (k.kind === 'out' && cur) { cur.expected = k.text; samples.push(cur); cur = null; }
+            });
+            if (cur) samples.push(cur);
+            samples = samples.slice(0, MAX_SAMPLES).map(function (s, i, all) {
+                return {id: 's' + i, name: 'Test ' + (i + 1) + ' (ví dụ)', input: s.input + '\n', expected: s.expected, locked: true};
+            });
+            var custom = [];
+            try { custom = JSON.parse(localStorage.getItem(storeKey) || '[]').slice(0, MAX_CUSTOM); } catch (e) { custom = []; }
+            var seq = custom.reduce(function (m, t) { return Math.max(m, t.n || 0); }, 0);
+            var results = {}, runInfo = null, busy = false, open = {};
+
+            function allTests() { return samples.concat(custom); }
+            function saveCustom() { try { localStorage.setItem(storeKey, JSON.stringify(custom)); } catch (e) {} }
+            function norm(s) { return $.trim(s || '').split(/\s+/).join(' '); }
+            function langKey() { return $('#id_language option:selected').data('key'); }
+            function source() { return window.ace_source && typeof window.ace_source.getSession === 'function' ? window.ace_source.getSession().getValue() : $('#id_source').val(); }
+            function fmtTime(sec) { return (Math.round(sec * 100) / 100).toString().replace('.', ',') + ' s'; }
+
+            function verdict(t, r) {
+                if (!r) return null;
+                if (r.status === 'SKIP') return {cls: 'warn', text: 'Bỏ qua', long: 'Bỏ qua (quá giờ chung)'};
+                if (r.status === 'TLE') return {cls: 'warn', text: 'Quá giờ', long: 'Quá thời gian'};
+                if (r.status === 'MLE') return {cls: 'warn', text: 'Quá bộ nhớ', long: 'Quá bộ nhớ'};
+                if (r.status === 'OLE') return {cls: 'warn', text: 'Quá output', long: 'In ra quá nhiều'};
+                if (r.status === 'RTE' || r.status === 'IR') return {cls: 'bad', text: 'Lỗi chạy', long: 'Lỗi khi chạy'};
+                if (!$.trim(t.expected)) return {cls: 'info', text: 'Đã chạy', long: 'Chạy xong'};
+                return norm(r.stdout) === norm(t.expected) ? {cls: 'ok', text: 'Đúng', long: 'Khớp kết quả mong đợi'}
+                                                          : {cls: 'bad', text: 'Sai', long: 'Khác kết quả mong đợi'};
+            }
+
+            function box(label, text) {
+                return $('<div class="pd-io">').append($('<div class="pd-io-h">').text(label), $('<pre>').text(text));
+            }
+
+            function render() {
+                var tests = allTests();
+                var $list = $('#pd-cases').empty();
+                tests.forEach(function (t) {
+                    var r = results[t.id], v = verdict(t, r), isOpen = !!open[t.id];
+                    var $case = $('<div class="pd-case">').toggleClass('on', isOpen);
+                    var $head = $('<button type="button" class="pd-case-h">').attr('aria-expanded', isOpen ? 'true' : 'false');
+                    $head.append($('<span class="pd-case-n">').text(t.locked ? t.name : t.name));
+                    var $right = $('<span class="pd-case-r">');
+                    if (v) $right.append($('<span class="bp-chip">').addClass(v.cls).text(v.text));
+                    if (r && r.status !== 'SKIP') $right.append($('<span class="pd-case-m">').text(Math.round(r.time * 1000) + ' ms'));
+                    if (!v) $right.append($('<span class="pd-case-m">').text('Chưa chạy'));
+                    $head.append($right).on('click', function () { open[t.id] = !open[t.id]; render(); });
+                    $case.append($head);
+                    if (isOpen) {
+                        var $body = $('<div class="pd-case-b">');
+                        if (t.locked) {
+                            $body.append($('<div class="pd-io-row">').append(box('Input', t.input), box('Mong đợi', t.expected)));
+                        } else {
+                            var $in = $('<div class="pd-io">').append($('<div class="pd-io-h">').text('Input (stdin hoặc file input)'),
+                                $('<textarea aria-label="Input của test" spellcheck="false">').val(t.input).on('input', function () { t.input = this.value; saveCustom(); }));
+                            var $ex = $('<div class="pd-io">').append($('<div class="pd-io-h">').text('Kết quả mong đợi (không bắt buộc)'),
+                                $('<textarea aria-label="Kết quả mong đợi" spellcheck="false">').val(t.expected).on('input', function () { t.expected = this.value; saveCustom(); }));
+                            $body.append($('<div class="pd-io-row">').append($in, $ex));
+                        }
+                        if (r) {
+                            var $out = $('<div class="pd-io-row">').append(
+                                box('Kết quả của bạn' + (r.truncated ? ' (đã cắt bớt)' : ''), r.stdout),
+                                $.trim(t.expected) ? box('Nhận xét', v.long + ' · ' + Math.round(r.time * 1000) + ' ms · ' + (r.memory / 1024).toFixed(1) + ' MB')
+                                                   : box('Nhận xét', v.long + ' · ' + Math.round(r.time * 1000) + ' ms · ' + (r.memory / 1024).toFixed(1) + ' MB'));
+                            $body.append($out);
+                            if (r.stderr) $body.append($('<div class="pd-io">').append($('<div class="pd-io-h">').text('Thông báo lỗi'), $('<pre class="pd-err">').text(r.stderr)));
+                        }
+                        if (!t.locked) {
+                            $body.append($('<button type="button" class="pd-link">').text('Xóa test này').on('click', function () {
+                                custom = custom.filter(function (x) { return x.id !== t.id; });
+                                saveCustom(); delete results[t.id]; delete open[t.id]; render();
+                            }));
+                        }
+                        $case.append($body);
+                    }
+                    $list.append($case);
+                });
+                if (!tests.length) $list.append($('<div class="bp-empty">').text('Bài này chưa có ví dụ. Hãy thêm test của bạn.'));
+                $('#pd-count').text('Test của bạn: ' + custom.length + '/' + MAX_CUSTOM);
+                $('#pd-add').prop('disabled', custom.length >= MAX_CUSTOM);
+
+                var $msg = $('#pd-runmsg').empty().removeClass('bad on');
+                if (runInfo && runInfo.error) {
+                    $msg.addClass('bad on').append($('<b>').text('Không chạy được. '), document.createTextNode(runInfo.error));
+                } else if (runInfo && runInfo.compile_error) {
+                    $msg.addClass('bad on').append($('<b>').text('Lỗi biên dịch'), $('<pre class="pd-err">').text(runInfo.compile_error));
+                } else if (runInfo && runInfo.mode) {
+                    var parts = [];
+                    if (runInfo.mode === 'file') {
+                        if (runInfo.input_file) parts.push('đọc ' + runInfo.input_file);
+                        if (runInfo.output_file) parts.push('ghi ' + runInfo.output_file);
+                        $msg.addClass('on').text('Đã nhận file: ' + parts.join(', '));
+                    } else {
+                        $msg.addClass('on').text('Nhập xuất chuẩn (stdin/stdout)');
+                    }
+                }
+            }
+
+            $('#pd-add').on('click', function () {
+                if (custom.length >= MAX_CUSTOM) return;
+                seq += 1;
+                var t = {id: 'c' + seq, n: seq, name: 'Test của bạn ' + seq, input: '', expected: '', locked: false};
+                custom.push(t); saveCustom(); open[t.id] = true; render();
+            });
+
+            function fail(message) { runInfo = {error: message}; results = {}; render(); }
+
+            $('#pd-run').on('click', function () {
+                if (busy) return;
+                var key = langKey();
+                if (runKeys.indexOf(key) < 0) { fail('Ngôn ngữ này chưa hỗ trợ chạy thử, bạn vẫn nộp bài bình thường.'); return; }
+                var tests = allTests().filter(function (t) { return t.locked || $.trim(t.input) !== ''; });
+                if (!tests.length) { fail('Chưa có test nào có dữ liệu để chạy.'); return; }
+                var src = source();
+                if (!$.trim(src)) { fail('Chưa có code để chạy.'); return; }
+                busy = true;
+                var $btn = $(this).prop('disabled', true).text('Đang chạy...');
+                $.ajax({
+                    url: runUrl, type: 'POST', contentType: 'application/json', timeout: 60000,
+                    headers: {'X-CSRFToken': csrf},
+                    data: JSON.stringify({language: $('#id_language').val(), source: src,
+                                          tests: tests.map(function (t) { return {input: t.input}; })})
+                }).done(function (reply) {
+                    runInfo = reply; results = {};
+                    (reply.results || []).forEach(function (r, i) { results[tests[i].id] = r; });
+                    open = {};
+                    tests.forEach(function (t) { var v = verdict(t, results[t.id]); if (v && v.cls !== 'ok') open[t.id] = true; });
+                    render();
+                    $('html, body').animate({scrollTop: $('#pd-console').offset().top - 80}, 250);
+                }).fail(function (xhr) {
+                    var msg = xhr.responseJSON && xhr.responseJSON.message;
+                    fail(msg || 'Không chạy thử được lúc này, thử lại sau.');
+                }).always(function () {
+                    busy = false;
+                    $btn.prop('disabled', false).text({{ _('Test run')|htmltojs }});
+                });
+            });
+            render();
+            {% endif %}
+
+            var FAMILIES = [
+                {id: 'cpp', label: 'C++', test: /^CPP/, prefer: ['CPP17', 'CPP20', 'CPP14', 'CPP11', 'CPP03']},
+                {id: 'c', label: 'C', test: /^C(11)?$/, prefer: ['C11', 'C']},
+                {id: 'py', label: 'Python', test: /^PY/, prefer: ['PY3', 'PYPY3', 'PYPY', 'PY2']},
+                {id: 'pas', label: 'Pascal', test: /^PAS$/, prefer: ['PAS']}
+            ];
+            var $sel = $('#id_language');
+            var $sel = $('#id_language');
+            // ---- code hints like VS Code: live autocomplete, snippets, STL names -----------------------
+            var HINTS = {
+                cpp: {
+                    words: 'vector string map set multiset unordered_map unordered_set queue priority_queue stack deque pair make_pair tuple array bitset list push_back pop_back emplace_back push_front pop_front front back size empty begin end rbegin rend clear resize assign insert erase find count lower_bound upper_bound binary_search sort stable_sort reverse unique min max min_element max_element swap abs sqrt pow floor ceil round log log2 memset memcpy strlen strcmp scanf printf puts getchar cin cout cerr endl getline to_string stoi stoll stod accumulate iota fill nth_element next_permutation __gcd gcd lcm numeric_limits INT_MAX INT_MIN LLONG_MAX LLONG_MIN first second substr c_str iterator const_iterator auto const static nullptr true false struct class template typename namespace using include define return break continue while for do if else switch case default int long short unsigned signed char bool float double void sizeof typedef'.split(' '),
+                    snippets: [
+                        ['main', 'int main() {\n\tios::sync_with_stdio(false);\n\tcin.tie(nullptr);\n\t$0\n\treturn 0;\n}'],
+                        ['for', 'for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n\t$0\n}'],
+                        ['forr', 'for (int ${1:i} = ${2:n} - 1; $1 >= 0; $1--) {\n\t$0\n}'],
+                        ['fore', 'for (auto &${1:x} : ${2:v}) {\n\t$0\n}'],
+                        ['while', 'while (${1:cond}) {\n\t$0\n}'],
+                        ['if', 'if (${1:cond}) {\n\t$0\n}'],
+                        ['ifelse', 'if (${1:cond}) {\n\t$2\n} else {\n\t$0\n}'],
+                        ['vec', 'vector<${1:int}> ${2:v}(${3:n});'],
+                        ['readn', 'int ${1:n};\ncin >> $1;'],
+                        ['readv', 'vector<${1:int}> ${2:a}(${3:n});\nfor (auto &x : $2) cin >> x;'],
+                        ['sortv', 'sort(${1:v}.begin(), $1.end());'],
+                        ['struct', 'struct ${1:Name} {\n\t$0\n};'],
+                        ['lambda', 'auto ${1:f} = [&](${2:int x}) {\n\t$0\n};'],
+                        ['inc', '#include <bits/stdc++.h>\nusing namespace std;\n']
+                    ]
+                },
+                c: {
+                    words: 'int long short unsigned signed char float double void const static struct typedef enum union sizeof return break continue while for do if else switch case default include define scanf printf puts gets getchar putchar fgets fprintf fscanf sprintf sscanf malloc calloc realloc free memset memcpy memcmp strlen strcmp strcpy strcat strchr abs sqrt pow floor ceil NULL stdin stdout stderr INT_MAX INT_MIN LLONG_MAX EOF qsort fopen fclose'.split(' '),
+                    snippets: [
+                        ['main', 'int main() {\n\t$0\n\treturn 0;\n}'],
+                        ['for', 'for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n\t$0\n}'],
+                        ['while', 'while (${1:cond}) {\n\t$0\n}'],
+                        ['if', 'if (${1:cond}) {\n\t$0\n}'],
+                        ['ifelse', 'if (${1:cond}) {\n\t$2\n} else {\n\t$0\n}'],
+                        ['scanf', 'scanf("${1:%d}", &${2:x});'],
+                        ['printf', 'printf("${1:%d}\\n", ${2:x});'],
+                        ['inc', '#include <stdio.h>\n#include <string.h>\n#include <stdlib.h>\n']
+                    ]
+                },
+                py: {
+                    words: 'print input range len int str float list dict set tuple sorted sum min max map filter enumerate zip abs open sys stdin stdout readline readlines split strip join format append extend pop insert remove index count reverse sort items keys values get add update lower upper replace startswith endswith isdigit isalpha def class return yield lambda import from as if elif else for while break continue pass try except finally raise with in is not and or None True False global nonlocal del assert math sqrt gcd floor ceil factorial heapq heappush heappop deque defaultdict Counter bisect_left bisect_right itertools permutations combinations product'.split(' '),
+                    snippets: [
+                        ['for', 'for ${1:i} in range(${2:n}):\n\t$0'],
+                        ['fore', 'for ${1:x} in ${2:arr}:\n\t$0'],
+                        ['while', 'while ${1:cond}:\n\t$0'],
+                        ['if', 'if ${1:cond}:\n\t$0'],
+                        ['ifelse', 'if ${1:cond}:\n\t$2\nelse:\n\t$0'],
+                        ['def', 'def ${1:name}(${2:args}):\n\t$0'],
+                        ['readints', '${1:a} = list(map(int, input().split()))'],
+                        ['readn', '${1:n} = int(input())'],
+                        ['fastio', 'import sys\ninput = sys.stdin.readline\n'],
+                        ['main', 'def main():\n\t$0\n\n\nif __name__ == "__main__":\n\tmain()'],
+                        ['try', 'try:\n\t$1\nexcept ${2:Exception}:\n\t$0']
+                    ]
+                },
+                pas: {
+                    words: 'program uses var const type begin end procedure function if then else for to downto do while repeat until case of record array string integer int64 longint word byte real double extended boolean char readln read writeln write assign reset rewrite close eof eoln length copy pos delete insert inc dec abs sqr sqrt trunc round odd chr ord div mod and or not xor shl shr true false exit break continue sort'.split(' '),
+                    snippets: [
+                        ['program', 'program ${1:Main};\nvar\n\t${2:n}: longint;\nbegin\n\t$0\nend.'],
+                        ['for', 'for ${1:i} := ${2:1} to ${3:n} do\nbegin\n\t$0\nend;'],
+                        ['fordown', 'for ${1:i} := ${2:n} downto ${3:1} do\nbegin\n\t$0\nend;'],
+                        ['while', 'while ${1:cond} do\nbegin\n\t$0\nend;'],
+                        ['repeat', 'repeat\n\t$0\nuntil ${1:cond};'],
+                        ['if', 'if ${1:cond} then\nbegin\n\t$0\nend;'],
+                        ['ifelse', 'if ${1:cond} then\nbegin\n\t$2\nend\nelse\nbegin\n\t$0\nend;'],
+                        ['procedure', 'procedure ${1:Name}(${2:args});\nbegin\n\t$0\nend;'],
+                        ['function', 'function ${1:Name}(${2:args}): ${3:longint};\nbegin\n\t$0\nend;']
+                    ]
+                }
+            };
+            function hintItems() {
+                var key = String($('#id_language option:selected').data('key'));
+                var fam = 'none';
+                FAMILIES.forEach(function (f) { if (f.test.test(key)) fam = f.id; });
+                var h = HINTS[fam];
+                if (!h) return [];
+                var items = h.snippets.map(function (sn) {
+                    return {caption: sn[0], snippet: sn[1], meta: 'snippet', score: 1100};
+                });
+                h.words.forEach(function (w) { items.push({caption: w, value: w, meta: fam === 'py' ? 'python' : (fam === 'pas' ? 'pascal' : 'c++'), score: 900}); });
+                return items;
+            }
+            function setupHints(editor) {
+                if (!editor || editor.__wsHints || typeof editor.setOptions !== 'function' || !window.ace) return;
+                editor.__wsHints = true;
+                function go() {
+                    var lt = ace.require('ace/ext/language_tools');
+                    editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true, enableSnippets: true,
+                                       tabSize: 4, useSoftTabs: true, showPrintMargin: false});
+                    var mine = {getCompletions: function (ed, session, pos, prefix, cb) { cb(null, hintItems()); }};
+                    editor.completers = [mine, lt.keyWordCompleter, lt.textCompleter];
+                    editor.setFontSize(15);
+                }
+                if (ace.config && ace.config.loadModule) ace.config.loadModule('ace/ext/language_tools', go);
+                else go();
+            }
+            $('#ace_source').on('ace_load', function (e, editor) { setupHints(editor); });
+            if (window.ace_source) setupHints(window.ace_source);
+            {% endif %}
         });
     </script>
 {% endblock %}
 
+{% block title_ruler %}{% endblock %}
+
 {% block title_row %}
-    <div class="problem-title">
-        {% if request.user.is_authenticated %}
-            {% if problem.id in completed_problem_ids %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                    {% if problem.is_public or request.in_contest %}
-                        <i class="solved-problem-color title-state fa fa-check-circle"></i>
-                    {% else %}
-                        <i class="solved-problem-color title-state fa fa-lock"></i>
-                    {% endif %}
-                </a>
-            {% elif problem.id in attempted_problems %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                    {% if problem.is_public or request.in_contest %}
-                        <i class="attempted-problem-color title-state fa fa-frown-o"></i>
-                    {% else %}
-                        <i class="attempted-problem-color title-state fa fa-lock"></i>
-                    {% endif %}
-                </a>
-            {% endif %}
-        {% endif %}
-        <h2 style="display: inline-block">{{ title }}</h2>
-        {% if problem.is_organization_private and problem.organization %}
-            <span class="organization-tags">
-                <span class="organization-tag">
-                    <a href="{{ problem.organization.get_absolute_url() }}">
-                        <i class="fa fa-lock"></i> {{ problem.organization.name }}
-                    </a>
-                </span>
-            </span>
-        {% endif %}
-        <span class="spacer"></span>
-        <a href="#" id="ui-new" class="button" style="vertical-align: middle; margin-right: 0.5em" title="Giao diện mới có chạy thử">Giao diện mới</a>
-        {% if has_pdf_render %}
-            <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
-        {% else %}
-        <a id="pdf_button" class="view-pdf" href='#'>
-        {% endif %}
-            <span class="pdf-icon">
-                <span class="fa fa-file-pdf-o pdf-icon-logo"></span>
-                <span class="pdf-icon-bar"></span>
-            </span>
-            {{ _('View as PDF') }}
-        </a>
-        {% if request.user.is_authenticated and not request.profile.mute %}
-            <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify" style="vertical-align: middle; margin-left: 0.5em;">
-                {{ _('Request clarification') }}
-            </a>
-        {% endif %}
-    </div>
+    {% set contest_ctx = contest_problem.contest if contest_problem else none %}
+    <header class="bp-head bp-head-row pd-head">
+        <div class="pd-title">
+            <div class="pd-crumb">
+                {% if contest_ctx %}
+                    <a href="{{ url('contest_view', contest_ctx.key) }}">{{ contest_ctx.name }}</a> /
+                {% else %}
+                    <a href="{{ url('problem_list') }}">{{ _('Programming tasks') }}</a> / {{ problem.group.full_name }} /
+                {% endif %}
+                <span class="bp-code">{{ problem.code }}</span>
+                {% if problem.is_organization_private and problem.organization %}
+                    · <a href="{{ problem.organization.get_absolute_url() }}"><i class="fa fa-lock"></i> {{ problem.organization.name }}</a>
+                {% endif %}
+            </div>
+            <h1>
+                {% if request.user.is_authenticated %}
+                    {% if problem.id in completed_problem_ids %}<span class="pd-st pd-st-ok" title="{{ _('Solved') }}"></span>
+                    {% elif problem.id in attempted_problems %}<span class="pd-st pd-st-try" title="{{ _('Attempted') }}"></span>{% endif %}
+                {% endif %}
+                {{ title }}
+            </h1>
+        </div>
+        <div class="pd-meta">
+            <span><b>{{ problem.time_limit|floatformat(-2) }} s</b><span>{{ _('time limit (short)') }}</span></span>
+            <span><b>{{ (problem.memory_limit / 1024)|floatformat(-1) }} MB</b><span>{{ _('memory limit (short)') }}</span></span>
+            <span><b>{% if contest_problem %}{{ contest_problem.points|floatformat(-2) }}{% else %}{{ problem.points|floatformat(-2) }}{% endif %}</b><span>{{ _('points (short)') }}{% if (contest_problem and contest_problem.partial) or (not contest_problem and problem.partial) %} · {{ _('partial') }}{% endif %}</span></span>
+        </div>
+    </header>
 {% endblock %}
 
-{% block info_float %}
-    {% if request.user.is_authenticated and request.in_contest and submission_limit %}
-        {% if submissions_left > 0 %}
-            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
-                {{ _('Submit solution') }}
-            </a>
-            <div class="submissions-left">
-                {% trans trimmed counter=submissions_left %}
-                    {{ counter }} submission left
-                    {% pluralize %}
-                    {{ counter }} submissions left
-                {% endtrans %}
+{% block body %}
+    {% set comments_open = comment_form and comment_form.errors %}
+    {% set comments_default = comments_open or not request.user.is_authenticated and false %}
+    <div class="bp-page pd-page">
+        <article class="bp-card pd-doc">
+            <div class="pd-tabs">
+                <button type="button" data-pane="statement" class="{{ '' if comments_open else 'on' }}">{{ _('Statement') }}</button>
+                <button type="button" data-pane="comments" class="{{ 'on' if comments_open else '' }}">{{ _('Comments') }}</button>
+                {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
+                    <a href="{{ url('problem_editorial', problem.code) }}">{{ _('Editorial') }}</a>
+                {% endif %}
+                {% if request.user.is_authenticated and not request.profile.mute %}
+                    {% if has_tickets or can_edit_problem %}
+                        <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('Q&A') }}{% if num_open_tickets %} <span class="pd-badge">{{ num_open_tickets }}</span>{% endif %}</a>
+                    {% else %}
+                        <a href="{{ url('new_problem_ticket', problem.code) }}">{{ _('Q&A') }}</a>
+                    {% endif %}
+                {% endif %}
+                {% if request.in_contest and contest_problem %}
+                    <a href="{{ url('contest_user_submissions', contest_problem.contest.key, request.user.username, problem.code) }}">{{ _('Submissions (title)') }}</a>
+                {% elif request.user.is_authenticated and has_submissions %}
+                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">{{ _('Submissions (title)') }}</a>
+                {% else %}
+                    <a href="{{ url('chronological_submissions', problem.code) }}">{{ _('Submissions (title)') }}</a>
+                {% endif %}
+                <span class="pd-tabs-fill"></span>
+                {% if has_pdf_render %}
+                    <a class="pd-tool" href="{{ url('problem_pdf', problem.code) }}">{{ _('View as PDF') }}</a>
+                {% else %}
+                    <a class="pd-tool" id="pdf_button" href="#">{{ _('View as PDF') }}</a>
+                {% endif %}
+                {% set can_manage = can_edit_problem or problem.is_subs_manageable_by(request.user) or perms.judge.edit_type_group_all_problem %}
+                <details class="pd-manage">
+                    <summary>{{ _('More actions') }} &#9662;</summary>
+                    <div>
+                        {% if request.in_contest and contest_problem %}
+                            {% set contest = contest_problem.contest %}
+                            {% if contest.can_see_full_submission_list(request.user) %}
+                                <a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a>
+                                {% if problem.is_public %}<a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a>{% endif %}
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a>
+                            {% if problem.is_public %}<a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a>{% endif %}
+                        {% endif %}
+                        {% if request.user.is_authenticated and not request.profile.mute %}
+                            <a href="{{ url('new_problem_ticket', problem.code) }}">{{ _('Request clarification') }}</a>
+                        {% endif %}
+                        {% if can_edit_problem %}
+                            <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('Manage tickets') }}{% if num_open_tickets %} ({{ num_open_tickets }}){% endif %}</a>
+                            <a href="{{ url('problem_edit', problem.code) }}">{{ _('Edit problem') }}</a>
+                            {% if not problem.is_manually_managed %}<a href="{{ url('problem_data', problem.code) }}">{{ _('Edit test data') }}</a>{% endif %}
+                            <a href="{{ url('problem_delete', problem.code) }}?next={{ request.get_full_path()|urlencode }}">{{ _('Delete problem') }}</a>
+                        {% endif %}
+                        {% if perms.judge.edit_type_group_all_problem %}
+                            <a href="{{ url('problem_edit_type_group', problem.code) }}">{{ _('Edit type group') }}</a>
+                        {% endif %}
+                        {% if problem.is_subs_manageable_by(request.user) %}
+                            <a href="{{ url('problem_manage_submissions', problem.code) }}">{{ _('Manage submissions') }}</a>
+                        {% endif %}
+                        {% if perms.judge.clone_problem and can_edit_problem %}
+                            <a href="{{ url('problem_clone', problem.code) }}">{{ _('Clone problem') }}</a>
+                        {% endif %}
+                    </div>
+                </details>
             </div>
-        {% else %}
-            <a class="unselectable button full disabled">{{ _('Submit solution') }}</a>
-            <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
-        {% endif %}
-    {% else %}
-        <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
-            {{ _('Submit solution') }}
-        </a>
-    {% endif %}
 
-    <hr style="padding-bottom: 0.3em">
-    {% if request.in_contest and contest_problem %}
-        {% set contest = contest_problem.contest %}
-        <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
-        {% if contest.can_see_full_submission_list(request.user) %}
-            <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-            {% if problem.is_public %}
-                <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
-            {% endif %}
-        {% endif %}
-    {% else %}
-        {% if request.user.is_authenticated and has_submissions %}
-            <div>
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">{{ _('My submissions') }}</a>
-            </div>
-        {% endif %}
-        <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-        {% if problem.is_public %}
-            <div><a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a></div>
-        {% endif %}
-    {% endif %}
-    {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
-        <hr>
-        <div><a href="{{ url('problem_editorial', problem.code) }}">{{ _('Read editorial') }}</a></div>
-    {% endif %}
-    {% if can_edit_problem %}
-        <hr>
-        <div>
-            <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('Manage tickets') }}
-                {% if num_open_tickets %}<span class="badge">{{ num_open_tickets }}</span>{% endif %}
-            </a>
-        </div>
-        <div><a href="{{ url('problem_edit', problem.code) }}">{{ _('Edit problem') }}</a></div>
-        <div><a href="{{ url('problem_delete', problem.code) }}?next={{ request.get_full_path()|urlencode }}">{{ _('Delete problem') }}</a></div>
-        {% if not problem.is_manually_managed %}
-            <div><a href="{{ url('problem_data', problem.code) }}">{{ _('Edit test data') }}</a></div>
-        {% endif %}
-    {% elif request.user.is_authenticated and has_tickets %}
-        <hr>
-        <div>
-            <a href="{{ url('problem_ticket_list', problem.code) }}">{{ _('My tickets') }}
-                {% if num_open_tickets %}<span class="badge">{{ num_open_tickets }}</span>{% endif %}
-            </a>
-        </div>
-    {% endif %}
-
-    {% if perms.judge.edit_type_group_all_problem %}
-        <div><a href="{{ url('problem_edit_type_group', problem.code) }}">{{ _('Edit type group') }}</a></div>
-    {% endif %}
-
-    {% if problem.is_subs_manageable_by(request.user) %}
-        <div>
-            <a href="{{ url('problem_manage_submissions', problem.code) }}">{{ _('Manage submissions') }}</a>
-        </div>
-    {% endif %}
-
-    {% if perms.judge.clone_problem and can_edit_problem %}
-        <div>
-            <a href="{{ url('problem_clone', problem.code) }}">{{ _('Clone problem') }}</a>
-        </div>
-    {% endif %}
-
-    <hr style="padding-top: 0.3em">
-
-    <div class="problem-info-entry">
-        <i class="fa fa-check fa-fw"></i><span class="pi-name">{{ _('Points:') }}</span>
-        <span class="pi-value">
-            {% if contest_problem %}
-                {{ contest_problem.points }}{% if contest_problem.partial %} {{ _('(partial)') }}{% endif %}
-            {% else %}
-                {{ problem.points|floatformat(2) }}{% if problem.partial %} {{ _('(partial)') }}{% endif %}
-            {% endif %}
-        </span>
-    </div>
-    <div class="problem-info-entry">
-        <i class="fa fa-clock-o fa-fw"></i><span class="pi-name">{{ _('Time limit:') }}</span>
-        <span class="pi-value">{{ problem.time_limit }}s</span>
-    </div>
-    <div class="problem-lang-limits">
-        {% for name, limit in problem.language_time_limit %}
-            <div class="lang-limit">
-                <span class="lang-name">{{ name }}</span>
-                <span class="lang-tl">{{ limit }}s</span>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="problem-info-entry">
-        <i class="fa fa-server fa-fw"></i><span class="pi-name">{{ _('Memory limit:') }}</span>
-        <span class="pi-value">{{ problem.memory_limit|kbsimpleformat }}</span>
-    </div>
-    <div class="problem-lang-limits">
-        {% for name, limit in problem.language_memory_limit %}
-            <div class="lang-limit">
-                <span class="lang-name">{{ name }}</span>
-                <span class="lang-ml">{{ limit|kbsimpleformat }}</span>
-            </div>
-        {% endfor %}
-    </div>
-    {% if problem.io_method.method == 'standard' %}
-        <div class="problem-info-entry">
-            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
-            <span class="pi-value">stdin</span>
-        </div>
-        <div class="problem-info-entry">
-            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
-            <span class="pi-value">stdout</span>
-        </div>
-    {% elif problem.io_method.method == 'file' %}
-        <div class="problem-info-entry">
-            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
-            <span class="pi-value"><i>{{ problem.io_method.input }}</i></span>
-        </div>
-        <div class="problem-info-entry">
-            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
-            <span class="pi-value"><i>{{ problem.io_method.output }}</i></span>
-        </div>
-    {% endif %}
-
-    <hr style="padding-top: 0.7em">
-
-    {% if not contest_problem or not contest_problem.contest.hide_problem_authors %}
-        {% cache 86400 'problem_authors' problem.id LANGUAGE_CODE %}
-            {% with authors=problem.authors.all() %}
-                {% if authors %}
-                    <div class="problem-info-entry">
-                        <i class="fa fa-pencil-square-o fa-fw"></i><span
-                            class="pi-name">{% trans trimmed count=authors|length %}
-                        Author:
-                        {% pluralize count %}
-                        Authors:
-                    {% endtrans %}</span>
-                        <div class="pi-value authors-value">{{ link_users(authors) }}</div>
+            <div id="pd-statement" class="pd-pane {{ '' if comments_open else 'on' }}">
+                {% set origin = contest_problem.contest if contest_problem else origin_contest %}
+                {% if contest_problems %}
+                    <div class="pd-cprobs">
+                        <span class="bp-mute">{{ _('Problems') }}:</span>
+                        {% for cp in contest_problems %}
+                            <a href="{{ url('problem_detail', cp.code) }}" class="{{ 'on' if cp.code == problem.code }}">{{ origin.get_label_for_problem(loop.index0) }}</a>
+                        {% endfor %}
                     </div>
                 {% endif %}
-            {% endwith %}
-        {% endcache %}
-    {% endif %}
-
-    {% if problem.source %}
-        <div class="problem-info-entry">
-            <i class="fa fa-pencil-square-o fa-fw"></i><span
-                class="pi-name">{{ _('Problem source:') }}</span>
-            <div class="pi-value authors-value">
-                {% if origin_contest %}
-                    <a href="{{ url('contest_view', origin_contest.key) }}">{{ origin_contest.name }}</a>
-                {% else %}
-                    {{ problem.source }}
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
-
-    {% if not contest_problem or not contest_problem.contest.hide_problem_tags %}
-        <div id="problem-types">
-            {% with types=problem.types_list %}
-                <div class="toggle closed unselectable">
-                    <i class="fa fa-chevron-right fa-fw"></i>{% trans trimmed count=problem.types_list|length %}
-                    Problem type
-                    {% pluralize count %}
-                    Problem types
-                {% endtrans %}
+                <iframe name="raw_problem" id="raw_problem" style="visibility: hidden; width: 0; height: 0; position: absolute; left: -999em"></iframe>
+                <div class="pd-body content-description screen">
+                    {% include "problem/problem-detail.html" %}
                 </div>
-                <div style="display:none" class="toggled">{{ problem.types_list|join(", ") }}</div>
-            {% endwith %}
-        </div>
-    {% endif %}
-    {% if show_languages %}
-        <div id="allowed-langs">
-            <div class="toggle open unselectable">
-                <i class="fa fa-chevron-right fa-fw"></i>{{ _('Allowed languages') }}
-            </div>
-            <div class="toggled">
-                {% with usable=problem.usable_common_names, langs=problem.languages_list() %}
-                    {% for lang in langs %}
-                        {%- if lang in usable -%}
-                            {{ lang }}
-                        {%- else -%}
-                            <s title="{{ _('No %(lang)s judge online', lang=lang) }}">{{ lang }}</s>
-                        {%- endif -%}
-                        {% if not loop.last %}, {% endif -%}
-                    {% endfor %}
-                {% endwith %}
-            </div>
-        </div>
-    {% endif %}
-
-    {% set contest = contest_problem.contest if contest_problem else origin_contest %}
-    {% if contest_problems %}
-    <div id="contest-problems-list">
-        <div class="toggle open unselectable">
-            <i class="fa fa-chevron-right fa-fw"></i>{{ _('Problems') }}
-        </div>
-        <div class="toggled">
-            <table class="table striped">
-                <tbody>
-                    {% for contest_problem in contest_problems %}
-                        <tr>
-                            {% if problem.code == contest_problem.code %}
-                            <td class="highlighted" style="text-align: center">
-                            {% else %}
-                            <td style="text-align: center">
-                            {% endif %}
-                            <a href="{{ url('problem_detail', contest_problem.code) }}">
-                                {{contest.get_label_for_problem(loop.index0)}}
-                            </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if problem.is_editable_by(request.user) %}
-        <div id="available-judges">
-            <i class="fa fa-database fa-fw"></i><span
-                class="pi-name">{% trans trimmed count=available_judges|length %}
-                Judge:
-                {% pluralize count %}
-                Judges:
-            {% endtrans %}
-            </span>
-            <div class="pi-value judges-value">
-                {% if available_judges %}
-                    {% if perms.judge.change_judge %}
-                        {% for judge in available_judges %}
-                            <a href="{{ url('admin:judge_judge_change', judge.id) }}">{{ judge.name }}</a>
-                            {%- if not loop.last %}, {% endif %}
-                        {% endfor %}
+                <dl class="pd-info">
+                    {% if problem.io_method.method == 'file' %}
+                        <div><dt>{{ _('Input:') }}</dt><dd><i>{{ problem.io_method.input }}</i></dd></div>
+                        <div><dt>{{ _('Output:') }}</dt><dd><i>{{ problem.io_method.output }}</i></dd></div>
                     {% else %}
-                        {{ available_judges|join(", ") }}
+                        <div><dt>{{ _('Input / output') }}</dt><dd>stdin / stdout</dd></div>
                     {% endif %}
-                {% else %}
-                    <i>{{ _('none available') }}</i>
+                    {% if not contest_problem or not contest_problem.contest.hide_problem_authors %}
+                        {% cache 86400 'problem_authors' problem.id LANGUAGE_CODE %}
+                            {% with authors=problem.authors.all() %}
+                                {% if authors %}<div><dt>{{ _('Authors:') }}</dt><dd>{{ link_users(authors) }}</dd></div>{% endif %}
+                            {% endwith %}
+                        {% endcache %}
+                    {% endif %}
+                    {% if problem.source %}
+                        <div><dt>{{ _('Problem source:') }}</dt><dd>{% if origin_contest %}<a href="{{ url('contest_view', origin_contest.key) }}">{{ origin_contest.name }}</a>{% else %}{{ problem.source }}{% endif %}</dd></div>
+                    {% endif %}
+                    {% if not contest_problem or not contest_problem.contest.hide_problem_tags %}
+                        {% if problem.types_list %}<div><dt>{{ _('Problem types') }}</dt><dd>{{ problem.types_list|join(", ") }}</dd></div>{% endif %}
+                    {% endif %}
+                    {% if show_languages %}
+                        <div><dt>{{ _('Allowed languages') }}</dt><dd>
+                            {% with usable=problem.usable_common_names, langs=problem.languages_list() %}
+                                {% for lang in langs %}{% if lang in usable %}{{ lang }}{% else %}<s title="{{ _('No %(lang)s judge online', lang=lang) }}">{{ lang }}</s>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+                            {% endwith %}
+                        </dd></div>
+                    {% endif %}
+                    {% set tl = problem.language_time_limit %}
+                    {% if tl %}
+                        <div><dt>{{ _('Time limit:') }}</dt><dd>{% for name, limit in tl %}{{ name }} {{ limit }}s{% if not loop.last %} · {% endif %}{% endfor %}</dd></div>
+                    {% endif %}
+                    {% set ml = problem.language_memory_limit %}
+                    {% if ml %}
+                        <div><dt>{{ _('Memory limit:') }}</dt><dd>{% for name, limit in ml %}{{ name }} {{ limit|kbsimpleformat }}{% if not loop.last %} · {% endif %}{% endfor %}</dd></div>
+                    {% endif %}
+                    {% if problem.is_editable_by(request.user) %}
+                        <div><dt>{{ _('Judges:') }}</dt><dd>
+                            {% if available_judges %}
+                                {% if perms.judge.change_judge %}
+                                    {% for judge in available_judges %}<a href="{{ url('admin:judge_judge_change', judge.id) }}">{{ judge.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+                                {% else %}{{ available_judges|join(", ") }}{% endif %}
+                            {% else %}<i>{{ _('none available') }}</i>{% endif %}
+                        </dd></div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <div id="pd-comments" class="pd-pane {{ 'on' if comments_open else '' }}">
+                <div id="comments" data-comments-url="{{ url('problem_comments', problem.code) }}" data-comments-trigger="tab"
+                     data-comments-preloaded="{{ 'true' if comments_open else 'false' }}">
+                    {% if comments_open %}
+                        {% with comment_warn_code=true %}{% include "comments/list.html" %}{% endwith %}
+                    {% else %}
+                        <div class="comments-loading">{{ _('Loading...') }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+
+        <aside class="pd-side">
+            {% if request.user.is_authenticated and form %}
+                <section class="bp-card pd-submit">
+                    {% include "problem/submit-form.html" %}
+                </section>
+                {% if run_enabled and not no_judges and has_test_data %}
+                    <section class="bp-card" id="pd-console">
+                        <div class="bp-card-h pd-card-bar">
+                            <span>{{ _('Test run results') }}</span>
+                            <span class="pd-card-tools"><span id="pd-count" class="bp-mute"></span><button type="button" id="pd-add" class="pd-link">+ {{ _('Add test') }}</button></span>
+                        </div>
+                        <div id="pd-runmsg"></div>
+                        <div id="pd-cases"></div>
+                    </section>
                 {% endif %}
-            </div>
-        </div>
-    {% endif %}
-{% endblock %}
-
-{% block description %}
-    <iframe name="raw_problem" id="raw_problem"></iframe>
-    {% include "problem/problem-detail.html" %}
-{% endblock %}
-
-{% block post_description_end %}
-    {% if request.user.is_authenticated and not request.profile.mute %}
-        <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
-            {{ _('Request clarification') }}
-        </a>
-    {% endif %}
-{% endblock %}
-
-{% block comments %}
-    {# A failed comment submission must land on the Comments tab so the error is
-       actually visible, even for authenticated users (whose default tab is
-       otherwise Submit Solution). #}
-    {% set comments_tab_active = not request.user.is_authenticated or (comment_form and comment_form.errors) %}
-    <div class="problem-tabs">
-        <ul>
-            {% if request.user.is_authenticated %}
-                <li><a href="#submit" {% if not comments_tab_active %}class="active"{% endif %}>{{ _('Submit Solution') }}</a></li>
+                <section class="bp-card">
+                    <div class="bp-card-h pd-card-bar">
+                        <span>{{ _('Your recent submissions') }}</span>
+                        {% if has_submissions %}<a class="pd-link" href="{% if request.in_contest and contest_problem %}{{ url('contest_user_submissions', contest_problem.contest.key, request.user.username, problem.code) }}{% else %}{{ url('user_submissions', problem.code, request.user.username) }}{% endif %}">{{ _('View all') }}</a>{% endif %}
+                    </div>
+                    {% for s in recent_submissions %}
+                        <a class="pd-sub" href="{{ url('submission_status', s.id) }}">
+                            <span class="pd-sub-t">{{ s.date|date('H:i · d/m') }}</span>
+                            <span class="bp-chip {{ chip_class(s.result_class) }}" title="{{ s.long_status }}">{{ s.short_status }}</span>
+                            <span class="pd-sub-p">{% if s.is_graded and s.status not in ('IE', 'CE', 'AB') %}{{ s.case_points|floatformat(-3) }}/{{ s.case_total|floatformat(0) }}{% elif s.is_graded %}—{% else %}<i class="fa fa-spinner fa-pulse"></i>{% endif %}</span>
+                        </a>
+                    {% else %}
+                        <div class="bp-empty">{{ _('You have not submitted this problem yet.') }}</div>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="bp-card pd-login">
+                    <div class="bp-card-h">{{ _('Submit code') }}</div>
+                    <div class="pd-login-b">
+                        <p>{{ _('Log in to test run and submit your solution.') }}</p>
+                        <a class="bp-btn" href="{{ url('auth_login') }}?next={{ request.path|urlencode }}">{{ _('Log in') }}</a>
+                    </div>
+                </section>
             {% endif %}
-            <li><a href="#comments" {% if comments_tab_active %}class="active"{% endif %}>{{ _('Comments') }}</a></li>
-        </ul>
-    </div>
-
-    {% if request.user.is_authenticated %}
-        <div id="submit" class="tab-content {% if not comments_tab_active %}active{% endif %}">
-            <div class="submit-tab-content">
-                {% include "problem/submit-form.html" %}
-            </div>
-        </div>
-    {% endif %}
-
-    <div id="comments" class="tab-content {% if comments_tab_active %}active{% endif %}"
-         data-comments-url="{{ url('problem_comments', problem.code) }}" data-comments-trigger="tab"
-         data-comments-preloaded="{{ 'true' if comment_form and comment_form.errors else 'false' }}">
-        {% if comment_form and comment_form.errors %}
-            {# A failed comment submission needs its error shown; render the full list
-               instead of the placeholder so comment_form.errors is actually visible.
-               data-comments-preloaded above tells lazy-load-js.html not to clobber
-               this with an AJAX fetch (which would build a fresh, error-free form). #}
-            {% with comment_warn_code=true %}
-                {% include "comments/list.html" %}
-            {% endwith %}
-        {% else %}
-            <div class="comments-loading">{{ _('Loading...') }}</div>
-        {% endif %}
+        </aside>
     </div>
 {% endblock %}

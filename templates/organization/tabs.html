@@ -1,40 +1,58 @@
-{% macro make_tab(name, fa, url, text) %}
-    <li class="tab{% if tab == name %} active{% endif %}">
-        {%- if url %}<a href="{{ url }}">{% else %}<span>{% endif -%}
-        <i class="tab-icon fa {{ fa }}"></i> {{ text }}
-        {%- if url %}</a>{% else %}</span>{% endif -%}
-    </li>
-{% endmacro %}
-
-<div class="page-title">
-    {% if request.organization is not defined %}
-        <h2>{{ content_title or title }}</h2>
-        <br>
-        <div class="tabs">
-            <ul>
-                {{ make_tab('home', 'fa-info-circle', url('organization_home', organization.slug), _('Home')) }}
-                {{ make_tab('users', 'fa-university', organization.get_users_url(), _('Users')) }}
-                {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.slug), _('Problems list')) }}
-                {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.slug), _('Contests list')) }}
-                {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.slug), _('Submissions')) }}
-            </ul>
-    {% else %}
-        <div class="tabs">
-        <h2>{{ content_title or title }}</h2>
-    {% endif %}
-        <span class="spacer"></span>
-        <ul>
-            {% if organization.is_admin(request.profile) %}
-                {% if request.user.has_perm('judge.create_organization_problem') %}
-                    {{ make_tab('create', 'fa-plus', url('problem_create_organization', organization.slug), _('Create new problem')) }}
+{# Header band of every organization page (OrgHome.dc.html): logo chip + name + counts, underlined tabs, actions. #}
+{% macro og_tab(name, url, text) %}<a href="{{ url }}"{% if tab == name %} class="on" aria-current="page"{% endif %}>{{ text }}</a>{% endmacro %}
+{% set _is_admin = organization.is_admin(request.profile) if request.user.is_authenticated else False %}
+<div class="og-head">
+    <div class="og-id">
+        <span class="og-logo" aria-hidden="true">{{ organization.short_name[:3] }}</span>
+        <div class="og-name">
+            <h1>{{ organization.name }}</h1>
+            <span class="og-sub">{{ _('Organization') }} &middot; {{ organization.member_count }} {{ _('members') }}{% if org_class_count is defined and org_class_count is not none %} &middot; {{ org_class_count }} {{ _('classes') }}{% endif %}</span>
+        </div>
+        <div class="og-actions">
+            {% if tab == 'home' and request.user.is_authenticated %}
+                {% if org_is_member %}
+                    {% if not request.official_contest_mode %}
+                        <form method="post" action="{{ url('leave_organization', organization.slug) }}" data-confirm="{{ _('Are you sure you want to leave this organization?') }}&#10;{{ _('You will have to rejoin to show up on the organization leaderboard.') if organization.is_open else _('You will have to request membership in order to join again.') }}" onsubmit="return confirm(this.dataset.confirm)">
+                            {% csrf_token %}
+                            <button type="submit" class="og-btn ghost">{{ _('Leave organization') }}</button>
+                        </form>
+                    {% endif %}
+                {% elif organization.is_open %}
+                    <form method="post" action="{{ url('join_organization', organization.slug) }}">
+                        {% csrf_token %}
+                        <button type="submit" class="og-btn">{{ _('Join organization') }}</button>
+                    </form>
+                {% else %}
+                    <a href="{{ url('request_organization', organization.slug) }}" class="og-btn">{{ _('Request membership') }}</a>
                 {% endif %}
-                {% if request.user.has_perm('judge.create_private_contest') %}
-                    {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.slug), _('Create new contest')) }}
-                {% endif %}
-                {{ make_tab('tags', 'fa-tags', url('organization_tag_list', organization.slug), _('Manage tags')) }}
             {% endif %}
-        </ul>
+            {% if _is_admin or perms.judge.edit_all_organization %}
+                <details class="og-menu">
+                    <summary class="og-btn ghost">{{ _('Manage') }}{% if org_pending_requests %} <span class="og-count">{{ org_pending_requests }}</span>{% endif %}</summary>
+                    <div class="og-menu-list">
+                        <a href="{{ url('edit_organization', organization.slug) }}">{{ _('Edit organization') }}</a>
+                        {% if not organization.is_open %}<a href="{{ url('organization_requests_pending', organization.slug) }}">{{ _('View requests') }}{% if org_pending_requests %} <span class="og-count">{{ org_pending_requests }}</span>{% endif %}</a>{% endif %}
+                        {% if perms.judge.edit_organization_post %}<a href="{{ url('blog_post_create_organization', organization.slug) }}">{{ _('Create blog post') }}</a>{% endif %}
+                        {% if perms.judge.create_organization_problem %}<a href="{{ url('problem_create_organization', organization.slug) }}">{{ _('Create new problem') }}</a>{% endif %}
+                        {% if perms.judge.create_private_contest %}<a href="{{ url('contest_create_organization', organization.slug) }}">{{ _('Create new contest') }}</a>{% endif %}
+                        <a href="{{ url('organization_tag_list', organization.slug) }}">{{ _('Manage tags') }}</a>
+                        <a href="{{ url('organization_monthly_usage', organization.slug) }}">{{ _('Organization cost') }}</a>
+                        {% if perms.judge.change_organization %}<a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>{% endif %}
+                    </div>
+                </details>
+            {% endif %}
+        </div>
     </div>
+    {% if request.organization is not defined %}
+        <div class="og-tabs" role="navigation" aria-label="{{ _('Organization') }}">
+            {{ og_tab('home', url('organization_home', organization.slug), _('Overview')) }}
+            {{ og_tab('users', organization.get_users_url(), _('Member list')) }}
+            {{ og_tab('exams', url('organization_exams', organization.slug), _('Exams')) }}
+            {{ og_tab('classes', url('organization_classes', organization.slug), _('Classes')) }}
+            {{ og_tab('problem-list', url('problem_list_organization', organization.slug), _('Problems')) }}
+            {{ og_tab('contest-list', url('contest_list_organization', organization.slug), _('Programming contests')) }}
+            {{ og_tab('submission-list', url('submission_list_organization', organization.slug), _('Submissions')) }}
+        </div>
+    {% endif %}
 </div>
-
 {% include "organization/notice.html" %}

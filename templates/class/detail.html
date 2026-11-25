@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    <div class="cx-cols">
+        <div class="cx-main">
+            {% for n in announcements %}
+                <section class="cx-card cx-note {{ 'cx-pin' if n.pinned }}">
+                    <div class="cx-note-h">
+                        <span class="cx-note-k">{% if n.pinned %}{{ _('Pinned announcement') }}{% else %}{{ n.author.user.first_name or n.author.user.username if n.author else '' }}{% endif %}</span>
+                        <span class="cx-note-d">{% if n.pinned and n.author %}{{ n.author.user.first_name or n.author.user.username }} &middot; {% endif %}{{ n.created|date('d/m/Y H:i') }}</span>
+                        {% if can_staff %}
+                            <form method="post" action="{{ url('class_announce', classroom.slug) }}" data-confirm="{{ _('Delete this announcement?') }}" onsubmit="return confirm(this.dataset.confirm)">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="announcement" value="{{ n.id }}"><button type="submit" class="cx-x" aria-label="{{ _('Delete') }}">&times;</button></form>
+                        {% endif %}
+                    </div>
+                    <p class="cx-note-b">{{ n.text }}</p>
+                </section>
+            {% endfor %}
+            {% if can_staff %}
+                <form method="post" action="{{ url('class_announce', classroom.slug) }}" class="cx-card" style="padding:16px 22px">
+                    {% csrf_token %}
+                    <div class="cx-field" style="margin-bottom:10px"><label for="ann">{{ _('Post an announcement') }}</label><textarea id="ann" name="text" rows="2" class="cx-input" maxlength="2000" required></textarea></div>
+                    <div style="display:flex;gap:16px;align-items:center"><label style="display:flex;gap:8px;font-size:14px"><input type="checkbox" name="pinned"> {{ _('Pin') }}</label><button class="cx-btn sm" type="submit">{{ _('Post') }}</button></div>
+                </form>
+            {% endif %}
+
+            <section class="cx-card">
+                <h2>{{ _('Assignments due soon') }} <a class="cx-link" href="{{ url('class_assignments', classroom.slug) }}">{{ _('Show all') }}</a></h2>
+                {% if upcoming %}
+                    <table class="cx-table">
+                        <thead><tr><th>{{ _('Assignment') }}</th><th>{{ _('Exam type') }}</th><th>{{ _('Due') }}</th><th class="r">{{ _('Submitted count') }}</th></tr></thead>
+                        <tbody>
+                        {% for a in upcoming %}
+                            <tr><td><a href="{{ url('class_assignments', classroom.slug) }}" style="font-weight:600">{{ a.title }}</a></td><td style="color:var(--c-muted)">{{ a.get_kind_display() }}</td><td>{{ a.due|date('d/m H:i') }}</td><td class="r">{{ done_counts[a.id] }}/{{ student_count }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}<div class="cx-empty">{{ _('Nothing is due soon.') }}</div>{% endif %}
+            </section>
+
+            <section class="cx-card">
+                <h2>{{ _('Class activity, 12 weeks') }}</h2>
+                <div class="cx-card-b"><div class="cx-heat">{% for level in heat %}<i class="l{{ level }}"></i>{% endfor %}</div></div>
+            </section>
+        </div>
+        <aside class="cx-side">
+            <section class="cx-card">
+                <h2>{{ _('Top this week') }} <a class="cx-link" href="{{ url('class_ranking', classroom.slug) }}">{{ _('See the rest') }}</a></h2>
+                <div class="cx-card-b">
+                    {% for t in top %}
+                        <div class="cx-top{{ ' me' if t.profile.id == me_id }}"><b>{{ t.rank }}</b><span class="cx-top-n">{{ t.profile.user.first_name or t.profile.user.username }}</span><span class="cx-top-p">{{ t.total }}</span></div>
+                    {% else %}<div class="cx-empty">{{ _('No students yet.') }}</div>{% endfor %}
+                </div>
+            </section>
+            {% if can_staff %}
+                <section class="cx-card">
+                    <h2>{{ _('Needs support') }}</h2>
+                    <div class="cx-card-b">
+                        <p class="cx-hint" style="margin:0 0 8px">{{ _('Only teachers see this.') }}</p>
+                        {% for w in warnings %}
+                            <div class="cx-warn"><span>{{ w.profile.user.first_name or w.profile.user.username }}</span><span class="cx-warn-r">{% if w.silent %}{% if w.days is none %}{{ _('no activity yet') }}{% else %}{{ w.days }} {{ _('days without submitting') }}{% endif %}{% endif %}{% if w.silent and w.missed %} &middot; {% endif %}{% if w.missed %}{{ _('skipped') }} {{ w.missed }} {{ _('exams count') }}{% endif %}</span></div>
+                        {% else %}<div class="cx-hint">{{ _('Everyone was active in the last 7 days.') }}</div>{% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+            <section class="cx-card">
+                <h2>{{ _('Teachers') }}</h2>
+                <div class="cx-card-b">{% for t in teachers %}<div style="padding:6px 0;font-size:14px">{{ link_user(t) }}</div>{% else %}<span class="cx-hint">—</span>{% endfor %}
+                {% if can_manage and classroom.join_code %}<div style="margin-top:10px;font-size:13px;color:var(--c-muted)">{{ _('Class code') }}: <b style="font-family:'JetBrains Mono',monospace;color:var(--c-ink)">{{ classroom.join_code }}</b></div>{% endif %}</div>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

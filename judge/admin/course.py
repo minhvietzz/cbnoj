@@ -24,7 +24,7 @@ class CourseAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     inlines = [CourseRoleInline, CourseLessonInline]
     fieldsets = (
-        (None, {'fields': ('name', 'slug', 'about', 'image_url')}),
+        (None, {'fields': ('name', 'slug', 'about', 'image_url', 'subject', 'classes')}),
         (_('Visibility'), {'fields': ('is_public', 'is_open')}),
     )
 

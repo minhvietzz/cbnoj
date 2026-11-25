@@ -4,6 +4,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from django.contrib.flatpages.models import FlatPage
 
+from judge.admin.classroom import ClassAnnouncementAdmin, ClassAssignmentAdmin, ClassroomAdmin, SubjectAdmin
 from judge.admin.comments import CommentAdmin
 from judge.admin.contest import ContestAdmin, ContestParticipationAdmin, ContestTagAdmin
 from judge.admin.course import CourseAdmin, CourseLessonAdmin
@@ -19,10 +20,11 @@ from judge.admin.submission import SubmissionAdmin
 from judge.admin.tag import TagAdmin, TagGroupAdmin, TagProblemAdmin
 from judge.admin.taxon import OrganizationProblemTagAdmin, ProblemGroupAdmin, ProblemTypeAdmin
 from judge.admin.ticket import TicketAdmin
-from judge.models import Badge, BankQuestion, BankTag, BlogPost, BlogPostTag, Comment, CommentLock, Contest, \
+from judge.models import Badge, BankQuestion, BankTag, BlogPost, BlogPostTag, ClassAnnouncement, ClassAssignment, \
+    Classroom, Comment, CommentLock, Contest, \
     ContestParticipation, ContestTag, Course, CourseLesson, Judge, Language, License, MiscConfig, NavigationBar, \
     Organization, OrganizationProblemTag, OrganizationRequest, Problem, ProblemGroup, ProblemType, Profile, Quiz, \
-    QuizAttempt, QuizProfileStat, QuizQuestion, Submission, Tag, TagGroup, TagProblem, Ticket
+    QuizAttempt, QuizProfileStat, QuizQuestion, Subject, Submission, Tag, TagGroup, TagProblem, Ticket
 
 admin.site.register(BlogPost, BlogPostAdmin)
 admin.site.register(BlogPostTag, BlogPostTagAdmin)
@@ -30,6 +32,10 @@ admin.site.register(Comment, CommentAdmin)
 admin.site.register(CommentLock)
 admin.site.register(Contest, ContestAdmin)
 admin.site.register(Course, CourseAdmin)
+admin.site.register(Classroom, ClassroomAdmin)
+admin.site.register(Subject, SubjectAdmin)
+admin.site.register(ClassAssignment, ClassAssignmentAdmin)
+admin.site.register(ClassAnnouncement, ClassAnnouncementAdmin)
 if getattr(settings, 'QUIZ_ENABLED', False):   # switched off: see dmoj/urls.py
     admin.site.register(Quiz, QuizAdmin)
     admin.site.register(BankQuestion, BankQuestionAdmin)

@@ -4,7 +4,6 @@ import json
 import os
 from operator import attrgetter, itemgetter
 
-import pytz
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
@@ -16,8 +15,7 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
-from django.db.models.fields import DateField
-from django.db.models.functions import Cast, Coalesce
+from django.db.models.functions import Coalesce
 from django.forms import Form
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -34,7 +32,7 @@ from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
-from judge.models import BlogPost, Organization, Profile, Submission
+from judge.models import BlogPost, ClassMember, Organization, Profile, RoleInClass, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -138,8 +136,11 @@ class UserPage(TitleMixin, UserMixin, DetailView):
             is_unlisted=False, performance_points__gt=self.object.performance_points,
         ).exclude(id=self.object.id).count() + 1
 
+        from judge.utils import learning
         from judge.utils.streak import streak_info
         context['streak'] = streak_info(self.object)
+        context['pf_classes'] = [c for c in learning.my_classes(self.object)
+                                 if c['classroom'].is_visible_to(self.request.user)]
         context['submission_count'] = Submission.objects.filter(user=self.object).count()
 
         if rating:
@@ -208,24 +209,10 @@ class UserAboutPage(UserPage):
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
 
-        user_timezone = settings.DEFAULT_USER_TIME_ZONE
-        if self.request is not None and self.request.profile is not None:
-            user_timezone = user_timezone or self.request.profile.timezone
-        timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.datetime.utcnow()).seconds
-
-        submissions_count = self.object.submission_set.count()
-        if settings.VNOJ_LOW_POWER_MODE and submissions_count > settings.VNOJ_LOW_POWER_MODE_CONFIG['heat_map_limit']:
-            submissions = []
-        else:
-            submissions = (
-                self.object.submission_set
-                .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
-                .values('date_only').annotate(cnt=Count('id'))
-            )
-
-        context['submission_data'] = mark_safe(json.dumps({
-            date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
-        }))
+        from judge.utils import learning
+        context['pf_heat'] = learning.heat_grid(self.object, weeks=26)
+        context['pf_skills'] = learning.topic_skills(self.object, limit=6)
+        context['pf_badges'] = learning.earned_badges(self.object, best_streak=context['streak']['best'])
         return context
 
 
@@ -622,9 +609,22 @@ class UserList(QueryStringSortMixin, InfinitePaginationMixin, DiggPaginatorMixin
             rank=self.paginate_by * (context['page_obj'].number - 1),
         ))
         context['first_page_href'] = '.'
+        context['class_names'] = self.get_class_names([entry[1].id for entry in context['users']])
+        context['my_id'] = self.request.profile.id if self.request.user.is_authenticated else None
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
+
+    @staticmethod
+    def get_class_names(profile_ids):
+        """profile id -> name of the (first, newest) active class the user studies in, for the "Lớp" column."""
+        names = {}
+        members = ClassMember.objects.filter(user_id__in=profile_ids, role=RoleInClass.STUDENT,
+                                             classroom__is_archived=False) \
+            .select_related('classroom').order_by('-classroom__school_year', '-joined')
+        for member in members:
+            names.setdefault(member.user_id, member.classroom.name)
+        return names
 
 
 user_list_view = UserList.as_view()

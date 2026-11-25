@@ -1,0 +1,22 @@
+{% extends "reversion/change_list.html" %}
+{% load admin_urls %}
+{% block object-tools %}
+<div class="cba-judges">
+    <div class="cba-stat"><b>{{ judges_online }}</b><span>máy đang chạy</span></div>
+    <div class="cba-stat"><b>{{ judges_offline }}</b><span>máy mất kết nối</span></div>
+    <div class="cba-stat"><b>{{ judges_disabled }}</b><span>máy đang tắt</span></div>
+</div>
+<div class="cba-cards">
+{% for j in cl.result_list %}
+    <a class="cba-card-j" href="{% url cl.opts|admin_urlname:'change' j.pk|admin_urlquote %}">
+        <span class="cba-card-top"><b>{{ j.name }}</b>
+            {% if j.is_disabled %}<span class="cba-badge off">Đã tắt</span>{% elif j.online %}<span class="cba-badge ok">Đang chạy</span>{% else %}<span class="cba-badge bad">Mất kết nối</span>{% endif %}</span>
+        <span class="cba-card-meta">Cấp bậc: {{ j.tier }}<br>
+        {% if j.online %}Chạy từ: {{ j.start_time|timesince }} trước<br>Độ trễ: {{ j.ping_ms|floatformat:0 }} ms · tải {{ j.load|floatformat:2 }}{% else %}Chưa kết nối{% endif %}<br>
+        {% if j.last_ip %}IP gần nhất: {{ j.last_ip }}{% endif %}</span>
+    </a>
+{% endfor %}
+</div>
+<p class="cba-note">Tắt máy (nút Disable trong trang sửa): bài nộp mới sẽ không giao cho máy đó nữa, bài đang chấm vẫn chạy xong.</p>
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,220 @@
+// Quiz pages (QuizList / QuizResult / results / live / import / exam room). Class prefix: qz- (list), ql- (table, in cbn-theme.scss)
+
+body.cbn-ui .qz-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+body.cbn-ui .qz-side {
+    flex: 0 0 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+body.cbn-ui .qz-side-f {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+
+    label, .qz-side-h {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--c-mute);
+    }
+
+    input[type=search] {
+        width: 100%;
+        height: 40px;
+    }
+}
+
+body.cbn-ui .qz-side-g {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .qz-side-h {
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--c-mute);
+    }
+
+    a, a:link, a:visited {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: var(--c-ink);
+
+        span + span {
+            color: var(--c-mute);
+        }
+    }
+
+    a:hover {
+        background: var(--c-soft);
+    }
+
+    a.on {
+        background: var(--c-blue-soft);
+        font-weight: 700;
+    }
+}
+
+body.cbn-ui a.qz-side-b, body.cbn-ui a.qz-side-b:link, body.cbn-ui a.qz-side-b:visited {
+    display: block;
+    padding: 12px 14px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--c-ink);
+
+    &:hover {
+        background: var(--c-soft);
+        color: var(--c-ink);
+    }
+}
+
+body.cbn-ui .qz-main {
+    flex: 1 1 640px;
+    min-width: 0;
+}
+
+body.cbn-ui .qz-mute {
+    color: var(--c-mute);
+}
+
+body.cbn-ui table.ql-table td.qz-mute {
+    color: var(--c-mute);
+}
+
+// ---- quiz results / report (Report.dc.html): tiles, flat tables, flat action bar ---------------------------------
+body.cbn-ui .rp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 16px; }
+body.cbn-ui .rp-sub { font-size: 13px; color: var(--c-mute); }
+body.cbn-ui .rp-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+body.cbn-ui .rp-btns a, body.cbn-ui .rp-btns a:link, body.cbn-ui .rp-btns a:visited {
+    padding: 9px 16px; border: 1px solid var(--c-ink); border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--c-ink); background: var(--c-card);
+}
+body.cbn-ui .rp-btns a:first-child { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+body.cbn-ui .rp-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 0 0 20px; }
+body.cbn-ui .rp-tiles > div { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; padding: 14px 18px; }
+body.cbn-ui .rp-tiles b { display: block; font-size: 28px; font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
+body.cbn-ui .rp-tiles span { font-size: 13px; color: var(--c-mute); }
+body.cbn-ui .rp-tiles .rp-warn { background: var(--c-bad-bg); border-color: transparent; }
+body.cbn-ui .rp-tiles .rp-warn b, body.cbn-ui .rp-tiles .rp-warn span { color: var(--c-bad-fg); }
+
+body.cbn-ui .qr-actions { background: var(--c-soft); border: 1px solid var(--c-line); border-radius: 6px; font-size: 13px; }
+body.cbn-ui .qr-actions input[type=number] { height: 34px; border: 1px solid var(--c-input); border-radius: 6px; padding: 0 8px; }
+body.cbn-ui .qr-actions button { border-radius: 6px; background: var(--c-blue); font-weight: 600; padding: 8px 14px; }
+body.cbn-ui .qr-actions button.danger { background: #b3261e; color: #fff; }
+body.cbn-ui .qr-actions button.quiet { background: var(--c-card); color: var(--c-ink) !important; border: 1px solid var(--c-ink); }
+body.cbn-ui .qr-bar span { border-radius: 3px 3px 0 0; background: var(--c-blue); }
+body.cbn-ui .qr-meter { border-radius: 3px; height: 8px; background: var(--c-ce-bg); }
+body.cbn-ui .qr-meter i { background: var(--c-blue); }
+body.cbn-ui .qr-meter.low i { background: var(--c-bad-fg); }
+body.cbn-ui .qr-warn { color: var(--c-bad-fg); font-weight: 600; }
+body.cbn-ui .qr-live-dot { box-shadow: none; }
+body.cbn-ui .h-scrollable-table > table.table { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; border-collapse: collapse; }
+body.cbn-ui .h-scrollable-table > table.table th { background: var(--c-card); border-bottom: 2px solid var(--c-ink); color: var(--c-mute); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: 9px 14px; }
+body.cbn-ui .h-scrollable-table > table.table td { border-bottom: 1px solid var(--c-line); padding: 10px 14px; font-size: 13px; background: transparent; }
+body.cbn-ui .h-scrollable-table > table.table tbody tr:hover td { background: var(--c-soft); }
+body.cbn-ui .course-section-title { font-size: 17px; font-weight: 700; color: var(--c-ink); margin: 20px 0 10px; }
+
+// quiz detail / leaderboard: flat, ink icons
+body.cbn-ui .course-meta i, body.cbn-ui .course-meta .fa { color: var(--c-mute); }
+body.cbn-ui .course-empty, body.cbn-ui .course-empty-small { border-radius: 6px; background: var(--c-card); border: 1px solid var(--c-line); }
+body.cbn-ui .quiz-two-col .problem-rows, body.cbn-ui .quiz-two-col .sidebox, body.cbn-ui .quiz-two-col .qz-board { border-radius: 6px; box-shadow: none; }
+body.cbn-ui .quiz-two-col .rk-pod, body.cbn-ui .quiz-two-col .qz-rank, body.cbn-ui .quiz-two-col .rk-num { border-radius: 4px; width: auto; height: auto; min-width: 26px; line-height: 24px; background: var(--c-ce-bg); color: var(--c-ink); font-weight: 600; }
+body.cbn-ui .rk-toolbar .rk-chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding-top: 0; padding-bottom: 0; }
+body.cbn-ui .quiz-board { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; box-shadow: none; padding: 4px 16px; }
+body.cbn-ui .quiz-board .lesson-no { width: auto; height: auto; min-width: 26px; padding: 0 6px; line-height: 24px; border-radius: 4px; background: var(--c-ce-bg); color: var(--c-ink); font-weight: 600; text-align: center; }
+body.cbn-ui button.qz-danger { background: var(--c-card); color: var(--c-bad-fg) !important; border: 1px solid var(--c-bad-fg); border-radius: 6px; box-shadow: none; padding: 9px 16px; font-weight: 600; cursor: pointer; }
+body.cbn-ui button.qz-danger:hover { background: var(--c-bad-bg); }
+body.cbn-ui a.lesson-nav-btn, body.cbn-ui a.lesson-nav-btn:link, body.cbn-ui a.lesson-nav-btn:visited { border-radius: 6px; box-shadow: none !important; background: var(--c-card); border: 1px solid var(--c-ink); color: var(--c-ink); font-weight: 600; padding: 8px 14px; }
+
+// ---- personal result (QuizResult.dc.html): questions on the left, "Tóm tắt" column on the right ------------------
+body.cbn-ui .rs-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin: 0 0 20px; }
+body.cbn-ui .rs-who { font-size: 14px; color: var(--c-mute); }
+body.cbn-ui .rs-score b { font-size: 44px; line-height: 1; font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
+body.cbn-ui .rs-score span { margin-left: 8px; font-size: 13px; color: var(--c-mute); }
+body.cbn-ui .rs-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+body.cbn-ui .rs-main { flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+body.cbn-ui .rs-side { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 76px; }
+body.cbn-ui .rs-sum { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; }
+body.cbn-ui .rs-sum h2 { margin: 0 0 4px; font-size: 17px; font-weight: 700; }
+body.cbn-ui .rs-sum > span { display: flex; justify-content: space-between; font-size: 14px; }
+body.cbn-ui .rs-sum > span > span { color: var(--c-mute); }
+body.cbn-ui .rs-sum .ok { color: var(--c-ok-fg); }
+body.cbn-ui .rs-sum .bad { color: var(--c-bad-fg); }
+body.cbn-ui a.rs-btn, body.cbn-ui a.rs-btn:link, body.cbn-ui a.rs-btn:visited { display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 6px; border: 1px solid var(--c-ink); color: var(--c-ink); font-weight: 600; font-size: 15px; background: var(--c-card); }
+body.cbn-ui a.rs-btn.pri, body.cbn-ui a.rs-btn.pri:link, body.cbn-ui a.rs-btn.pri:visited { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+body.cbn-ui .rs-main .qz-option { border-radius: 6px; box-shadow: none; }
+body.cbn-ui .rs-main .qz-letter { border-radius: 4px; background: var(--c-ce-bg); color: var(--c-ink); }
+body.cbn-ui .rs-main .qz-option.is-correct { background: var(--c-ok-bg); border-color: var(--c-ok-fg); }
+@media (max-width: 800px) { body.cbn-ui .rs-side { position: static; } body.cbn-ui .rs-score b { font-size: 34px; } }
+body.cbn-ui #content-body:has(.rs-grid, .rp-head) { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; }
+body.cbn-ui .rp-head { padding-top: 24px; } body.cbn-ui .rs-head { padding-top: 24px; }
+
+// live monitor (Monitor.dc.html): one card per candidate
+body.cbn-ui .mn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 8px 0 16px; }
+body.cbn-ui .mn-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--c-card); border: 2px solid var(--c-line); border-radius: 6px; cursor: pointer; }
+body.cbn-ui .mn-card.mn-bad { border-color: var(--c-bad-fg); }
+body.cbn-ui .mn-card.mn-off { border-color: #c98a00; }
+body.cbn-ui .mn-top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+body.cbn-ui .mn-top b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+body.cbn-ui .mn-clock { font-family: var(--cbn-mono, "JetBrains Mono", monospace); font-variant-numeric: tabular-nums; color: var(--c-mute); }
+body.cbn-ui .mn-bot { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--c-mute); font-weight: 600; }
+
+// upload / import pages: flat chips, code box, file input
+body.cbn-ui .qz-upload .qz-markers code, body.cbn-ui .qz-guide code { background: var(--c-ce-bg); color: var(--c-ink); border-radius: 4px; padding: 1px 6px; font-weight: 600; font-size: 12.5px; }
+body.cbn-ui .qz-sample { border-radius: 6px; background: var(--c-soft); border: 1px solid var(--c-line); color: var(--c-ink); }
+body.cbn-ui .qz-form-card label, body.cbn-ui .qz-guide + .qz-form-card label { color: var(--c-ink); font-weight: 600; font-size: 13px; }
+body.cbn-ui .qz-form-card input[type=file], body.cbn-ui .qz-upload input[type=file] { border-radius: 6px; background: var(--c-soft); border: 1px solid var(--c-line); padding: 8px 12px; }
+body.cbn-ui .qz-form-card input[type=text], body.cbn-ui .qz-form-card input[type=number], body.cbn-ui .qz-form-card textarea, body.cbn-ui .qz-form-card select { border: 1px solid var(--c-input); border-radius: 6px; box-shadow: none; }
+body.cbn-ui .qz-problems { border-radius: 6px; }
+
+// phone exam room: the header keeps one tidy row for status + submit
+@media (max-width: 600px) {
+    body.cbn-ui .moet-conn { white-space: nowrap; font-size: 12px; flex: 0 0 auto; }
+    body.cbn-ui .moet-conn #qz-conn-text { display: none; }
+    body.cbn-ui .moet-conn.off #qz-conn-text { display: inline; }
+}
+
+// question bank header: three equal flat buttons
+body.cbn-ui .bk-hero-side { display: flex; flex-direction: column; gap: 8px; align-items: stretch; min-width: 220px; }
+body.cbn-ui .bk-hero-side a, body.cbn-ui .bk-hero-side a:link, body.cbn-ui .bk-hero-side a:visited {
+    display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 6px; box-shadow: none;
+    border: 1px solid var(--c-ink); background: var(--c-card); color: var(--c-ink); font-weight: 600; font-size: 14px; text-align: center; white-space: nowrap;
+}
+body.cbn-ui .bk-hero-side a.course-join, body.cbn-ui .bk-hero-side a.course-join:link { background: var(--c-blue); border-color: var(--c-blue); color: #fff; }
+body.cbn-ui .bk-hero-side a i { color: inherit; }
+
+// grade tiers (Report.dc.html "Xếp loại")
+body.cbn-ui .rp-tiers { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 6px; padding: 18px 22px; margin: 0 0 20px; display: flex; flex-direction: column; gap: 12px; }
+body.cbn-ui .rp-tiers h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; }
+body.cbn-ui .rp-tier { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+body.cbn-ui .rp-tn { width: 150px; font-weight: 600; }
+body.cbn-ui .rp-bar { flex: 1; height: 14px; background: var(--c-ce-bg); border-radius: 3px; overflow: hidden; }
+body.cbn-ui .rp-bar i { display: block; height: 14px; }
+body.cbn-ui .rp-tier b { width: 96px; text-align: right; font-variant-numeric: tabular-nums; }
+body.cbn-ui .rp-g { background: var(--c-ok-fg); } body.cbn-ui .rp-k { background: var(--c-blue); } body.cbn-ui .rp-t { background: #c98a00; } body.cbn-ui .rp-y { background: var(--c-bad-fg); }
+body.cbn-ui .rp-flag { display: inline-block; padding: 2px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; background: var(--c-warn-bg); color: var(--c-warn-fg); }
+body.cbn-ui .rp-flag.bad { background: var(--c-bad-bg); color: var(--c-bad-fg); }
+
+// "Create exam" button on the quiz list
+body.cbn-ui .qz-create-bar { display: flex; justify-content: flex-end; margin: 0 0 12px; }
+body.cbn-ui a.qz-create, body.cbn-ui a.qz-create:link, body.cbn-ui a.qz-create:visited { display: inline-block; padding: 9px 18px; border-radius: 6px; background: var(--c-blue); color: #fff; font-size: 13px; font-weight: 600; box-shadow: none; }
+body.cbn-ui a.qz-create:hover { background: #17307f; color: #fff; }

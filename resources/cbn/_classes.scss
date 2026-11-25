@@ -1,0 +1,277 @@
+// Class pages (ClassHome / ClassAssign / ClassRanking / ClassGrades / ClassImport / ClassCreate / MyClasses drawings).
+// The base styles live in templates/class/_style.html (prefix cx-); this partial refines them to the drawings.
+
+body.cbn-ui .cx {
+    overflow-x: visible;
+
+    // links keep the ink colour; blue is for the explicit .cx-link only
+    a, a:link, a:visited {
+        color: var(--c-ink);
+    }
+
+    a:hover {
+        color: var(--c-blue);
+    }
+
+    a.cx-link, a.cx-link:link, a.cx-link:visited, h2 a.cx-link, h2 a.cx-link:link, h2 a.cx-link:visited {
+        color: var(--c-blue);
+    }
+
+    a.cx-btn, a.cx-btn:link, a.cx-btn:visited {
+        color: #fff;
+    }
+
+    a.cx-btn.ghost, a.cx-btn.ghost:link, a.cx-btn.ghost:visited {
+        color: var(--c-ink);
+    }
+}
+
+// ---- header band: full width white strip, underlined tabs ----------------------------------------------------------
+body.cbn-ui .cx-head {
+    position: relative;
+    isolation: isolate;
+    margin: -28px 0 28px;
+    padding: 24px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    &::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 100vw;
+        transform: translateX(-50%);
+        background: var(--c-card);
+        border-bottom: 1px solid var(--c-line);
+    }
+}
+
+body.cbn-ui .cx-crumb {
+    font-size: 13px;
+
+    a, a:link, a:visited {
+        color: var(--c-mute);
+    }
+
+    a:hover {
+        color: var(--c-blue);
+    }
+}
+
+body.cbn-ui .cx-title-row {
+    margin: 10px 0 22px;
+}
+
+body.cbn-ui .cx-title-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+}
+
+body.cbn-ui .cx-title {
+    font-size: 32px;
+    line-height: 1.2;
+}
+
+body.cbn-ui .cx-sub {
+    font-size: 14px;
+    color: var(--c-muted);
+}
+
+body.cbn-ui .cx-tabs {
+    a, a:link, a:visited {
+        color: var(--c-muted);
+        white-space: nowrap;
+    }
+
+    a:hover {
+        color: var(--c-ink);
+    }
+
+    a.on, a.on:link, a.on:visited {
+        color: var(--c-ink);
+    }
+}
+
+@media (max-width: 760px) {
+    body.cbn-ui .cx-title {
+        font-size: 26px;
+    }
+
+    body.cbn-ui .cx-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 0 20px;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+}
+
+// ---- cards ---------------------------------------------------------------------------------------------------------
+body.cbn-ui .cx-card {
+    margin-bottom: 24px;
+
+    > h2, .cx-card-h {
+        padding: 18px 24px 12px;
+    }
+
+    .cx-card-b {
+        padding: 4px 24px 20px;
+    }
+}
+
+body.cbn-ui .cx-table {
+    th, td {
+        &:first-child {
+            padding-left: 24px;
+        }
+
+        &:last-child {
+            padding-right: 24px;
+        }
+    }
+}
+
+body.cbn-ui .cx-main > .cx-card:last-child, body.cbn-ui .cx-side > .cx-card:last-child {
+    margin-bottom: 0;
+}
+
+// pinned / plain announcements
+body.cbn-ui .cx-note {
+    padding: 18px 24px;
+    overflow: visible;
+}
+
+body.cbn-ui .cx-note.cx-pin {
+    border-left: 6px solid var(--c-yellow);
+}
+
+body.cbn-ui .cx-note-h {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+body.cbn-ui .cx-note-k {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+body.cbn-ui .cx-note.cx-pin .cx-note-k {
+    color: #7a5200;
+}
+
+body.cbn-ui .cx-note-d {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--c-muted);
+}
+
+body.cbn-ui .cx-note-b {
+    margin: 8px 0 0;
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+body.cbn-ui button.cx-x {
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--c-muted) !important;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        background: none;
+        color: var(--c-bad) !important;
+    }
+}
+
+// top of the week and "needs support"
+body.cbn-ui .cx-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-top: 1px solid var(--c-line);
+
+    &.me {
+        margin: 0 -24px;
+        padding: 10px 24px;
+        background: var(--c-blue-s);
+    }
+
+    b {
+        width: 22px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .cx-top-n {
+        flex: 1;
+        min-width: 0;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cx-top-p {
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+body.cbn-ui .cx-warn {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--c-line);
+    font-size: 14px;
+
+    .cx-warn-r {
+        color: var(--c-bad);
+        font-weight: 600;
+        text-align: right;
+    }
+}
+
+// activity grid: 12 week columns that fill the card, weekdays as rows
+body.cbn-ui .cx-heat {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 4px;
+
+    i {
+        width: auto;
+        height: 22px;
+    }
+}
+
+body.cbn-ui #content .cx h2 a.cx-link, body.cbn-ui #content .cx h2 a.cx-link:link, body.cbn-ui #content .cx h2 a.cx-link:visited {
+    color: var(--c-blue);
+}
+
+body.cbn-ui .cx-seg a.on, body.cbn-ui .cx-seg a.on:link, body.cbn-ui .cx-seg a.on:visited, body.cbn-ui .cx-seg a.on:hover {
+    background: var(--c-ink);
+    color: var(--c-card);
+}
+
+body.cbn-ui .cx .cx-mono {
+    font-family: var(--cbn-mono);
+    font-size: 13px;
+    color: var(--c-muted);
+}

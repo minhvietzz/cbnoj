@@ -11693,3 +11693,1567 @@ msgstr "Rất ít người đúng"
 
 msgid "Possible causes"
 msgstr "Nguyên nhân có thể"
+
+#: templates/registration/oauth.html
+msgid "Log in with Google"
+msgstr "Đăng nhập bằng Google"
+
+#: templates/registration/login.html
+msgid "Bac Ninh Gifted High School"
+msgstr "THPT Chuyên Bắc Ninh"
+
+#: templates/registration/login.html
+msgid "Practice coding every day, take mock exams every week."
+msgstr "Luyện code mỗi ngày, thi thử mỗi tuần."
+
+#: templates/registration/login.html
+msgid "Submit solutions, see judging results instantly and track your progress in one place."
+msgstr "Nộp bài, xem kết quả chấm ngay và theo dõi tiến bộ của bạn trong một nơi."
+
+#: templates/registration/login.html
+msgid "Automatic judging in many languages"
+msgstr "Chấm bài tự động, nhiều ngôn ngữ"
+
+#: templates/registration/login.html
+msgid "Quizzes and online contests"
+msgstr "Bài thi trắc nghiệm và kỳ thi trực tuyến"
+
+#: templates/registration/login.html
+msgid "Rankings and class courses"
+msgstr "Bảng xếp hạng và khóa học của lớp"
+
+#: templates/registration/login.html
+msgid "Welcome back to CBNoj."
+msgstr "Chào mừng quay lại CBNoj."
+
+#: templates/registration/login.html
+msgid "or use your CBNoj account"
+msgstr "hoặc dùng tài khoản CBNoj"
+
+#: templates/registration/login.html
+msgid "Don't have an account?"
+msgstr "Chưa có tài khoản?"
+
+#: templates/registration/login.html
+msgid "Register now"
+msgstr "Đăng ký ngay"
+
+#: templates/registration/login.html
+msgid "Create an account"
+msgstr "Tạo tài khoản"
+
+#: templates/registration/login.html
+msgid "Free, takes less than a minute."
+msgstr "Miễn phí, mất chưa đến một phút."
+
+#: templates/registration/login.html
+msgid "or fill in your details"
+msgstr "hoặc điền thông tin"
+
+#: templates/registration/login.html
+msgid "Already have an account?"
+msgstr "Đã có tài khoản?"
+
+#: templates/registration/login.html
+msgid "Sign up with Google"
+msgstr "Đăng ký bằng Google"
+
+#: templates/base.html
+msgid "Search problems"
+msgstr "Tìm bài tập"
+
+#: templates/base.html
+msgid "Try the new interface"
+msgstr "Thử giao diện mới"
+
+#: templates/base.html
+msgid "Back to the old interface"
+msgstr "Về giao diện cũ"
+
+#: templates/registration/registration_form.html
+msgid "Create an account, then join your class."
+msgstr "Tạo tài khoản, rồi vào lớp của bạn."
+
+#: templates/registration/registration_form.html
+msgid "Sign up with your email or Google."
+msgstr "Đăng ký tài khoản bằng email hoặc Google."
+
+#: templates/registration/registration_form.html
+msgid "Fill in your username and class in the sheet your teacher sent."
+msgstr "Điền tên truy cập và lớp vào bảng giáo viên gửi."
+
+#: templates/registration/registration_form.html
+msgid "Your teacher adds you to the class; assignments appear in My classes."
+msgstr "Giáo viên ghép bạn vào lớp, bài giao hiện ở \"Lớp của tôi\"."
+
+#: templates/quiz/variants
+msgid "Exam codes"
+msgstr "Mã đề"
+
+#: templates/quiz/variants
+msgid "Exam codes generated:"
+msgstr "Đã sinh mã đề:"
+
+#: templates/quiz/variants
+msgid "The starting code must be 1-8 letters or digits."
+msgstr "Mã bắt đầu gồm 1-8 chữ cái hoặc chữ số."
+
+#: templates/quiz/variants
+msgid "The generated codes would be longer than 8 characters."
+msgstr "Các mã sinh ra sẽ dài quá 8 ký tự."
+
+#: templates/quiz/variants
+msgid "The number of codes must be between 2 and 12."
+msgstr "Số mã đề phải từ 2 đến 12."
+
+#: templates/quiz/variants
+msgid "This quiz draws a random subset of questions for every candidate, so exam codes (which contain every question) cannot be used. Set \"questions per attempt\" to 0 first."
+msgstr "Bài này rút ngẫu nhiên một phần câu hỏi cho từng thí sinh nên không dùng được mã đề (mã đề chứa đủ mọi câu). Hãy đặt \"số câu mỗi lượt làm\" về 0 trước."
+
+#: templates/quiz/variants
+msgid "The quiz has no questions."
+msgstr "Bài chưa có câu hỏi nào."
+
+#: templates/quiz/variants
+msgid "Choose at least one thing to shuffle: the questions or the options."
+msgstr "Hãy chọn ít nhất một thứ để xáo: câu hỏi hoặc đáp án."
+
+#: templates/quiz/variants
+msgid "Could not make that many different codes: the quiz has too few questions or options to shuffle."
+msgstr "Không thể tạo ngần ấy mã đề khác nhau: bài có quá ít câu hoặc đáp án để xáo."
+
+#: templates/quiz/variants
+msgid "Candidates already have attempts on the current exam codes, so they cannot be replaced. Reset or delete those attempts first."
+msgstr "Đã có thí sinh làm bài theo các mã đề hiện tại nên không thể thay mã. Hãy đặt lại hoặc xóa các lượt làm đó trước."
+
+#: templates/quiz/variants
+msgid "Number of codes"
+msgstr "Số mã đề"
+
+#: templates/quiz/variants
+msgid "from 2 to 12"
+msgstr "từ 2 đến 12"
+
+#: templates/quiz/variants
+msgid "Codes start from"
+msgstr "Mã đề bắt đầu từ"
+
+#: templates/quiz/variants
+msgid "Shuffle questions inside each section"
+msgstr "Xáo thứ tự câu trong từng phần"
+
+#: templates/quiz/variants
+msgid "Shuffle options A B C D"
+msgstr "Xáo thứ tự đáp án A B C D"
+
+#: templates/quiz/variants
+msgid "Options such as \"both A and B\" or \"all of the above\" keep their place."
+msgstr "Các đáp án như \"cả A và B\" hoặc \"tất cả các đáp án trên\" giữ nguyên vị trí."
+
+#: templates/quiz/variants
+msgid "Regenerate codes"
+msgstr "Sinh lại mã đề"
+
+#: templates/quiz/variants
+msgid "Generate exam codes"
+msgstr "Sinh mã đề"
+
+#: templates/quiz/variants
+msgid "Checked:"
+msgstr "Đã kiểm tra:"
+
+#: templates/quiz/variants
+msgid "no two codes are identical; correct answers A/B/C/D are evenly spread in every code."
+msgstr "không có hai mã trùng nhau; đáp án đúng A/B/C/D phân bố đều ở mọi mã."
+
+#: templates/quiz/variants
+msgid "no two codes are identical."
+msgstr "không có hai mã trùng nhau."
+
+#: templates/quiz/variants
+msgid "some codes are identical."
+msgstr "có mã trùng nhau."
+
+#: templates/quiz/variants
+msgid "The spread of correct answers A/B/C/D is uneven in some codes (more than 10 points from an even share), usually because the quiz has few questions."
+msgstr "Phân bố đáp án đúng A/B/C/D chưa đều ở một số mã (lệch hơn 10 điểm phần trăm so với mức đều), thường do bài có ít câu."
+
+#: templates/quiz/variants
+msgid "No exam codes yet. Set the options and generate them."
+msgstr "Chưa có mã đề. Chọn thiết lập rồi sinh mã đề."
+
+#: templates/quiz/variants
+msgid "pages"
+msgstr "trang"
+
+#: templates/quiz/variants
+msgid "The questions changed after this code was made; regenerate it."
+msgstr "Câu hỏi đã thay đổi sau khi tạo mã này; hãy sinh lại."
+
+#: templates/quiz/variants
+msgid "View print version"
+msgstr "Xem bản in"
+
+#: templates/quiz/variants
+msgid "Answer key of all codes"
+msgstr "Bảng đáp án các mã đề"
+
+#: templates/quiz/variants
+msgid "Print answer key"
+msgstr "In bảng đáp án"
+
+#: templates/quiz/variants
+msgid "True/false questions show the statements in order (True = first letter of \"True\"); short answer questions show the accepted answers."
+msgstr "Câu đúng/sai hiện lần lượt từng ý (Đ = đúng, S = sai); câu trả lời ngắn hiện các đáp án chấp nhận."
+
+#: templates/quiz/variants
+msgid "Print / Save PDF"
+msgstr "In / Lưu PDF"
+
+#: templates/quiz/variants
+msgid "Back to exam codes"
+msgstr "Quay lại mã đề"
+
+#: templates/quiz/variants
+msgid "Exam code"
+msgstr "Mã đề thi"
+
+#: templates/quiz/variants
+msgid "Candidate number"
+msgstr "Số báo danh"
+
+#: templates/quiz/variants
+msgid "Answer"
+msgstr "Đáp án"
+
+#: templates/quiz/variants
+msgid "--- End ---"
+msgstr "--- Hết ---"
+
+#: templates/quiz/variants
+msgid "Answer key"
+msgstr "Đáp án"
+
+#: templates/class
+msgid "A class needs at least one teacher."
+msgstr "Lớp cần có ít nhất một giáo viên."
+
+#: templates/class
+msgid "Accounts matched"
+msgstr "Tài khoản khớp"
+
+#: templates/class
+msgid "Accounts not found: %s"
+msgstr "Không tìm thấy tài khoản: %s"
+
+#: templates/class
+msgid "Add members by username"
+msgstr "Thêm thành viên theo tên truy cập"
+
+#: templates/class
+msgid "Added %d member(s)."
+msgstr "Đã thêm %d thành viên."
+
+#: templates/class
+msgid "Added to a class"
+msgstr "Đã thêm vào lớp"
+
+#: templates/class
+msgid "All classes"
+msgstr "Tất cả lớp"
+
+#: templates/class
+msgid "All subjects"
+msgstr "Mọi môn"
+
+#: templates/class
+msgid "Already in the class"
+msgstr "Đã có trong lớp"
+
+#: templates/class
+msgid "Also add the students to the organization of the class"
+msgstr "Thêm học sinh vào tổ chức của lớp"
+
+#: templates/class
+msgid "Assign to the whole class"
+msgstr "Giao cho cả lớp"
+
+#: templates/class
+msgid "Assignment"
+msgstr "Bài giao"
+
+#: templates/class
+msgid "Assignment created."
+msgstr "Đã giao bài."
+
+#: templates/class
+msgid "Assignments"
+msgstr "Bài giao"
+
+#: templates/class
+msgid "Assignments due soon"
+msgstr "Bài giao sắp hạn"
+
+#: templates/class
+msgid "Attendance"
+msgstr "Chuyên cần"
+
+#: templates/class
+msgid "Change compares with the ranking seven days ago. Counted since"
+msgstr "Thay đổi so với bảng xếp hạng 7 ngày trước. Tính từ"
+
+#: templates/class
+msgid "Check result (nothing saved yet)"
+msgstr "Kết quả kiểm tra (chưa lưu)"
+
+#: templates/class
+msgid "Choose a quiz."
+msgstr "Hãy chọn một bài trắc nghiệm."
+
+#: templates/class
+msgid "Class"
+msgstr "Lớp"
+
+#: templates/class
+msgid "Class activity, 12 weeks"
+msgstr "Hoạt động cả lớp, 12 tuần"
+
+#: templates/class
+msgid "Class announcement"
+msgstr "Thông báo của lớp"
+
+#: templates/class
+msgid "Class code"
+msgstr "Mã lớp"
+
+#: templates/class
+msgid "Class created."
+msgstr "Đã tạo lớp."
+
+#: templates/class
+msgid "Class home"
+msgstr "Tổng quan"
+
+#: templates/class
+msgid "Class saved."
+msgstr "Đã lưu lớp."
+
+#: templates/class
+msgid "Classes"
+msgstr "Lớp"
+
+#: templates/class
+msgid "Classes created"
+msgstr "Lớp đã tạo"
+
+#: templates/class
+msgid "Classes that would be created"
+msgstr "Lớp sẽ được tạo"
+
+#: templates/class
+msgid "Create class"
+msgstr "Tạo lớp"
+
+#: templates/class
+msgid "Create classes that do not exist yet"
+msgstr "Tạo các lớp chưa có"
+
+#: templates/class
+msgid "Delete this announcement?"
+msgstr "Xóa thông báo này?"
+
+#: templates/class
+msgid "Delete this assignment?"
+msgstr "Xóa bài giao này?"
+
+#: templates/class
+msgid "Download the sample file"
+msgstr "Tải tệp mẫu"
+
+#: templates/class
+msgid "Due"
+msgstr "Hạn nộp"
+
+#: templates/class
+msgid "Duration"
+msgstr "Thời lượng"
+
+#: templates/class
+msgid "Each column is an assignment. A blank cell is not due yet; an overdue empty cell counts as 0."
+msgstr "Mỗi cột là một bài giao. Ô trống là chưa đến hạn; quá hạn mà chưa làm thì tính 0."
+
+#: templates/class
+msgid "Edit class"
+msgstr "Sửa lớp"
+
+#: templates/class
+msgid "Enter at least one problem code."
+msgstr "Hãy nhập ít nhất một mã bài."
+
+#: templates/class
+msgid "Everyone was active in the last 7 days."
+msgstr "Mọi người đều hoạt động trong 7 ngày qua."
+
+#: templates/class
+msgid "Exam"
+msgstr "Kỳ thi"
+
+#: templates/class
+msgid "Exams"
+msgstr "Kỳ thi"
+
+#: templates/class
+msgid "File (.csv or .xlsx)"
+msgstr "Tệp (.csv hoặc .xlsx)"
+
+#: templates/class
+msgid "Grade book"
+msgstr "Sổ điểm"
+
+#: templates/class
+msgid "If this looks right, upload the same file again with \"Only check\" unticked."
+msgstr "Nếu kết quả đúng, tải lại cùng tệp và bỏ dấu \"Chỉ kiểm tra\"."
+
+#: templates/class
+msgid "Import a class list"
+msgstr "Nhập danh sách ghép lớp"
+
+#: templates/class
+msgid "Import result"
+msgstr "Kết quả nhập"
+
+#: templates/class
+msgid "Independent class"
+msgstr "Lớp độc lập"
+
+#: templates/class
+msgid "Join a class"
+msgstr "Vào lớp"
+
+#: templates/class
+msgid "Month"
+msgstr "Tháng"
+
+#: templates/class
+msgid "My classes"
+msgstr "Lớp của tôi"
+
+#: templates/class
+msgid "Needs support"
+msgstr "Cần hỗ trợ"
+
+#: templates/class
+msgid "New assignment"
+msgstr "Giao bài mới"
+
+#: templates/class
+msgid "No account found for"
+msgstr "Chưa có tài khoản cho"
+
+#: templates/class
+msgid "No assignments yet."
+msgstr "Chưa có bài giao nào."
+
+#: templates/class
+msgid "No classes yet"
+msgstr "Chưa có lớp nào"
+
+#: templates/class
+msgid "No deadline"
+msgstr "Không có hạn"
+
+#: templates/class
+msgid "No exams are linked to this class yet."
+msgstr "Chưa có kỳ thi nào gắn với lớp này."
+
+#: templates/class
+msgid "No members yet"
+msgstr "Chưa có thành viên"
+
+#: templates/class
+msgid "No students yet."
+msgstr "Chưa có học sinh."
+
+#: templates/class
+msgid "Nothing is due soon."
+msgstr "Chưa có bài nào sắp đến hạn."
+
+#: templates/class
+msgid "One username per line"
+msgstr "Mỗi dòng một tên truy cập"
+
+#: templates/class
+msgid "Only check, do not save yet"
+msgstr "Chỉ kiểm tra, chưa lưu"
+
+#: templates/class
+msgid "Only teachers see this."
+msgstr "Chỉ giáo viên thấy mục này."
+
+#: templates/class
+msgid "PINNED"
+msgstr "ĐÃ GHIM"
+
+#: templates/class
+msgid "Pin"
+msgstr "Ghim"
+
+#: templates/class
+msgid "Post"
+msgstr "Đăng"
+
+#: templates/class
+msgid "Post an announcement"
+msgstr "Đăng thông báo"
+
+#: templates/class
+msgid "Problem codes"
+msgstr "Mã bài"
+
+#: templates/class
+msgid "Programming"
+msgstr "Lập trình"
+
+#: templates/class
+msgid "Programming problems: codes separated by spaces, commas or lines."
+msgstr "Bài lập trình: các mã cách nhau bằng dấu cách, dấu phẩy hoặc xuống dòng."
+
+#: templates/class
+msgid "Quiz"
+msgstr "Trắc nghiệm"
+
+#: templates/class
+msgid "Remove this member from the class?"
+msgstr "Xóa thành viên này khỏi lớp?"
+
+#: templates/class
+msgid "Role"
+msgstr "Vai trò"
+
+#: templates/class
+msgid "Rows read"
+msgstr "Dòng đọc được"
+
+#: templates/class
+msgid "Rows without a usable class (rows)"
+msgstr "Dòng không có lớp dùng được (số dòng)"
+
+#: templates/class
+msgid "School year"
+msgstr "Năm học"
+
+#: templates/class
+msgid "Several accounts share this email"
+msgstr "Nhiều tài khoản dùng chung email này"
+
+#: templates/class
+msgid "Students create their own accounts as usual. Then fill in a sheet (Google Sheets or Excel) with one row per student and upload it here to put them in their classes."
+msgstr "Học sinh tự tạo tài khoản như bình thường. Sau đó điền bảng tính (Google Sheets hoặc Excel), mỗi học sinh một dòng, rồi tải lên đây để ghép vào lớp."
+
+#: templates/class
+msgid "Students get a notification, and a reminder a day before the deadline."
+msgstr "Học sinh nhận thông báo, và nhắc lại trước hạn một ngày."
+
+#: templates/class
+msgid "Teachers"
+msgstr "Giáo viên"
+
+#: templates/class
+msgid "Term"
+msgstr "Học kỳ"
+
+#: templates/class
+msgid "The class does not exist, the name matches several classes, or \"create classes\" is off."
+msgstr "Lớp chưa có, tên trùng nhiều lớp, hoặc đang tắt \"tạo lớp\"."
+
+#: templates/class
+msgid "The file has no data rows."
+msgstr "Tệp không có dòng dữ liệu."
+
+#: templates/class
+msgid "The file is too large (max 2 MB)."
+msgstr "Tệp quá lớn (tối đa 2 MB)."
+
+#: templates/class
+msgid "The first row must name the columns:"
+msgstr "Dòng đầu phải ghi tên các cột:"
+
+#: templates/class
+msgid "The first row must name the columns: a username or email column and a class column."
+msgstr "Dòng đầu phải ghi tên cột: một cột tên truy cập hoặc email, và một cột lớp."
+
+#: templates/class
+msgid "The result of the check appears here."
+msgstr "Kết quả kiểm tra hiện ở đây."
+
+#: templates/class
+msgid "These students have not created an account yet, or the username is misspelled."
+msgstr "Các bạn này chưa tạo tài khoản, hoặc tên truy cập bị gõ sai."
+
+#: templates/class
+msgid "This class code is not valid."
+msgstr "Mã lớp không hợp lệ."
+
+#: templates/class
+msgid "This week"
+msgstr "Tuần này"
+
+#: templates/class
+msgid "Too many rows (max %d)."
+msgstr "Quá nhiều dòng (tối đa %d)."
+
+#: templates/class
+msgid "Top this week"
+msgstr "Top tuần này"
+
+#: templates/class
+msgid "Unknown or inaccessible problems: %s"
+msgstr "Bài không tồn tại hoặc không truy cập được: %s"
+
+#: templates/class
+msgid "Upload"
+msgstr "Tải lên"
+
+#: templates/class
+msgid "Would be added to a class"
+msgstr "Sẽ được thêm vào lớp"
+
+#: templates/class
+msgid "Year"
+msgstr "Năm"
+
+#: templates/class
+msgid "You are not in any class yet. Ask your teacher for the class code, or wait to be added to a class."
+msgstr "Bạn chưa thuộc lớp nào. Hãy hỏi giáo viên mã lớp, hoặc chờ được thêm vào lớp."
+
+#: templates/class
+msgid "You cannot use this quiz."
+msgstr "Bạn không dùng được bài trắc nghiệm này."
+
+#: templates/class
+msgid "You may not change these classes"
+msgstr "Bạn không được sửa các lớp này"
+
+#: templates/class
+msgid "assignments due soon"
+msgstr "bài sắp hạn"
+
+#: templates/class
+msgid "days without activity"
+msgstr "ngày chưa hoạt động"
+
+#: templates/class
+msgid "no activity yet"
+msgstr "chưa hoạt động lần nào"
+
+#: templates/class
+msgid "optional"
+msgstr "tùy chọn"
+
+#: templates/class
+msgid "optional, default: student"
+msgstr "tùy chọn, mặc định: học sinh"
+
+#: templates/class
+msgid "set by the teacher"
+msgstr "giáo viên tự chỉnh"
+
+#: templates/class
+msgid "Class name shown in the URL"
+msgstr "Tên lớp hiện trong địa chỉ"
+
+#: templates/class
+msgid "For example 2026-2027."
+msgstr "Ví dụ 2026-2027."
+
+#: templates/class
+msgid "Homeroom teacher"
+msgstr "Giáo viên chủ nhiệm"
+
+#: templates/class
+msgid "Optional. A class can also exist outside any organization."
+msgstr "Tùy chọn. Lớp có thể đứng riêng, không thuộc tổ chức nào."
+
+#: templates/class
+msgid "Programming problems"
+msgstr "Bài lập trình"
+
+#: templates/class
+msgid "Students who enter this code can join the class. Empty = disabled."
+msgstr "Học sinh nhập mã này sẽ vào được lớp. Để trống = tắt."
+
+#: templates/class
+msgid "Subject teacher"
+msgstr "Giáo viên bộ môn"
+
+#: templates/class
+msgid "active"
+msgstr "đang dùng"
+
+#: templates/class
+msgid "announcement"
+msgstr "thông báo"
+
+#: templates/class
+msgid "archived"
+msgstr "đã lưu trữ"
+
+#: templates/class
+msgid "author"
+msgstr "tác giả"
+
+#: templates/class
+msgid "class"
+msgstr "lớp"
+
+#: templates/class
+msgid "class announcement"
+msgstr "thông báo lớp"
+
+#: templates/class
+msgid "class announcements"
+msgstr "thông báo lớp"
+
+#: templates/class
+msgid "class assignment"
+msgstr "bài giao"
+
+#: templates/class
+msgid "class assignments"
+msgstr "bài giao"
+
+#: templates/class
+msgid "class description"
+msgstr "giới thiệu lớp"
+
+#: templates/class
+msgid "class member"
+msgstr "thành viên lớp"
+
+#: templates/class
+msgid "class members"
+msgstr "thành viên lớp"
+
+#: templates/class
+msgid "class name"
+msgstr "tên lớp"
+
+#: templates/class
+msgid "class slug"
+msgstr "đường dẫn lớp"
+
+#: templates/class
+msgid "classes"
+msgstr "lớp"
+
+#: templates/class
+msgid "created by"
+msgstr "người tạo"
+
+#: templates/class
+msgid "due"
+msgstr "hạn nộp"
+
+#: templates/class
+msgid "join code"
+msgstr "mã tham gia"
+
+#: templates/class
+msgid "joined"
+msgstr "ngày vào"
+
+#: templates/class
+msgid "opens"
+msgstr "mở lúc"
+
+#: templates/class
+msgid "pinned"
+msgstr "đã ghim"
+
+#: templates/class
+msgid "ranking weights"
+msgstr "tỉ trọng xếp hạng"
+
+#: templates/class
+msgid "school year"
+msgstr "năm học"
+
+#: templates/class
+msgid "subject"
+msgstr "môn"
+
+#: templates/class
+msgid "subject name"
+msgstr "tên môn"
+
+#: templates/class
+msgid "subject slug"
+msgstr "đường dẫn môn"
+
+#: templates/class
+msgid "subjects"
+msgstr "môn học"
+
+#: templates/class
+msgid "Members of these classes may take the quiz."
+msgstr "Thành viên các lớp này làm được bài trắc nghiệm."
+
+#: templates/class
+msgid "Members of these classes are students of the course."
+msgstr "Thành viên các lớp này là học viên của khóa học."
+
+#: templates/class
+msgid "Shown in the contest list of these classes."
+msgstr "Hiện trong danh sách kỳ thi của các lớp này."
+
+#: templates/class
+msgid "exam code"
+msgstr "mã đề"
+
+#: templates/class
+msgid "Question ids in the order of this version."
+msgstr "Id câu hỏi theo thứ tự của mã đề này."
+
+#: templates/class
+msgid "Option ids per question id, in the order of this version."
+msgstr "Id đáp án của từng câu, theo thứ tự của mã đề này."
+
+#: templates/home/dashboard.html
+msgid "To do first"
+msgstr "Cần làm trước"
+
+#: templates/home/dashboard.html
+msgid "Upcoming exams"
+msgstr "Kỳ thi sắp tới"
+
+#: templates/organization
+msgid "Overview"
+msgstr "Tổng quan"
+
+#: templates/organization
+msgid "Exams of %s"
+msgstr "Kỳ thi của %s"
+
+#: templates/organization
+msgid "Classes of %s"
+msgstr "Lớp của %s"
+
+#: templates/organization
+msgid "This organization has no exams yet."
+msgstr "Tổ chức này chưa có kỳ thi nào."
+
+#: templates/class/report_print.html
+msgid "Class report"
+msgstr "Báo cáo lớp"
+
+#: templates/class/report_print.html
+msgid "Class results report"
+msgstr "Báo cáo kết quả của lớp"
+
+#: templates/class/report_print.html
+msgid "Class teacher"
+msgstr "Giáo viên chủ nhiệm"
+
+#: templates/class/report_print.html
+msgid "From 5.0 up"
+msgstr "Từ 5,0 trở lên"
+
+#: templates/class/report_print.html
+msgid "Independence - Freedom - Happiness"
+msgstr "Độc lập - Tự do - Hạnh phúc"
+
+#: templates/class/report_print.html
+msgid "Principal"
+msgstr "Hiệu trưởng"
+
+#: templates/class/report_print.html
+msgid "Print / Save as PDF"
+msgstr "In / Lưu PDF"
+
+#: templates/class/report_print.html
+msgid "Report (PDF)"
+msgstr "Báo cáo (PDF)"
+
+#: templates/class/report_print.html
+msgid "Result sheet"
+msgstr "Phiếu kết quả"
+
+#: templates/class/report_print.html
+msgid "SOCIALIST REPUBLIC OF VIET NAM"
+msgstr "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM"
+
+#: templates/class/report_print.html
+msgid "Sheet for every student"
+msgstr "Phiếu từng học sinh"
+
+#: templates/class/report_print.html
+msgid "members"
+msgstr "thành viên"
+
+msgid "Time limit"
+msgstr "Thời gian"
+
+msgid "Best score"
+msgstr "Điểm cao nhất"
+
+msgid "Retake"
+msgstr "Làm lại"
+
+#: practice and plain exam import
+msgid "Draw questions from the question bank, with priority to the ones you often get wrong."
+msgstr "Tự rút câu hỏi từ ngân hàng đề, ưu tiên những câu bạn hay sai."
+
+msgid "days in a row"
+msgstr "ngày liên tiếp"
+
+msgid "Chapter"
+msgstr "Chương"
+
+msgid "Mixed"
+msgstr "Trộn"
+
+msgid "Prefer questions I got wrong before"
+msgstr "Ưu tiên câu tôi từng làm sai"
+
+msgid "Your weak topics"
+msgstr "Điểm yếu của bạn"
+
+msgid "Not enough data yet. Practise a few sets and your weak topics will appear here."
+msgstr "Chưa đủ dữ liệu. Làm vài bài ôn tập, điểm yếu của bạn sẽ hiện ở đây."
+
+msgid "Import an exam paper"
+msgstr "Nhập đề thi từ Word/PDF"
+
+msgid "Upload file"
+msgstr "Tải tệp"
+
+msgid "Review and edit"
+msgstr "Xem trước và sửa"
+
+msgid "Save to the bank"
+msgstr "Lưu vào ngân hàng"
+
+msgid "Upload the exam"
+msgstr "Tải đề lên"
+
+msgid "Upload an ordinary exam paper: Word (.docx) or a PDF that contains text. The questions are recognised automatically and you can check and fix them on the next page before anything is saved."
+msgstr "Tải một đề thi thông thường: Word (.docx) hoặc PDF có chữ. Hệ thống tự nhận dạng câu hỏi, bạn xem và sửa ở trang sau trước khi lưu."
+
+msgid "File (.docx or .pdf)"
+msgstr "Tệp (.docx hoặc .pdf)"
+
+msgid "up to"
+msgstr "tối đa"
+
+msgid "Read the file"
+msgstr "Đọc tệp"
+
+msgid "What is recognised"
+msgstr "Hệ thống nhận dạng được"
+
+msgid "Questions that start with \"Câu 1.\", \"Câu 1:\" or \"1.\""
+msgstr "Câu hỏi bắt đầu bằng \"Câu 1.\", \"Câu 1:\" hoặc \"1.\""
+
+msgid "Options A. B. C. D. (or a) b) c) d)), on separate lines or on one line"
+msgstr "Phương án A. B. C. D. (hoặc a) b) c) d)), mỗi dòng một phương án hoặc nhiều phương án trên một dòng"
+
+msgid "The correct answer from an \"Đáp án: C\" line, from the answer table at the end, or from underlined or bold options in Word"
+msgstr "Đáp án đúng lấy từ dòng \"Đáp án: C\", từ bảng đáp án cuối đề, hoặc từ phương án gạch chân/in đậm trong Word"
+
+msgid "Sections \"Phần I\", \"Phần II (đúng sai)\", \"Phần III (trả lời ngắn)\""
+msgstr "Các phần \"Phần I\", \"Phần II (đúng sai)\", \"Phần III (trả lời ngắn)\""
+
+msgid "Scanned or photographed PDFs cannot be read: use the Word file or a PDF exported from Word. Pictures are not imported."
+msgstr "PDF scan hoặc chụp ảnh không đọc được: hãy dùng tệp Word hoặc PDF xuất từ Word. Hình ảnh không được nhập."
+
+msgid "Use the [qus] marker format instead"
+msgstr "Dùng định dạng đánh dấu [qus]"
+
+msgid "Fix these before saving"
+msgstr "Cần sửa trước khi lưu"
+
+msgid "questions recognised"
+msgstr "câu nhận dạng được"
+
+msgid "No answer table found at the end of the file."
+msgstr "Không thấy bảng đáp án ở cuối tệp."
+
+msgid "questions need checking"
+msgstr "câu cần kiểm tra"
+
+msgid "The PDF has pictures on pages"
+msgstr "PDF có hình ảnh ở trang"
+
+msgid "they are not imported."
+msgstr "hình không được nhập."
+
+msgid "An answer table was found but could not be read."
+msgstr "Có bảng đáp án nhưng không đọc được."
+
+msgid "Chapter (tag)"
+msgstr "Chương (thẻ)"
+
+msgid "Comma separated"
+msgstr "Cách nhau bằng dấu phẩy"
+
+msgid "Save as"
+msgstr "Lưu thành"
+
+msgid "Question bank only"
+msgstr "Chỉ ngân hàng đề"
+
+msgid "Bank and a quiz"
+msgstr "Ngân hàng và một bài quiz"
+
+msgid "Quiz title (only for a quiz)"
+msgstr "Tiêu đề quiz (chỉ khi tạo quiz)"
+
+msgid "Save questions"
+msgstr "Lưu các câu hỏi"
+
+msgid "Apply my changes"
+msgstr "Áp dụng thay đổi của tôi"
+
+msgid "Cancel and upload another file"
+msgstr "Hủy và tải tệp khác"
+
+msgid "Nothing is stored until you press Save. Questions already in the bank are skipped."
+msgstr "Chưa có gì được lưu cho đến khi bạn bấm Lưu. Câu đã có trong ngân hàng sẽ được bỏ qua."
+
+msgid "in the file"
+msgstr "trong tệp"
+
+msgid "Needs checking"
+msgstr "Cần kiểm tra"
+
+msgid "Recognised"
+msgstr "Đã nhận dạng"
+
+msgid "Tick the correct options (for true/false: the statements that are true)."
+msgstr "Đánh dấu phương án đúng (với đúng/sai: các ý đúng)."
+
+msgid "Accepted answers, separated by |"
+msgstr "Các đáp án chấp nhận, cách nhau bằng |"
+
+msgid "Delete this question"
+msgstr "Xóa câu này"
+
+msgid "Have an ordinary Word or PDF exam without markers? Import it here."
+msgstr "Có đề Word hoặc PDF thông thường, không có dấu [qus]? Nhập tại đây."
+
+msgid "No correct answer found: choose it below."
+msgstr "Chưa tìm thấy đáp án đúng: hãy chọn bên dưới."
+
+msgid "The answer given does not match the options: check it."
+msgstr "Đáp án ghi trong đề không khớp các phương án: hãy kiểm tra."
+
+msgid "Only some statements have an answer: the others were set to false."
+msgstr "Chỉ một số ý có đáp án: các ý còn lại được đặt là sai."
+
+msgid "The number of options looks wrong for this type."
+msgstr "Số phương án có vẻ không đúng với loại câu này."
+
+msgid "No options were found for this question."
+msgstr "Không tìm thấy phương án nào cho câu này."
+
+msgid "Has a picture or refers to one: pictures are not imported, add them by hand."
+msgstr "Có hình hoặc nhắc tới hình: hình không được nhập, hãy thêm thủ công."
+
+msgid "Has a formula: check that it was read correctly."
+msgstr "Có công thức: hãy kiểm tra đã đọc đúng chưa."
+
+msgid "A choice question needs at least 2 options."
+msgstr "Câu trắc nghiệm cần ít nhất 2 phương án."
+
+msgid "Choose the correct option."
+msgstr "Hãy chọn phương án đúng."
+
+msgid "A true/false question needs exactly 4 statements."
+msgstr "Câu đúng/sai cần đúng 4 ý."
+
+msgid "Enter the accepted answer."
+msgstr "Hãy nhập đáp án chấp nhận."
+
+msgid "The file is larger than 10 MB."
+msgstr "Tệp lớn hơn 10 MB."
+
+msgid "The file could not be read. Try saving it again as .docx."
+msgstr "Không đọc được tệp. Hãy thử lưu lại dưới dạng .docx."
+
+msgid "Review the imported questions"
+msgstr "Xem lại các câu đã nhập"
+
+msgid "Question %(n)d: %(why)s"
+msgstr "Câu %(n)d: %(why)s"
+
+msgid "There are no questions left to save."
+msgstr "Không còn câu nào để lưu."
+
+msgid "Enter a title for the quiz."
+msgstr "Hãy nhập tiêu đề cho quiz."
+
+msgid "today"
+msgstr "hôm nay"
+
+msgid "yesterday"
+msgstr "hôm qua"
+
+msgid "%(n)d days ago"
+msgstr "%(n)d ngày trước"
+
+msgid "Hello %(name)s, what will you do today?"
+msgstr "Chào %(name)s, hôm nay làm gì?"
+
+msgid "day streak"
+msgstr "ngày liên tiếp"
+
+msgid "average score this week"
+msgstr "điểm trung bình tuần"
+
+msgid "All assignments"
+msgstr "Xem tất cả bài giao"
+
+msgid "You have no assignments to do right now."
+msgstr "Bạn không còn bài giao nào cần làm."
+
+msgid "Continue learning"
+msgstr "Tiếp tục học"
+
+msgid "Open courses"
+msgstr "Khóa học đang mở"
+
+msgid "All courses"
+msgstr "Tất cả khóa học"
+
+msgid "No posts yet."
+msgstr "Chưa có bài viết nào."
+
+msgid "LIVE"
+msgstr "ĐANG THI"
+
+msgid "MONTH"
+msgstr "THG"
+
+msgid "Activity, last 12 weeks"
+msgstr "Hoạt động 12 tuần"
+
+msgid "Find problem"
+msgstr "Tìm bài"
+
+msgid "Problem name or code"
+msgstr "Tên hoặc mã bài"
+
+msgid "Subject (filter)"
+msgstr "Môn"
+
+msgid "Problem group"
+msgstr "Nhóm bài"
+
+msgid "Unsolved"
+msgstr "Chưa giải"
+
+msgid "Attempted"
+msgstr "Đã thử"
+
+msgid "Min points"
+msgstr "Điểm thấp nhất"
+
+msgid "Max points"
+msgstr "Điểm cao nhất"
+
+msgid "Options"
+msgstr "Tùy chọn"
+
+msgid "Showing %(a)s–%(b)s of %(n)s problems"
+msgstr "Hiển thị %(a)s–%(b)s trong %(n)s bài"
+
+msgid "No problems found."
+msgstr "Không có bài nào."
+
+msgid "Pick a random problem"
+msgstr "Chọn ngẫu nhiên một bài"
+
+msgid "Group"
+msgstr "Nhóm"
+
+msgid "AC (column)"
+msgstr "AC"
+
+# --- ui-c 2026-11-22: organization pages
+msgid "Member list"
+msgstr "Thành viên"
+
+msgid "Programming contests"
+msgstr "Kỳ thi lập trình"
+
+msgid "Pinned"
+msgstr "Đã ghim"
+
+msgid "Exams of the organization"
+msgstr "Kỳ thi của tổ chức"
+
+msgid "whole organization"
+msgstr "Toàn tổ chức"
+
+msgid "No upcoming exams."
+msgstr "Chưa có kỳ thi sắp tới."
+
+msgid "Administrators"
+msgstr "Quản trị viên"
+
+msgid "No administrators."
+msgstr "Chưa có quản trị viên."
+
+msgid "Search members"
+msgstr "Tìm thành viên"
+
+msgid "Search by name or username"
+msgstr "Tìm theo tên hoặc tên truy cập"
+
+msgid "All roles"
+msgstr "Mọi vai trò"
+
+msgid "Pupil"
+msgstr "Học sinh"
+
+msgid "pupils"
+msgstr "học sinh"
+
+msgid "Administrator"
+msgstr "Quản trị viên"
+
+msgid "Member"
+msgstr "Thành viên"
+
+msgid "No members match."
+msgstr "Không có thành viên nào phù hợp."
+
+msgid "All states"
+msgstr "Mọi trạng thái"
+
+msgid "Exam type"
+msgstr "Loại"
+
+msgid "Create exam"
+msgstr "Tạo kỳ thi"
+
+msgid "Audience"
+msgstr "Đối tượng"
+
+msgid "By request"
+msgstr "Cần yêu cầu"
+
+msgid "No organizations found."
+msgstr "Không có tổ chức nào."
+
+msgid "Day streak"
+msgstr "Ngày liên tiếp"
+
+msgid "Activity, last 26 weeks"
+msgstr "Hoạt động 26 tuần"
+
+msgid "Longest streak:"
+msgstr "Dài nhất:"
+
+msgid "Skills by topic"
+msgstr "Năng lực theo chủ đề"
+
+msgid "No problems have been attempted yet."
+msgstr "Chưa làm bài nào."
+
+msgid "%(n)s day streak"
+msgstr "%(n)s ngày liên tiếp"
+
+msgid "%(n)s AC problems"
+msgstr "%(n)s bài AC"
+
+msgid "Rating and contribution"
+msgstr "Rating và đóng góp"
+
+msgid "Badges"
+msgstr "Huy hiệu"
+
+msgid "Submit code"
+msgstr "Nộp bài"
+
+msgid "Test run"
+msgstr "Chạy thử"
+
+msgid "submissions left"
+msgstr "lượt nộp còn lại"
+
+msgid "time limit (short)"
+msgstr "thời gian"
+
+msgid "memory limit (short)"
+msgstr "bộ nhớ"
+
+msgid "points (short)"
+msgstr "điểm"
+
+msgid "Q&A"
+msgstr "Hỏi đáp"
+
+msgid "Input / output"
+msgstr "Vào / ra"
+
+msgid "Judges:"
+msgstr "Máy chấm:"
+
+msgid "Test run results"
+msgstr "Kết quả chạy thử"
+
+msgid "Add test"
+msgstr "Thêm test"
+
+msgid "Your recent submissions"
+msgstr "Bài nộp gần đây của bạn"
+
+msgid "You have not submitted this problem yet."
+msgstr "Bạn chưa nộp bài này."
+
+msgid "Log in to test run and submit your solution."
+msgstr "Đăng nhập để chạy thử và nộp bài."
+
+msgid "Joined in"
+msgstr "tham gia"
+
+msgid "Progress"
+msgstr "Tiến độ"
+
+msgid "Needs at least %(percent)s in the previous lesson"
+msgstr "Cần đạt ít nhất %(percent)s ở bài trước"
+
+msgid "This course has no description yet."
+msgstr "Khóa học chưa có mô tả."
+
+msgid "Programming tasks"
+msgstr "Bài tập lập trình"
+
+msgid "%(n)s problems, auto-graded"
+msgstr "%(n)s bài, chấm tự động"
+
+msgid "By subject, with practice"
+msgstr "Theo môn, có ôn luyện"
+
+msgid "Timed programming contests"
+msgstr "Kỳ thi lập trình có giờ"
+
+msgid "Your submissions and verdicts"
+msgstr "Bài nộp và kết quả chấm"
+
+msgid "My organizations"
+msgstr "TỔ CHỨC CỦA TÔI"
+
+msgid "Exam list"
+msgstr "Danh sách kỳ thi"
+
+msgid "Join another organization"
+msgstr "Tham gia tổ chức khác"
+
+msgid "Browse organizations"
+msgstr "Xem các tổ chức"
+
+msgid "More actions"
+msgstr "Thêm"
+
+msgid "Create account"
+msgstr "Tạo tài khoản"
+
+msgid "Use a popular email such as Gmail to receive password recovery mail."
+msgstr "Dùng email thông dụng như Gmail để nhận thư khôi phục mật khẩu."
+
+msgid "Submitter"
+msgstr "Người nộp"
+
+msgid "Runtime"
+msgstr "Chạy"
+
+msgid "All results"
+msgstr "Mọi kết quả"
+
+msgid "All languages"
+msgstr "Mọi ngôn ngữ"
+
+msgid "Only my submissions"
+msgstr "Chỉ bài của tôi"
+
+msgid "No submissions found."
+msgstr "Chưa có bài nộp nào."
+
+msgid "Submissions (title)"
+msgstr "Bài nộp"
+
+# --- ui-c 2026-11-22: class pages
+msgid "Class ranking"
+msgstr "Xếp hạng"
+
+msgid "Homeroom:"
+msgstr "GVCN:"
+
+msgid "Pinned announcement"
+msgstr "THÔNG BÁO ĐÃ GHIM"
+
+msgid "Show all"
+msgstr "Tất cả"
+
+msgid "See the rest"
+msgstr "Xem hết"
+
+msgid "Submitted count"
+msgstr "Đã nộp"
+
+msgid "days without submitting"
+msgstr "ngày chưa nộp bài"
+
+msgid "skipped"
+msgstr "bỏ"
+
+msgid "exams count"
+msgstr "kỳ thi"
+
+msgid "School-wide rank"
+msgstr "Hạng toàn trường"
+
+msgid "Whole year"
+msgstr "Cả năm"
+
+msgid "School-wide"
+msgstr "Toàn trường"
+
+msgid "By organization"
+msgstr "Theo tổ chức"
+
+msgid "By class"
+msgstr "Theo lớp"
+
+msgid "No users found."
+msgstr "Không có thành viên nào."
+
+msgid "Sorted by performance points"
+msgstr "Xếp theo điểm thành tích"
+
+msgid "Not read"
+msgstr "Không đọc được"
+
+msgid "No class on this row"
+msgstr "Dòng không ghi lớp"
+
+msgid "No account yet"
+msgstr "Chưa có tài khoản"
+
+msgid "No usable class"
+msgstr "Không có lớp phù hợp"
+
+msgid "Not allowed to change this class"
+msgstr "Không có quyền sửa lớp này"
+
+msgid "Will join the class"
+msgstr "Sẽ vào lớp"
+
+msgid "Added to the class"
+msgstr "Đã thêm vào lớp"
+
+msgid "Row"
+msgstr "Dòng"
+
+msgid "Rows with errors"
+msgstr "Dòng lỗi"
+
+msgid "Check the file"
+msgstr "Kiểm tra tệp"
+
+msgid "Showing the first 300 rows."
+msgstr "Đang hiện 300 dòng đầu."
+
+msgid "Contests (title)"
+msgstr "Kỳ thi"
+
+msgid "Contest format (col)"
+msgstr "Hình thức"
+
+msgid "Enter contest"
+msgstr "Vào thi"
+
+msgid "LIVE NOW"
+msgstr "ĐANG DIỄN RA"
+
+msgid "problems (count)"
+msgstr "bài"
+
+msgid "contestants"
+msgstr "thí sinh"
+
+msgid "Contestants"
+msgstr "Thí sinh"
+
+msgid "Upcoming and finished"
+msgstr "Sắp diễn ra và đã kết thúc"
+
+msgid "There are no scheduled or past contests."
+msgstr "Chưa có kỳ thi nào sắp tới hoặc đã diễn ra."
+
+msgid "time left (inline)"
+msgstr "còn"
+
+# --- ui-c 2026-11-22: quiz list
+msgid "Quiz name"
+msgstr "Tên bộ đề"
+
+msgid "Search quizzes"
+msgstr "Tìm bộ đề"
+
+msgid "Quick practice from the question bank"
+msgstr "Ôn luyện nhanh từ ngân hàng đề"
+
+msgid "Informatics"
+msgstr "Tin học"
+
+#: templates/base.html
+msgid "MAINTENANCE"
+msgstr "BẢO TRÌ"
+
+#: templates/base.html
+msgid "The site is under maintenance"
+msgstr "Trang đang bảo trì"
+
+#: templates/base.html
+msgid "Some pages may look broken or work slowly for a while. Your data is safe. Thank you for your patience."
+msgstr "Một số trang có thể hiển thị lỗi hoặc chạy chậm trong lúc này. Dữ liệu của bạn vẫn an toàn. Cảm ơn bạn đã thông cảm."
+
+#: templates/base.html
+msgid "I understand"
+msgstr "Đã hiểu"
+
+msgid "Wrong or skipped"
+msgstr "Sai hoặc bỏ trống"
+
+msgid "Started"
+msgstr "Bắt đầu lúc"
+
+msgid "Review wrong answers"
+msgstr "Ôn lại các câu sai"
+
+msgid "Grade tiers"
+msgstr "Xếp loại"
+
+msgid "Excellent (8+)"
+msgstr "Giỏi (từ 8)"
+
+msgid "Good (6.5-8)"
+msgstr "Khá (6,5–8)"
+
+msgid "Average (5-6.5)"
+msgstr "Trung bình (5–6,5)"
+
+msgid "Weak (<5)"
+msgstr "Yếu (dưới 5)"
+
+msgid "Questions to review"
+msgstr "Câu cần xem lại"
+
+msgid "Quiz exam"
+msgstr "Kỳ thi trắc nghiệm"
+
+msgid "Programming contest"
+msgstr "Kỳ thi lập trình"

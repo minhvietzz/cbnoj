@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ quiz.title }} - {{ _('Code') }} {{ variant.code }}</title>
+    {% include "quiz/variants/print_style.html" %}
+</head>
+<body>
+    <div class="vx-toolbar">
+        <button type="button" onclick="window.print()">{{ _('Print / Save PDF') }}</button>
+        <a href="{{ url('quiz_variants', quiz.slug) }}">{{ _('Back to exam codes') }}</a>
+        <span>{{ total }} {{ _('questions') }} · ~{{ pages }} {{ _('pages') }}</span>
+    </div>
+    <main class="vx-sheet">
+        <header class="vx-title">
+            <div class="vx-title-row">
+                <div>
+                    <h1>{{ quiz.title }}</h1>
+                    {% if quiz.time_limit %}<div class="vx-sub">{{ _('Time') }}: {{ quiz.time_limit }} {{ _('minutes') }}</div>{% endif %}
+                </div>
+                <div class="vx-codebox"><span>{{ _('Exam code') }}</span><b>{{ variant.code }}</b></div>
+            </div>
+            <div class="vx-fill">
+                <div>{{ _('Full name') }}: <i></i></div>
+                <div>{{ _('Candidate number') }}: <i></i></div>
+            </div>
+        </header>
+        {% for item in items %}
+            {% if item.type == 'section' %}
+                <h2 class="vx-section">{{ item.title }}</h2>
+            {% elif item.type == 'passage' %}
+                <div class="vx-passage content-description">{{ item.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+            {% else %}
+                {% set q = item.question %}
+                <section class="vx-q">
+                    <div class="vx-qhead"><b>{{ _('Question') }} {{ item.number }}.</b> <span class="vx-pts">({{ q.points|round(2) }} {{ _('points') }})</span></div>
+                    <div class="vx-qtext content-description">{{ q.text|markdown('blog', MATH_ENGINE)|reference|str|safe }}</div>
+                    {% if q.kind == 'tf4' %}
+                        <div class="vx-opts vx-tf">
+                            {% for o in item.options %}
+                                <div class="vx-opt"><b>{{ o.label|lower }})</b> <span class="content-description">{{ o.option.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span></div>
+                            {% endfor %}
+                        </div>
+                    {% elif q.kind == 'short' %}
+                        <div class="vx-short">{{ _('Answer') }}: <i></i></div>
+                    {% else %}
+                        <div class="vx-opts">
+                            {% for o in item.options %}
+                                <div class="vx-opt"><b>{{ o.label }}.</b> <span class="content-description">{{ o.option.text|markdown('blog', MATH_ENGINE, strip_paragraphs=True)|reference|str|safe }}</span></div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </section>
+            {% endif %}
+        {% endfor %}
+        <footer class="vx-end">{{ _('--- End ---') }}</footer>
+    </main>
+    {% if REQUIRE_JAX %}{% include "mathjax-load.html" %}{% endif %}
+</body>
+</html>

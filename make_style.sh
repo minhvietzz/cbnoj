@@ -22,3 +22,8 @@ build_style() {
 
 build_style 'default' 'resources'
 build_style 'dark' 'resources/dark'
+
+# CBNoj "paper" interface: loaded only when the cbn_ui cookie / CBN_UI_DEFAULT is on (see templates/base.html).
+echo "Creating cbn theme..."
+npx sass --no-source-map resources/cbn-theme.scss sass_processed/cbn-theme.css
+npx postcss sass_processed/cbn-theme.css --no-map --use autoprefixer -o resources/cbn-theme.css

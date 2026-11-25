@@ -7,6 +7,7 @@ from django.utils.functional import SimpleLazyObject, new_method_proxy
 
 from judge import event_poster as event
 from judge.utils.caniuse import CanIUse, SUPPORT
+from judge.views.ui_switch import cbn_ui_enabled
 from .models import NavigationBar, Profile
 
 
@@ -69,6 +70,9 @@ def general_info(request):
         'REGISTRATION_OPEN': settings.REGISTRATION_OPEN,
         'perms': PermWrapper(request.user),
         'HAS_WEBAUTHN': bool(settings.WEBAUTHN_RP_ID),
+        'CBN_UI': cbn_ui_enabled(request),
+        'CBN_ASSET_V': _cbn_asset_version(),
+        'MAINTENANCE': _maintenance_notice(),
     }
     from judge.views.server_status import can_view_server_status
     info['can_view_server_status'] = can_view_server_status(request.user)
@@ -90,6 +94,35 @@ def site_name(request):
     return {'SITE_NAME': settings.SITE_NAME,
             'SITE_LONG_NAME': settings.SITE_LONG_NAME,
             'SITE_ADMIN_EMAIL': settings.SITE_ADMIN_EMAIL}
+
+
+MAINTENANCE_FLAG = '/home/vnojsite/maintenance.flag'
+
+
+def _maintenance_notice():
+    """Text of the maintenance pop-up while the flag file exists (create it to switch the pop-up on, delete it to
+    switch it off; no restart needed). The first line of the file is the message; empty file = default message."""
+    import os
+    try:
+        if not os.path.exists(MAINTENANCE_FLAG):
+            return None
+        with open(MAINTENANCE_FLAG, encoding='utf-8') as f:
+            return f.readline().strip() or True
+    except OSError:
+        return None
+
+
+def _cbn_asset_version():
+    """Query string that changes whenever the new theme's CSS is rebuilt (static files are cached for years)."""
+    import os
+    root = getattr(settings, 'STATIC_ROOT', None) or ''
+    stamp = 0
+    for name in ('cbn-theme.css', 'be-vietnam-pro.css', 'common.js'):
+        try:
+            stamp = max(stamp, int(os.path.getmtime(os.path.join(root, name))))
+        except OSError:
+            pass
+    return stamp
 
 
 def site_theme(request):

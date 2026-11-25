@@ -1,0 +1,21 @@
+{# Header of a course page: breadcrumb, name, chips, facts, flat progress box. Rendered inside the page tabs band. #}
+<div class="crs-head">
+    <div class="crs-head-main">
+        <a class="crs-crumb" href="{{ url('course_list') }}">{{ _('Courses') }}</a>
+        <h1>{{ course.name }}</h1>
+        <div class="crs-facts">
+            {% if can_access %}<span class="crs-chip crs-chip-ok">{{ _('Joined') }}</span>{% endif %}
+            {% if not course.is_public %}<span class="crs-chip">{{ _('Private') }}</span>{% endif %}
+            {% if not course.is_open %}<span class="crs-chip">{{ _('Closed') }}</span>{% endif %}
+            {% if teachers %}<span>{% for teacher in teachers %}{{ link_user(teacher) }}{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+            <span>{{ lesson_count }} {{ _('lessons') }}</span>
+            <span>{{ student_count }} {{ _('students') }}</span>
+        </div>
+    </div>
+    {% if can_access and overall_total %}
+        <dl class="lh-stats crs-stats">
+            <div><dd>{{ overall_percent }}%</dd><dt>{{ _('Progress') }}</dt></div>
+            <div><dd>{{ overall_solved }}/{{ overall_total }}</dd><dt>{{ _('problems solved') }}</dt></div>
+        </dl>
+    {% endif %}
+</div>

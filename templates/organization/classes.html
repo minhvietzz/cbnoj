@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title_row %}
+    {% set tab = 'classes' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="og neo-flat">
+    {% if can_create_class %}
+        <div class="og-toolbar">
+            <span class="og-grow"></span>
+            <a class="og-btn ghost" href="{{ url('class_import') }}">{{ _('Import a class list') }}</a>
+            <a class="og-btn" href="{{ url('class_create') }}">{{ _('Create class') }}</a>
+        </div>
+    {% endif %}
+    {% if classes %}
+        <div class="og-grid">
+            {% for c in classes %}
+                <a class="og-tile" href="{{ c.get_absolute_url() }}">
+                    <div class="og-tile-h">
+                        <span class="og-badge">{{ c.name[:3] }}</span>
+                        {% if c.my_role %}<span class="og-chip">{{ role_names[c.my_role] }}</span>{% endif %}
+                    </div>
+                    <div class="og-tile-b">
+                        <span class="og-tile-name">{{ c.name }}</span>
+                        <span class="og-meta">{{ c.school_year }}{% if c.subject %} &middot; {{ c.subject.name }}{% endif %}</span>
+                    </div>
+                    <div class="og-tile-f"><span><b>{{ c.student_count }}</b>{{ _('pupils') }}</span></div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <section class="og-card"><div class="og-empty">{{ _('No classes yet') }}</div></section>
+    {% endif %}
+</div>
+{% endblock %}

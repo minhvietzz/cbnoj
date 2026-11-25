@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span class="cx-hint">{{ _('Each column is an assignment. A blank cell is not due yet; an overdue empty cell counts as 0.') }}</span>
+        {% if can_staff %}<div style="display:flex;gap:10px"><a class="cx-btn ghost sm" href="?export=xlsx">{{ _('Export Excel') }}</a><a class="cx-btn ghost sm" href="{{ url('class_report_print', classroom.slug) }}">{{ _('Report (PDF)') }}</a><a class="cx-btn ghost sm" href="?export=csv">CSV</a></div>{% endif %}
+    </div>
+    <section class="cx-card cx-scroll">
+        {% if assignments and rows %}
+        <table class="cx-table" style="text-align:center">
+            <thead><tr><th style="min-width:200px;text-align:left">{{ _('Pupil') }}</th>{% for a in assignments %}<th style="text-align:center;text-transform:none">{{ a.title|truncate(22) }}</th>{% endfor %}<th style="text-align:center">{{ _('Average') }}</th></tr></thead>
+            <tbody>
+            {% for r in rows %}
+                <tr>
+                    <td style="text-align:left;font-weight:600"><a href="{{ url('user_page', r.profile.user.username) }}">{{ r.profile.user.first_name or r.profile.user.username }}</a>{{ user_tag(r.profile) }}</td>
+                    {% for v in r.cells %}
+                        <td style="background:{{ 'transparent' if v is none else ('var(--c-ok-s)' if v >= 8 else ('var(--c-bad-s)' if v < 5 else 'transparent')) }}">{% if v is not none %}{{ ('%.2f'|format(v))|replace('.', ',') }}{% endif %}</td>
+                    {% endfor %}
+                    <td style="font-weight:700">{% if r.average is not none %}{{ ('%.2f'|format(r.average))|replace('.', ',') }}{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<div class="cx-empty">{{ _('No assignments yet.') }}</div>{% endif %}
+    </section>
+</div>
+{% endblock %}

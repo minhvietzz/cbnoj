@@ -142,6 +142,21 @@ def item_title(item):
     return '<Unknown>'
 
 
+def _rank_tag(profile):
+    """A small label for special accounts (admin, teacher, staff, setter, banned, ...); empty for normal users."""
+    rank = getattr(profile, 'display_rank', 'user')
+    if not isinstance(profile, Profile) or not rank or rank == 'user':
+        return ''
+    return (f'<span class="user-tag user-tag-{escape(rank)}">'
+            f'{escape(str(profile.get_display_rank_display()))}</span>')
+
+
+@registry.function
+def user_tag(profile):
+    """Label to put after a plain user link in templates that do not use link_user."""
+    return mark_safe(_rank_tag(profile))
+
+
 @registry.function
 def link_user(user):
     if isinstance(user, Profile):
@@ -159,10 +174,12 @@ def link_user(user):
     else:
         display_badge_img = ''
 
+    rank_tag = _rank_tag(profile)
+
     return mark_safe(f'<span class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
                      f' style="display: inline-block;">'
-                     f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
+                     f'{escape(profile.display_name)}</a>{display_badge_img}</span>{rank_tag}')
 
 
 @registry.function

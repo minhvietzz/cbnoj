@@ -1,109 +1,64 @@
+{% from "bp/macros.html" import chip_class %}
 {% set can_view, can_edit = submission_layout(submission, profile_id, request.user, completed_problem_ids, editable_problem_ids, tester_problem_ids) %}
-<div class="sub-result {{ submission.result_class }}">
-    <div class="score">
-        {%- if submission.is_graded -%}
-            {%- if submission.status in ('IE', 'CE', 'AB') -%}
-                ---
-            {%- else -%}
-                {{ submission.case_points|floatformat(-3) }} / {{ submission.case_total|floatformat(0) }}
-            {%- endif -%}
-        {%- else -%}
-            <i class="fa fa-spinner fa-pulse grading-spinner"></i>
-        {%- endif -%}
-    </div>
-
-    <div class="state">
-        <span title="{{ submission.long_status }}" class="status">{{ submission.short_status }}</span> |
-        <span class="language">{{ submission.language.short_display_name }}</span>
-    </div>
-</div>
 {% set can_view_testcase_status = request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A' %}
-<div class="sub-main">
-    <div class="sub-info{% if submission.status == 'G' %} sub-info-grading{% endif %}">
-        {% if show_problem %}
-            <div class="name">
-                <a href="{{ url('problem_detail', submission.problem.code) }}">{{ problem_name }}</a>
-            </div>
+<td class="bp-mono sb-id">{% if can_view %}<a href="{{ url('submission_status', submission.id) }}">{{ submission.id }}</a>{% else %}{{ submission.id }}{% endif %}</td>
+<td class="bp-mute sb-time" title="{{ submission.date|date('d/m/Y H:i:s') }}">{{ submission.date|date('H:i · d/m') }}</td>
+<td class="sb-user">{{ link_user(submission.user) }}</td>
+{% if show_problem %}
+    <td class="sb-prob">
+        <a href="{{ url('problem_detail', submission.problem.code) }}"><span class="bp-mono">{{ submission.problem.code }}</span> · {{ problem_name }}</a>
+        {% if not request.in_contest and submission.contest_object_id %}
+            <a href="{{ url('contest_view', submission.contest_object.key) }}" class="sb-contest" title="{{ submission.contest_object.name }}"><i class="fa fa-dot-circle-o"></i></a>
         {% endif %}
-        <div>
-            {{ link_user(submission.user) }}
-            <br class="xs-br">
-            <span class="time">{{ relative_time(submission.date) }}</span>
-            {% if not request.in_contest and submission.contest_object_id %}
-                <a href="{{ url('contest_view', submission.contest_object.key) }}"
-                   class="submission-contest">
-                    <i title="{{ submission.contest_object.name }}" class="fa fa-dot-circle-o"></i>
-                </a>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if submission.status == 'G' and can_view_testcase_status %}
-        <div class="sub-testcase">
-            {%- if submission.current_testcase > 0 -%}
-                {{ _('Case #%(case)s', case=submission.current_testcase) }}
-            {%- else -%}
-                ...
-            {%- endif -%}
-        </div>
-    {% endif %}
-
-    {% if can_view %}
-        <div class="sub-prop"><div>
-            <a href="{{ url('submission_status', submission.id) }}">
-                <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
-            </a> ·
-            {% if not submission.language.file_only %}
-                <a href="{{ url('submission_source', submission.id) }}">
-                    <i class="fa fa-file-code-o fa-fw"></i><span class="label">{{ _('source') }}</span>
-                </a>
-            {% else %}
-                <a href="{{ url('submission_source_download', submission.id) }}">
-                    <i class="fa fa-download fa-fw"></i><span class="label">{{ _('download') }}</span>
-                </a>
-            {% endif %}
-            {% if perms.judge.rejudge_submission and can_edit %} ·
-                {% if not submission.is_locked %}
-                    <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false">
-                        <i class="fa fa-refresh fa-fw"></i><span class="label">{{ _('rejudge') }}</span>
-                    </a>
-                {% else %}
-                    <i class="fa fa-refresh fa-fw grey-icon"></i>
-                    <span class="label grey-label"
-                          title="{{ _('This submission has been locked, and cannot be rejudged.') }}">
-                        {{ _('locked') }}
-                    </span>
-                {% endif %}
-            {% endif %}
-            {% if can_edit %}
-                {% if not submission.language.file_only %} ·
-                    <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
-                        <i class="fa fa-files-o fa-fw"></i><span class="label">{{ _('diff') }}</span>
-                    </a>
-                {% endif %}
-                {% if request.user.is_superuser %} ·
-                    <a href="{{ url('admin:judge_submission_change', submission.id) }}">
-                        <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
-                    </a>
-                {% endif %}
-            {% endif %}
-        </div></div>
-    {% endif %}
-</div>
-
-
-<div class="sub-usage">
-    {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not can_view_testcase_status %}
-        <div class="time">---</div>
-        <div class="memory">---</div>
+    </td>
+{% endif %}
+<td class="sb-res">
+    {% if submission.status == 'G' %}
+        <span class="bp-chip info"><i class="fa fa-spinner fa-pulse"></i>{% if can_view_testcase_status and submission.current_testcase > 0 %} #{{ submission.current_testcase }}{% endif %}</span>
     {% else %}
-        {% if "TLE" != submission.result %}
-            <div title="{{ submission.time or 0 }}s" class="time">
-                {{ (submission.time or 0)|floatformat(2) }}s
-            </div>
-        {% else %}
-            <div class="time">---</div>
-        {% endif %}
-        <div class="memory">{{ submission.memory|kbdetailformat }}</div>
+        <span class="bp-chip {{ chip_class(submission.result_class) }}" title="{{ submission.long_status }}">{{ submission.short_status }}</span>
     {% endif %}
-</div>
+</td>
+<td class="bp-r sb-pts">
+    {%- if submission.is_graded -%}
+        {%- if submission.status in ('IE', 'CE', 'AB') -%}
+            —
+        {%- else -%}
+            {{ submission.case_points|floatformat(-3) }}{% if submission.case_points != submission.case_total %}<span class="bp-mute">/{{ submission.case_total|floatformat(0) }}</span>{% endif %}
+        {%- endif -%}
+    {%- else -%}
+        <i class="fa fa-spinner fa-pulse grading-spinner"></i>
+    {%- endif -%}
+</td>
+<td class="bp-r sb-run">
+    {%- if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not can_view_testcase_status or submission.result == 'TLE' -%}
+        —
+    {%- else -%}
+        <span title="{{ submission.time or 0 }}s">{{ (submission.time or 0)|floatformat(2) }} s</span>{% if submission.memory %} <span class="bp-mute">{{ submission.memory|kbdetailformat }}</span>{% endif %}
+    {%- endif -%}
+</td>
+<td class="bp-mute sb-lang">{{ submission.language.short_display_name }}</td>
+<td class="sb-act">
+    {% if can_view %}
+        {% if not submission.language.file_only %}
+            <a href="{{ url('submission_source', submission.id) }}" title="{{ _('source') }}"><i class="fa fa-file-code-o fa-fw"></i></a>
+        {% else %}
+            <a href="{{ url('submission_source_download', submission.id) }}" title="{{ _('download') }}"><i class="fa fa-download fa-fw"></i></a>
+        {% endif %}
+        {% if perms.judge.rejudge_submission and can_edit %}
+            {% if not submission.is_locked %}
+                <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false" title="{{ _('rejudge') }}"><i class="fa fa-refresh fa-fw"></i></a>
+            {% else %}
+                <i class="fa fa-refresh fa-fw grey-icon" title="{{ _('This submission has been locked, and cannot be rejudged.') }}"></i>
+            {% endif %}
+        {% endif %}
+        {% if can_edit %}
+            {% if not submission.language.file_only %}
+                <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}" title="{{ _('diff') }}"><i class="fa fa-files-o fa-fw"></i></a>
+            {% endif %}
+            {% if request.user.is_superuser %}
+                <a href="{{ url('admin:judge_submission_change', submission.id) }}" title="{{ _('admin') }}"><i class="fa fa-cog fa-fw"></i></a>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</td>

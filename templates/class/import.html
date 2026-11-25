@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    <div class="cx-head" style="padding-bottom:22px">
+        <div class="cx-crumb"><a href="{{ url('class_list') }}">{{ _('My classes') }}</a> / {{ _('Import a class list') }}</div>
+        <h1 class="cx-title" style="margin:8px 0 6px">{{ _('Import a class list') }}</h1>
+        <p style="margin:0;color:var(--c-muted);max-width:760px">{{ _('Students create their own accounts as usual. Then fill in a sheet (Google Sheets or Excel) with one row per student and upload it here to put them in their classes.') }}
+            {{ _('The first row must name the columns:') }} <code>{{ _('Full name') }}</code> ({{ _('optional') }}), <code>{{ _('Username') }}</code> {{ _('or') }} <code>Email</code>, <code>{{ _('Class') }}</code>, <code>{{ _('Role') }}</code> ({{ _('optional, default: student') }}).
+            <a href="{{ url('class_import_template') }}" style="color:var(--c-blue);font-weight:600">{{ _('Download the sample file') }}</a></p>
+    </div>
+    <div class="cx-cols">
+        <form method="post" enctype="multipart/form-data" class="cx-card" style="flex:1 1 360px;padding:22px 24px">
+            {% csrf_token %}
+            {{ form.non_field_errors() }}
+            {% for field in form %}
+                <div class="cx-field">
+                    {% if field.field.widget.input_type == 'checkbox' %}
+                        <label style="display:flex;gap:10px;align-items:center;font-weight:500">{{ field }} {{ field.label }}</label>
+                    {% else %}
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                    {% endif %}
+                    {% if field.errors %}<span class="cx-err">{{ field.errors|join(' ') }}</span>{% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="cx-btn" style="width:100%;height:46px;font-size:15px">{{ _('Check the file') }}</button>
+        </form>
+        <div style="flex:2 1 520px;min-width:0">
+            {% if report %}
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px">
+                    <div class="cx-card" style="margin:0;padding:14px 18px"><b style="font-size:26px">{{ report.rows }}</b><div class="cx-hint">{{ _('Rows read') }}</div></div>
+                    <div class="cx-card" style="margin:0;padding:14px 18px;background:var(--c-ok-s)"><b style="font-size:26px;color:var(--c-ok)">{{ report.added }}</b><div style="font-size:13px;color:var(--c-ok)">{% if dry_run %}{{ _('Would be added to a class') }}{% else %}{{ _('Added to a class') }}{% endif %}</div></div>
+                    <div class="cx-card" style="margin:0;padding:14px 18px;background:var(--c-warn-s)"><b style="font-size:26px;color:var(--c-warn)">{{ report.unmatched|length }}</b><div style="font-size:13px;color:var(--c-warn)">{{ _('No account found for') }}</div></div>
+                    <div class="cx-card" style="margin:0;padding:14px 18px;background:var(--c-bad-s)"><b style="font-size:26px;color:var(--c-bad)">{{ report.error_rows }}</b><div style="font-size:13px;color:var(--c-bad)">{{ _('Rows with errors') }}</div></div>
+                </div>
+                <section class="cx-card">
+                    <h2>{% if dry_run %}{{ _('Check result (nothing saved yet)') }}{% else %}{{ _('Import result') }}{% endif %}</h2>
+                    <div class="cx-scroll"><table class="cx-table">
+                        <thead><tr><th>{{ _('Row') }}</th><th>{{ _('Full name') }}</th><th>{{ _('Username') }}</th><th>{{ _('Class') }}</th><th>{{ _('Result') }}</th></tr></thead>
+                        <tbody>
+                        {% for l in report.lines[:300] %}
+                            <tr><td style="color:var(--c-muted)">{{ l.row }}</td><td style="font-weight:600">{{ l.name or '—' }}</td><td class="cx-mono">{{ l.username }}</td><td>{{ l.class }}</td><td><span class="cx-chip {{ {'ok': 'ok', 'warn': 'warn', 'bad': 'bad'}.get(l.tone, '') }}">{{ l.result }}</span></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table></div>
+                    {% if report.lines|length > 300 %}<div class="cx-hint" style="padding:10px 24px">{{ _('Showing the first 300 rows.') }}</div>{% endif %}
+                </section>
+                <section class="cx-card" style="padding:18px 22px">
+                    <ul style="margin:0 0 8px;padding-left:20px;line-height:1.8">
+                        <li>{{ _('Accounts matched') }}: <b>{{ report.matched }}</b></li>
+                        {% if report.created_classes %}<li>{% if dry_run %}{{ _('Classes that would be created') }}{% else %}{{ _('Classes created') }}{% endif %}: {{ report.created_classes|join(', ') }}</li>{% endif %}
+                        {% if report.classes %}<li>{{ _('Classes') }}: {{ report.classes|join(', ') }}</li>{% endif %}
+                    </ul>
+                    {% if report.unmatched %}<div class="cx-flash warning"><b>{{ _('No account found for') }} ({{ report.unmatched|length }}):</b> {{ report.unmatched[:50]|join(', ') }}{% if report.unmatched|length > 50 %} …{% endif %}<br><small>{{ _('These students have not created an account yet, or the username is misspelled.') }}</small></div>{% endif %}
+                    {% if report.ambiguous %}<div class="cx-flash warning"><b>{{ _('Several accounts share this email') }}:</b> {{ report.ambiguous[:30]|join(', ') }}</div>{% endif %}
+                    {% if report.no_class %}<div class="cx-flash warning"><b>{{ _('Rows without a usable class (rows)') }}:</b> {{ report.no_class[:50]|join(', ') }}<br><small>{{ _('The class does not exist, the name matches several classes, or "create classes" is off.') }}</small></div>{% endif %}
+                    {% if report.denied %}<div class="cx-flash warning"><b>{{ _('You may not change these classes') }}:</b> {{ report.denied[:30]|join(', ') }}</div>{% endif %}
+                    {% if dry_run %}<p style="margin:8px 0 0;color:var(--c-muted)">{{ _('If this looks right, upload the same file again with "Only check" unticked.') }}</p>{% endif %}
+                </section>
+            {% else %}
+                <div class="cx-card cx-empty">{{ _('The result of the check appears here.') }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>.cx .cx-field input[type=file], .cx .cx-field input[type=text], .cx .cx-field select { width: 100%; border: 1px solid var(--c-field); border-radius: 6px; padding: 8px 12px; font: inherit; font-size: 14px; background: var(--c-card); color: var(--c-ink); }</style>
+{% endblock %}

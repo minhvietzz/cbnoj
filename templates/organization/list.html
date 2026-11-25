@@ -1,10 +1,7 @@
 {% extends "base.html" %}
 {% block js_media %}
-    <script src="{{ static('libs/tablesorter.js') }}" type="text/javascript"></script>
     <script type="text/javascript">
         $(function () {
-            $('.organization-table').tablesorter({sortList: [[1, 1]]});
-
             $('input#show_all_orgs').click(function () {
                 ($('<form>').attr('action', window.location.pathname + '?' + $('form#show-all-orgs-form').serialize())
                     .append($('<input>').attr('type', 'hidden').attr('name', 'csrfmiddlewaretoken')
@@ -22,60 +19,80 @@
     {% include "organization/list-tabs.html" %}
 {% endblock %}
 
-{% macro org_table(name, queryset, show_admin_info=False) %}
-    <h4>{{ name }}</h4>
-    <table class="organization-table table striped">
-        <thead>
-            <tr>
-                <th{% if not show_admin_info %} style="width:70%"{% endif %}>{{ _('Name') }}</th>
-                <th{% if not show_admin_info %} style="width:15%"{% endif %}>{{ _('Points') }}</th>
-                <th>{{ _('Members') }}</th>
-                {% if show_admin_info %}
-                    <th>{{ _('Short name') }}</th>
-                    <th>{{ _('Slug') }}</th>
-                    <th>{{ _('Admins') }}</th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
+{% macro org_cards(queryset) %}
+    <div class="og-grid">
         {% for org in queryset %}
-            <tr>
-                <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
-                <td><a href="{{ org.get_users_url() }}">{{ org.performance_points|floatformat(2) }}</a></td>
-                <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
-                {% if show_admin_info %}
-                    <td>{{ org.short_name }}</td>
-                    <td>{{ org.slug }}</td>
-                    <td>{{ link_users(org.admins.all()) }}</td>
-                {% endif %}
-            </tr>
+            <a class="og-tile" href="{{ org.get_absolute_url() }}">
+                <div class="og-tile-h">
+                    <span class="og-badge navy">{{ org.short_name[:3] }}</span>
+                    <span class="og-chip {{ 'ok' if org.is_open else '' }}">{{ _('Open') if org.is_open else _('By request') }}</span>
+                </div>
+                <div class="og-tile-b"><span class="og-tile-name">{{ org.name }}</span></div>
+                <div class="og-tile-f">
+                    <span><b>{{ org.member_count }}</b>{{ _('members') }}</span>
+                    <span><b>{{ org.performance_points|floatformat(0) }}</b>{{ _('Points') }}</span>
+                </div>
+            </a>
         {% endfor %}
-        </tbody>
-    </table>
+    </div>
+{% endmacro %}
+
+{% macro org_table(queryset, show_admin_info=False) %}
+    <section class="og-card og-flush">
+        <div class="og-scroll">
+            <table class="og-table organization-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th class="r">{{ _('Member list') }}</th>
+                        <th class="r">{{ _('Points') }}</th>
+                        {% if show_admin_info %}
+                            <th>{{ _('Short name') }}</th>
+                            <th>{{ _('Slug') }}</th>
+                            <th>{{ _('Admins') }}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for org in queryset %}
+                        <tr>
+                            <td class="organization-name"><a href="{{ org.get_absolute_url() }}" class="og-strong">{{ org.name }}</a></td>
+                            <td class="r"><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
+                            <td class="r">{{ org.performance_points|floatformat(0) }}</td>
+                            {% if show_admin_info %}
+                                <td>{{ org.short_name }}</td>
+                                <td class="og-mono">{{ org.slug }}</td>
+                                <td>{{ link_users(org.admins.all()) }}</td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="{{ 6 if show_admin_info else 3 }}" class="og-empty">{{ _('No organizations found.') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 {% endmacro %}
 
 {% block body %}
-    <div class="content-description">
-        {% if user_organizations %}
-            {{ org_table(_('Your organizations'), user_organizations, show_admin_info=show_all_orgs) }}
-        {% endif %}
+<div class="og neo-flat">
+    {% if user_organizations %}
+        <h2 class="og-h2">{{ _('Your organizations') }}</h2>
+        {{ org_cards(user_organizations) }}
+    {% endif %}
 
-        {% if (page_obj and page_obj.has_other_pages()) or show_all_orgs %}
-            <div class="top-pagination-bar">
-                {% if page_obj and page_obj.has_other_pages() %}
-                    {% include "list-pages.html" %}
-                {% endif %}
-                {% if show_all_orgs %}
-                    <div style="display: flex; align-items: center; margin-left: auto;">
-                        <form id="search-form" name="form" action="" method="get">
-                            <input id="search" type="text" name="search" value="{{ search_query or '' }}"
-                                placeholder="{{ _('Search organization...') }}">
-                        </form>
-                    </div>
-                {% endif %}
-            </div>
+    <div class="og-toolbar og-between">
+        <h2 class="og-h2">{{ _('All organizations') }}</h2>
+        {% if show_all_orgs %}
+            <form id="search-form" name="form" action="" method="get">
+                <input id="search" type="search" name="search" value="{{ search_query or '' }}" class="og-input og-search"
+                       placeholder="{{ _('Search organization...') }}">
+            </form>
         {% endif %}
-
-        {{ org_table(_('All organizations'), organizations, show_admin_info=show_all_orgs) }}
     </div>
+    {{ org_table(organizations, show_admin_info=show_all_orgs) }}
+    {% if page_obj and page_obj.has_other_pages() %}
+        <div class="og-pages">{% include "list-pages.html" %}</div>
+    {% endif %}
+</div>
 {% endblock %}

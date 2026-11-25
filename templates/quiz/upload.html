@@ -54,6 +54,7 @@ C. Đà Nẵng
                 {% csrf_token %}
                 {% if replacing %}<input type="hidden" name="replace" value="{{ replacing.slug }}">{% endif %}
                 {% if org %}<input type="hidden" name="org" value="{{ org.id }}">{% endif %}
+                {% if classroom %}<input type="hidden" name="class" value="{{ classroom.id }}">{% endif %}
                 {% if form.non_field_errors() %}<div class="qz-problems"><ul>{% for e in form.non_field_errors() %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
                 {% for field in form %}
                     {% if field.field.widget.input_type == 'checkbox' %}

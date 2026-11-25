@@ -12,11 +12,19 @@
     </script>
 {% endblock %}
 
+{% block title_row %}{% include "organization/requests/_head.html" %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
 {% block body %}
-    <form action="" method="post" class="form-area">
+<div class="og neo-flat">
+    <form action="" method="post" class="og-card og-form">
         {% csrf_token %}
-        <p><label for="{{ form.reason.id_for_label }}"><b>{{ _('Your reason for joining:') }}</b></label></p>
-        <p>{{ form.reason }}</p>
-        <button type="submit">{{ _('Request!') }}</button>
+        <div class="og-field">
+            <label for="{{ form.reason.id_for_label }}">{{ _('Your reason for joining:') }}</label>
+            {{ form.reason }}
+            {% for e in form.reason.errors %}<span class="og-err">{{ e }}</span>{% endfor %}
+        </div>
+        <div class="og-form-foot"><button type="submit" class="og-btn">{{ _('Request!') }}</button></div>
     </form>
+</div>
 {% endblock %}

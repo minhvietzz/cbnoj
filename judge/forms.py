@@ -59,7 +59,7 @@ class ProfileForm(ModelForm):
     class Meta:
         model = Profile
         fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme',
-                  'site_theme', 'problem_ui', 'template_cpp', 'template_c', 'template_py', 'template_pas',
+                  'site_theme', 'template_cpp', 'template_c', 'template_py', 'template_pas',
                   'user_script']
         widgets = {
             'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
@@ -67,7 +67,6 @@ class ProfileForm(ModelForm):
             'language': Select2Widget(attrs={'style': 'width:200px'}),
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
             'site_theme': Select2Widget(attrs={'style': 'width:200px'}),
-            'problem_ui': Select2Widget(attrs={'style': 'width:260px'}),
             'template_cpp': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
             'template_c': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),
             'template_py': forms.Textarea(attrs={'rows': 10, 'spellcheck': 'false', 'class': 'ep-code'}),

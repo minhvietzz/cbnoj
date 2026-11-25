@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+<meta charset="utf-8">
+<title>{{ _('Class report') }} {{ classroom.name }}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+    @page { size: A4; margin: 16mm 14mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Be Vietnam Pro', 'Times New Roman', serif; color: #15171C; font-size: 12.5px; line-height: 1.45; }
+    .bar-top { padding: 10px 16px; background: #F6F5F1; border-bottom: 1px solid #DAD8D0; display: flex; gap: 12px; align-items: center; }
+    .bar-top button, .bar-top a { padding: 8px 16px; border: 0; border-radius: 6px; background: #1F3FBF; color: #fff; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .bar-top a.g { background: #fff; color: #15171C; border: 1px solid #15171C; }
+    .sheet { max-width: 190mm; margin: 0 auto; padding: 10px 0 20px; }
+    .head { display: flex; justify-content: space-between; text-align: center; margin-bottom: 14px; }
+    .head div { width: 46%; font-weight: 700; text-transform: uppercase; font-size: 12px; }
+    .head small { display: block; text-transform: none; font-weight: 600; }
+    h1 { text-align: center; font-size: 17px; margin: 10px 0 2px; text-transform: uppercase; }
+    .sub { text-align: center; color: #5E6470; margin-bottom: 12px; }
+    .boxes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
+    .box { border: 1px solid #15171C; padding: 6px 8px; text-align: center; }
+    .box b { display: block; font-size: 18px; }
+    .box span { font-size: 11px; color: #5E6470; }
+    h2 { font-size: 13px; margin: 14px 0 6px; text-transform: uppercase; }
+    .chart { display: flex; align-items: flex-end; gap: 4px; height: 90px; border-bottom: 2px solid #15171C; }
+    .chart div { flex: 1; text-align: center; font-size: 10px; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; }
+    .chart i { display: block; background: #1F3FBF; }
+    .chart-l { display: flex; gap: 4px; font-size: 10px; color: #5E6470; }
+    .chart-l span { flex: 1; text-align: center; }
+    .tier { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+    .tier span { width: 90px; font-weight: 600; }
+    .tier .t { flex: 1; height: 9px; background: #EDEBE4; }
+    .tier .t i { display: block; height: 9px; background: #15171C; }
+    table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; padding: 5px 6px; border-bottom: 2px solid #15171C; }
+    td { padding: 4px 6px; border-bottom: 1px solid #DAD8D0; font-variant-numeric: tabular-nums; }
+    td.n, th.n { text-align: center; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    .sign { display: flex; justify-content: space-between; margin-top: 26px; text-align: center; }
+    .sign div { width: 44%; }
+    .sign i { display: block; height: 56px; }
+    .student { break-before: page; }
+    .student:first-of-type { break-before: auto; }
+    @media print { .bar-top { display: none; } .sheet { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="bar-top"><button onclick="window.print()">{{ _('Print / Save as PDF') }}</button>
+    {% if per_student %}<a class="g" href="{{ url('class_report_print', classroom.slug) }}">{{ _('Class report') }}</a>{% else %}<a class="g" href="{{ url('class_report_print', classroom.slug) }}?students=1">{{ _('Sheet for every student') }}</a>{% endif %}
+    <a class="g" href="{{ url('class_grades', classroom.slug) }}">{{ _('Back') }}</a></div>
+<div class="sheet">
+{% if not per_student %}
+    <div class="head"><div>{{ school or SITE_NAME }}<small>{{ classroom.name }}</small></div><div>{{ _('SOCIALIST REPUBLIC OF VIET NAM') }}<small>{{ _('Independence - Freedom - Happiness') }}</small></div></div>
+    <h1>{{ _('Class results report') }}</h1>
+    <div class="sub">{{ classroom.name }}{% if classroom.school_year %} · {{ classroom.school_year }}{% endif %}{% if classroom.subject %} · {{ classroom.subject.name }}{% endif %} · {{ today|date('d/m/Y') }}</div>
+    <div class="boxes">
+        <div class="box"><b>{{ summary.students }}</b><span>{{ _('students') }}</span></div>
+        <div class="box"><b>{{ ('%.2f'|format(summary.average))|replace('.', ',') if summary.average is not none else '—' }}</b><span>{{ _('Average') }}</span></div>
+        <div class="box"><b>{{ ('%.2f'|format(summary.median))|replace('.', ',') if summary.median is not none else '—' }}</b><span>{{ _('Median') }}</span></div>
+        <div class="box"><b>{{ ('%.2f'|format(summary.top))|replace('.', ',') if summary.top is not none else '—' }}</b><span>{{ _('Highest') }}</span></div>
+        <div class="box"><b>{{ summary.pass_pct if summary.pass_pct is not none else '—' }}{% if summary.pass_pct is not none %}%{% endif %}</b><span>{{ _('From 5.0 up') }}</span></div>
+    </div>
+    <h2>{{ _('Score distribution') }}</h2>
+    <div class="chart">{% for n in bins %}<div>{{ n if n else '' }}<i style="height:{{ (80 * n / bin_max)|int }}px"></i></div>{% endfor %}</div>
+    <div class="chart-l">{% for n in bins %}<span>{{ loop.index0 }}–{{ loop.index }}</span>{% endfor %}</div>
+    <h2>{{ _('Grades') }}</h2>
+    {% for t in tiers %}<div class="tier"><span>{{ t.label }}</span><div class="t"><i style="width:{{ t.pct }}%"></i></div><b>{{ t.count }} ({{ t.pct }}%)</b></div>{% endfor %}
+    <h2>{{ _('Grade book') }}</h2>
+    <table>
+        <thead><tr><th class="n">#</th><th>{{ _('Student') }}</th>{% for a in assignments %}<th class="n">{{ a.title|truncate(16) }}</th>{% endfor %}<th class="n">{{ _('Average') }}</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+            <tr><td class="n">{{ loop.index }}</td><td>{{ r.profile.user.get_full_name() or r.profile.user.username }}<br><small style="color:#5E6470">{{ r.profile.user.username }}</small></td>
+                {% for v in r.cells %}<td class="n">{% if v is not none %}{{ ('%.2f'|format(v))|replace('.', ',') }}{% endif %}</td>{% endfor %}
+                <td class="n"><b>{% if r.average is not none %}{{ ('%.2f'|format(r.average))|replace('.', ',') }}{% endif %}</b></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="sign"><div>{{ _('Class teacher') }}<i></i></div><div>{{ today|date('d/m/Y') }}<br>{{ _('Principal') }}<i></i></div></div>
+{% else %}
+    {% for r in rows %}
+        <section class="student">
+            <h1>{{ _('Result sheet') }}</h1>
+            <div class="sub">{{ classroom.name }}{% if classroom.school_year %} · {{ classroom.school_year }}{% endif %}</div>
+            <p><b>{{ r.profile.user.get_full_name() or r.profile.user.username }}</b> ({{ r.profile.user.username }}) · {{ _('Average') }}: <b>{% if r.average is not none %}{{ ('%.2f'|format(r.average))|replace('.', ',') }}{% else %}—{% endif %}</b></p>
+            <table>
+                <thead><tr><th>{{ _('Assignment') }}</th><th class="n">{{ _('Due') }}</th><th class="n">{{ _('Score') }}</th></tr></thead>
+                <tbody>
+                {% for a in assignments %}
+                    <tr><td>{{ a.title }}</td><td class="n">{% if a.due %}{{ a.due|date('d/m/Y') }}{% else %}—{% endif %}</td><td class="n">{% if r.cells[loop.index0] is not none %}{{ ('%.2f'|format(r.cells[loop.index0]))|replace('.', ',') }}{% else %}—{% endif %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endfor %}
+{% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    <div class="cx-cols">
+        <div class="cx-main">
+            {% for it in items %}
+                {% set a = it.a %}
+                <div class="cx-card" style="padding:18px 22px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between">
+                    <div style="display:flex;gap:16px;align-items:center;min-width:0;flex:1 1 280px">
+                        <span class="cx-badge" style="background:{{ 'var(--c-blue)' if a.kind == 'problem' else 'var(--c-ok)' }};width:44px;height:44px;font-size:13px">{{ 'LT' if a.kind == 'problem' else 'TN' }}</span>
+                        <div style="min-width:0">
+                            <div style="font-weight:700;font-size:16px">{{ a.title }}</div>
+                            <div style="font-size:13px;color:var(--c-muted)">
+                                {% if a.kind == 'problem' %}{{ it.problems|length }} {{ _('problems') }}: {% for p in it.problems[:5] %}<a href="{{ p.get_absolute_url() }}" style="font-family:'JetBrains Mono',monospace">{{ p.code }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+                                {% elif a.quiz %}<a href="{{ a.quiz.get_absolute_url() }}">{{ a.quiz.title }}</a>{% endif %}
+                            </div>
+                            {% if a.description %}<div style="font-size:13px;margin-top:4px;white-space:pre-line">{{ a.description }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+                        {% if can_staff %}
+                            <div style="width:150px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--c-muted)"><span>{{ _('Submitted count') }}</span><b style="color:var(--c-ink)">{{ it.done }}/{{ it.total }}</b></div><div class="cx-bar"><i style="width:{{ it.pct }}%"></i></div></div>
+                        {% elif it.mine %}
+                            <div style="width:150px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--c-muted)"><span>{{ _('My progress') }}</span><b style="color:var(--c-ink)">{{ (it.mine.done * 100)|int }}%</b></div><div class="cx-bar"><i style="width:{{ (it.mine.done * 100)|int }}%"></i></div></div>
+                        {% endif %}
+                        <span class="cx-chip {{ 'bad' if it.overdue else ('warn' if a.due else '') }}">{% if a.due %}{{ _('Due') }} {{ a.due|date('d/m H:i') }}{% else %}{{ _('No deadline') }}{% endif %}</span>
+                        {% if can_staff %}<form method="post" action="{{ url('class_assignment_delete', classroom.slug) }}" data-confirm="{{ _('Delete this assignment?') }}" onsubmit="return confirm(this.dataset.confirm)">{% csrf_token %}<input type="hidden" name="assignment" value="{{ a.id }}"><button class="cx-btn ghost sm" type="submit">{{ _('Delete') }}</button></form>{% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="cx-card cx-empty">{{ _('No assignments yet.') }}</div>
+            {% endfor %}
+        </div>
+        {% if can_staff %}
+        <aside class="cx-side">
+            <form method="post" class="cx-card" id="new-assignment" style="padding:20px 22px">
+                {% csrf_token %}
+                <h3 style="margin:0 0 14px;font-size:18px;font-weight:700">{{ _('New assignment') }}</h3>
+                {{ form.non_field_errors() }}
+                {% for field in form %}
+                    <div class="cx-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {% if field.name == 'due' %}<input type="text" name="due" id="{{ field.id_for_label }}" class="cx-input" placeholder="29/11/2026 23:59" value="{{ field.value() or '' }}">{% else %}{{ field }}{% endif %}
+                        {% if field.help_text %}<span class="cx-hint">{{ field.help_text }}</span>{% endif %}
+                        {% if field.errors %}<span class="cx-err">{{ field.errors|join(' ') }}</span>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="cx-btn" style="width:100%">{{ _('Assign to the whole class') }}</button>
+                <p class="cx-hint" style="margin:10px 0 0">{{ _('Students get a notification, and a reminder a day before the deadline.') }}</p>
+            </form>
+        </aside>
+        {% endif %}
+    </div>
+</div>
+<style>.cx .cx-field input[type=text], .cx .cx-field select, .cx .cx-field textarea { width: 100%; border: 1px solid var(--c-field); border-radius: 6px; padding: 0 12px; font: inherit; font-size: 14px; background: var(--c-card); color: var(--c-ink); height: 42px; } .cx .cx-field textarea { height: auto; padding: 10px 12px; }</style>
+{% endblock %}

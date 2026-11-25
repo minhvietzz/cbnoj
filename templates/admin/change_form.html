@@ -1,0 +1,38 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls cbn_admin %}
+{% block content_title %}
+<div class="cba-head"><h1>{% if add %}Thêm {% cba_title opts "one" %}{% else %}{{ original|truncatechars:60 }}{% endif %}</h1>
+{% if change and not is_popup %}<span class="cba-head-tools">{% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}<a class="cba-ghost" href="{% add_preserved_filters history_url %}">Lịch sử</a>{% if has_absolute_url %}<a class="cba-ghost" href="{{ absolute_url }}">Xem trên web</a>{% endif %}</span>{% endif %}</div>
+{% endblock %}
+{% block object-tools %}{% endblock %}
+{% block after_related_objects %}{{ block.super }}
+<script>
+(function () {
+    var form = document.getElementById('{{ opts.model_name }}_form');
+    if (!form) return;
+    var heads = [];
+    form.querySelectorAll('fieldset.module > h2, .inline-group > h2, .inline-group .tabular > h2, .js-inline-admin-formset > h2').forEach(function (h) {
+        var t = (h.textContent || '').trim();
+        if (t) heads.push([t, h]);
+    });
+    if (heads.length < 3) return;
+    var bar = document.createElement('nav');
+    bar.className = 'cba-jump';
+    bar.setAttribute('aria-label', 'Nhảy tới nhóm');
+    heads.forEach(function (x, i) {
+        var h = x[1], box = h.closest('fieldset, .inline-group') || h;
+        box.id = box.id || ('cba-sec-' + i);
+        var a = document.createElement('a');
+        a.href = '#' + box.id;
+        a.textContent = x[0].replace(/\s+/g, ' ').slice(0, 40);
+        a.addEventListener('click', function (e) {
+            e.preventDefault();
+            box.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+        bar.appendChild(a);
+    });
+    var anchor = form.firstElementChild;
+    form.insertBefore(bar, anchor);
+})();
+</script>
+{% endblock %}

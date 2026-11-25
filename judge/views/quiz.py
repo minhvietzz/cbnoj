@@ -4,6 +4,7 @@ import unicodedata
 from datetime import timedelta
 
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -20,9 +21,10 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 
-from judge.models import Course, CourseLesson, Organization, Profile, Quiz, QuizAttempt, QuizOption, QuizQuestion
+from judge.models import Classroom, Course, CourseLesson, Organization, Profile, Quiz, QuizAttempt, QuizOption, \
+    QuizQuestion, Subject
 from judge.models.course import EDITABLE_ROLES
-from judge.utils import quiz_grading, seb
+from judge.utils import exam_variants, quiz_grading, seb
 from judge.utils.question_bank import add_to_bank, split_tags
 from judge.utils.quiz_parser import QuizFormatError, build_template_docx, parse_quiz_file, parse_quiz_lines
 from judge.utils.views import TitleMixin
@@ -135,6 +137,24 @@ class QuizList(QuizTabsMixin, TitleMixin, ListView):
         return 'all'
 
     def get_queryset(self):
+        queryset = self.visible_queryset()
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(Q(title__icontains=search) | Q(description__icontains=search))
+        subject = self.request.GET.get('subject', '').strip()[:64]
+        if subject:
+            queryset = queryset.filter(self.subject_filter(subject))
+        return Quiz.objects.filter(id__in=queryset.values('id')).annotate(
+            qcount=Count('questions', distinct=True)).select_related('creator__user', 'subject').order_by('-created')
+
+    @staticmethod
+    def subject_filter(subject):
+        subject_filter = Q(subject__slug=subject)
+        if subject == getattr(settings, 'DEFAULT_SUBJECT_SLUG', 'tin-hoc'):
+            subject_filter |= Q(subject__isnull=True)
+        return subject_filter
+
+    def visible_queryset(self):
         user = self.request.user
         queryset = Quiz.objects.all()
         if self.tab == 'mine':
@@ -151,11 +171,7 @@ class QuizList(QuizTabsMixin, TitleMixin, ListView):
             else:
                 visible |= exams & Q(is_public=True, organizations__isnull=True)
             queryset = queryset.filter(visible)
-        search = self.request.GET.get('search', '').strip()
-        if search:
-            queryset = queryset.filter(Q(title__icontains=search) | Q(description__icontains=search))
-        return Quiz.objects.filter(id__in=queryset.values('id')).annotate(
-            qcount=Count('questions', distinct=True)).select_related('creator__user').order_by('-created')
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -166,7 +182,14 @@ class QuizList(QuizTabsMixin, TitleMixin, ListView):
             quiz.my_best = scores.get(quiz.id)
         context['quizzes'] = quizzes
         context['search'] = self.request.GET.get('search', '')
-        context['page_prefix'] = '?tab=%s&search=%s&page=' % (self.tab, context['search'])
+        context['subject'] = self.request.GET.get('subject', '').strip()[:64]
+        context['subjects'] = list(Subject.objects.filter(is_active=True))
+        visible = self.visible_queryset()
+        context['subject_counts'] = [(sub, Quiz.objects.filter(id__in=visible.values('id'))
+                                      .filter(self.subject_filter(sub.slug)).count()) for sub in context['subjects']]
+        context['total_visible'] = Quiz.objects.filter(id__in=visible.values('id')).count()
+        context['page_prefix'] = '?tab=%s&search=%s&subject=%s&page=' % (
+            self.tab, context['search'], context['subject'])
         context.update(self.tab_context(self.tab))
         return context
 
@@ -269,6 +292,7 @@ class QuizStart(LoginRequiredMixin, QuizMixin, View):
             running = QuizAttempt.objects.create(
                 quiz=quiz, user=profile, seed=random.randint(1, 2 ** 31 - 1), ip=client_ip(request),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')[:255])
+            exam_variants.assign_variant(running)   # no-op unless the teacher generated exam codes
         return HttpResponseRedirect(reverse('quiz_attempt', args=(quiz.slug, running.id)))
 
 
@@ -346,7 +370,7 @@ class QuizAttemptView(LoginRequiredMixin, AttemptMixin, TitleMixin, TemplateView
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         attempt = self.attempt
-        questions = attempt.ordered_questions()
+        questions = exam_variants.apply_variant(attempt, attempt.ordered_questions())
         saved = attempt.answers or {}
         for question in questions:
             value = saved.get(str(question.id))
@@ -359,7 +383,8 @@ class QuizAttemptView(LoginRequiredMixin, AttemptMixin, TitleMixin, TemplateView
             if text and text not in passages:
                 passages.append(text)
             question.passage_no = passages.index(text) + 1 if text else 0
-        context.update({'quiz': self.quiz, 'attempt': attempt, 'questions': questions, 'passages': passages,
+        context.update({'quiz': self.quiz, 'attempt': exam_variants.shown_attempt(attempt),
+                        'questions': questions, 'passages': passages,
                         'seconds_left': attempt.seconds_left,
                         'violations_left': (max(0, self.quiz.max_violations - attempt.violation_count)
                                             if self.quiz.max_violations else None)})
@@ -415,7 +440,7 @@ class QuizResult(AttemptMixin, TitleMixin, TemplateView):
         context['answers_pending'] = self.quiz.show_answers and not released and not context['can_manage']
         review = []
         if reveal:
-            questions = attempt.ordered_questions()
+            questions = exam_variants.apply_variant(attempt, attempt.ordered_questions())
             for number, question in enumerate(questions, 1):
                 given = attempt.answers.get(str(question.id))
                 chosen = set(given) if isinstance(given, list) else set()
@@ -506,7 +531,7 @@ class QuizUpload(LoginRequiredMixin, TitleMixin, FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if (request.user.is_authenticated and not can_upload(request.user) and
-                not can_upload_for_org(request.user, self.org)):
+                not can_upload_for_org(request.user, self.org) and self.classroom is None):
             raise PermissionDenied(_('You do not have permission to upload quizzes.'))
         return super().dispatch(request, *args, **kwargs)
 
@@ -515,6 +540,15 @@ class QuizUpload(LoginRequiredMixin, TitleMixin, FormView):
         """The organization this exam is being uploaded for (?org=<id>), if any."""
         org_id = self.request.GET.get('org') or self.request.POST.get('org')
         return Organization.objects.filter(id=org_id).first() if org_id and org_id.isdigit() else None
+
+    @cached_property
+    def classroom(self):
+        """The class this exam is being created for (?class=<id>); only people who manage that class may."""
+        class_id = self.request.GET.get('class') or self.request.POST.get('class')
+        if not class_id or not class_id.isdigit() or not self.request.user.is_authenticated:
+            return None
+        classroom = Classroom.objects.filter(id=class_id).first()
+        return classroom if classroom is not None and classroom.is_managed_by(self.request.user) else None
 
     @cached_property
     def replacing(self):
@@ -542,13 +576,14 @@ class QuizUpload(LoginRequiredMixin, TitleMixin, FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'replacing': self.replacing, 'can_upload': True, 'tab': 'upload', 'org': self.org})
+        context.update({'replacing': self.replacing, 'can_upload': True, 'tab': 'upload', 'org': self.org,
+                        'classroom': self.classroom})
         return context
 
     def form_valid(self, form):
         parsed = form.parsed
         context = {'form': form, 'replacing': self.replacing, 'parsed': parsed, 'title': self.get_title(),
-                   'can_upload': True, 'tab': 'upload', 'org': self.org}
+                   'can_upload': True, 'tab': 'upload', 'org': self.org, 'classroom': self.classroom}
         if parsed['errors']:
             return render(self.request, 'quiz/upload.html', context)
         data = form.cleaned_data
@@ -561,6 +596,7 @@ class QuizUpload(LoginRequiredMixin, TitleMixin, FormView):
             'to_bank': data['to_bank'], 'bank_tags': data['bank_tags'],
             'replace': self.replacing.slug if self.replacing else None,
             'org': self.org.id if self.org and can_upload_for_org(self.request.user, self.org) else None,
+            'class': self.classroom.id if self.classroom else None,
             'source': parsed['source'], 'questions': parsed['questions'],
         }
         context.update({'draft': self.request.session[DRAFT_KEY], 'preview': True,
@@ -585,7 +621,10 @@ class QuizUploadConfirm(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         draft = request.session.pop(DRAFT_KEY, None)
         org = Organization.objects.filter(id=draft.get('org')).first() if draft and draft.get('org') else None
-        if not can_upload(request.user) and not can_upload_for_org(request.user, org):
+        classroom = Classroom.objects.filter(id=draft.get('class')).first() if draft and draft.get('class') else None
+        if classroom is not None and not classroom.is_managed_by(request.user):
+            classroom = None
+        if not can_upload(request.user) and not can_upload_for_org(request.user, org) and classroom is None:
             raise PermissionDenied()
         if not draft:
             return HttpResponseRedirect(reverse('quiz_upload'))
@@ -613,7 +652,14 @@ class QuizUploadConfirm(LoginRequiredMixin, View):
             quiz.is_public = draft['is_public']
             quiz.lesson = lesson
             quiz.source_name = draft['source']
-            if org is not None and not draft['replace']:
+            if classroom is not None and not draft['replace']:
+                # An exam held in a class: only the class members see it; the window is a placeholder.
+                start = timezone.now().replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
+                quiz.mode = 'exam'
+                quiz.start_time = start
+                quiz.end_time = start + timedelta(minutes=(draft['time_limit'] or 45) + 15)
+                quiz.is_public = False
+            elif org is not None and not draft['replace']:
                 # An exam held in an organization behaves like an organization contest: it has a time window and
                 # only members see it. The window is a placeholder the organizer adjusts on the manage page.
                 start = timezone.now().replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
@@ -622,7 +668,9 @@ class QuizUploadConfirm(LoginRequiredMixin, View):
                 quiz.end_time = start + timedelta(minutes=(draft['time_limit'] or 45) + 15)
                 quiz.is_public = False
             quiz.save()
-            if org is not None and not draft['replace']:
+            if classroom is not None and not draft['replace']:
+                quiz.classes.add(classroom)
+            elif org is not None and not draft['replace']:
                 quiz.organizations.add(org)
             banks = None
             if draft.get('to_bank'):
@@ -631,6 +679,10 @@ class QuizUploadConfirm(LoginRequiredMixin, View):
                 messages.success(request, _('%(added)d new questions were added to the question bank '
                                             '(%(skipped)d already existed).') % {'added': added, 'skipped': skipped})
             save_questions(quiz, draft['questions'], banks)
+        if classroom is not None and not draft['replace']:
+            messages.success(request, _('The exam was created for %(org)s. Set its start and end time here.')
+                             % {'org': classroom.name})
+            return HttpResponseRedirect(reverse('quiz_manage', args=(quiz.slug,)))
         if org is not None and not draft['replace']:
             messages.success(request, _('The exam was created for %(org)s. Set its start and end time here.')
                              % {'org': org.name})

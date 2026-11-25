@@ -1,0 +1,3581 @@
+// CBNoj "paper" interface (the signed-off drawings in dc2/project/*.dc.html).
+//
+// Loaded LAST and ONLY when the `cbn_ui=1` cookie (or settings.CBN_UI_DEFAULT) is on: base.html then adds
+// `class="cbn-ui"` to <body> and links this file. Every rule is prefixed with `body.cbn-ui`, so the old look is
+// untouched when the switch is off. Colours/spacing are CSS variables; the dark variant is plain CSS too
+// (body[data-theme="dark"] and body[data-theme="auto"] + prefers-color-scheme).
+//
+// Build: ./make_style.sh (sass -> sass_processed/cbn-theme.css -> postcss/autoprefixer -> resources/cbn-theme.css).
+
+// ===================================================================================================================
+// 1. Tokens
+// ===================================================================================================================
+body.cbn-ui {
+    --c-bg: #f6f5f1;
+    --c-card: #fff;
+    --c-soft: #faf9f6;
+    --c-line: #dad8d0;
+    --c-line2: #efede6;
+    --c-input: #bdbab0;
+    --c-ink: #15171c;
+    --c-mute: #5e6470;
+    --c-blue: #1f3fbf;
+    --c-blue-h: #17307f;
+    --c-blue-soft: #e8ecfa;
+    --c-navy: #0f1a44;
+    --c-navy-line: #2b3868;
+    --c-navy-text: #c5cbe4;
+    --c-gold: #f2b705;
+    --c-track: #e9e7e0;
+    --c-ok-bg: #e3f2ea;
+    --c-ok-fg: #1e7a4d;
+    --c-bad-bg: #fbe9e7;
+    --c-bad-fg: #b3261e;
+    --c-warn-bg: #fff1d6;
+    --c-warn-fg: #8a5300;
+    --c-ce-bg: #edebe4;
+    --c-ce-fg: #4a4f5a;
+    --c-menu-shadow: 0 8px 24px rgba(15, 26, 68, 0.14);
+    --cbn-sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --cbn-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+body.cbn-ui[data-theme="dark"] {
+    --c-bg: #12141a;
+    --c-card: #1b1e27;
+    --c-soft: #20242f;
+    --c-line: #343846;
+    --c-line2: #2a2e3a;
+    --c-input: #4a4f5e;
+    --c-ink: #eceef4;
+    --c-mute: #9aa1b2;
+    --c-blue: #5b78f0;
+    --c-blue-h: #7c93f4;
+    --c-blue-soft: #232c52;
+    --c-navy: #0a1230;
+    --c-track: #2a2e3a;
+    --c-ok-bg: #173a2a;
+    --c-ok-fg: #6fd3a0;
+    --c-bad-bg: #4a2220;
+    --c-bad-fg: #ff9d94;
+    --c-warn-bg: #4a3712;
+    --c-warn-fg: #f3c36b;
+    --c-ce-bg: #2a2e3a;
+    --c-ce-fg: #b9bfcc;
+    --c-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+    body.cbn-ui[data-theme="auto"] {
+        --c-bg: #12141a;
+        --c-card: #1b1e27;
+        --c-soft: #20242f;
+        --c-line: #343846;
+        --c-line2: #2a2e3a;
+        --c-input: #4a4f5e;
+        --c-ink: #eceef4;
+        --c-mute: #9aa1b2;
+        --c-blue: #5b78f0;
+        --c-blue-h: #7c93f4;
+        --c-blue-soft: #232c52;
+        --c-navy: #0a1230;
+        --c-track: #2a2e3a;
+        --c-ok-bg: #173a2a;
+        --c-ok-fg: #6fd3a0;
+        --c-bad-bg: #4a2220;
+        --c-bad-fg: #ff9d94;
+        --c-warn-bg: #4a3712;
+        --c-warn-fg: #f3c36b;
+        --c-ce-bg: #2a2e3a;
+        --c-ce-fg: #b9bfcc;
+        --c-menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+}
+
+// ===================================================================================================================
+// 2. Base
+// ===================================================================================================================
+body.cbn-ui {
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font-family: var(--cbn-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+    overflow-x: clip;
+}
+
+body.cbn-ui a {
+    color: var(--c-blue);
+}
+
+body.cbn-ui a:hover {
+    color: var(--c-blue-h);
+}
+
+body.cbn-ui h1, body.cbn-ui h2, body.cbn-ui h3, body.cbn-ui h4 {
+    font-family: var(--cbn-sans);
+}
+
+body.cbn-ui #page-container {
+    max-width: none;
+    padding: 0 0 56px;
+    background: transparent;
+    border: 0;
+}
+
+body.cbn-ui #page-container > br {
+    display: none;
+}
+
+body.cbn-ui #content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    box-sizing: border-box;
+}
+
+body.cbn-ui #content-body {
+    padding-bottom: 0;
+    padding-top: 28px;
+}
+
+body.cbn-ui code, body.cbn-ui kbd, body.cbn-ui samp, body.cbn-ui pre {
+    font-family: var(--cbn-mono);
+}
+
+@media (max-width: 760px) {
+    body.cbn-ui #content {
+        padding: 0 16px;
+    }
+}
+
+// ===================================================================================================================
+// 3. Top bar (Nav.dc.html): navy, 64px, gold logo chip, gold 3px underline on the current item
+// ===================================================================================================================
+body.cbn-ui nav#navigation {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    height: auto !important;
+    min-height: 0;
+    background: var(--c-navy);
+    font-family: var(--cbn-sans);
+    z-index: 500;
+}
+
+body.cbn-ui nav#navigation #nav-shadow {
+    display: none;
+}
+
+body.cbn-ui nav#navigation #nav-container {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 28px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1200px;
+    height: 64px !important;
+    margin: 0 auto;
+    padding: 0 32px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.cbn-ui nav#navigation .nav-brand,
+body.cbn-ui nav#navigation .nav-brand:link,
+body.cbn-ui nav#navigation .nav-brand:visited {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 10px;
+    margin: 0;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0;
+}
+
+body.cbn-ui nav#navigation .nav-brand img {
+    height: 36px;
+    width: auto;
+    padding: 0;
+}
+
+body.cbn-ui nav#navigation .nav-brand img.nav-brand-mark {
+    display: block;
+    height: 40px;
+    width: auto;
+    padding: 0;
+}
+
+body.cbn-ui nav#navigation .nav-brand-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--c-gold);
+    color: #0f1a44;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0;
+    box-shadow: none;
+}
+
+body.cbn-ui nav#navigation .nav-brand-name {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+// --- item list ---
+body.cbn-ui nav#navigation ul#nav-list {
+    flex: 1 1 0;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 2px;
+    min-width: 0;
+    height: auto;
+    width: auto;
+    position: static;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    height: auto;
+    text-transform: none;
+    font-family: var(--cbn-sans);
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li.home-nav-element {
+    display: none;
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li > a,
+body.cbn-ui nav#navigation ul#nav-list > li > a:link,
+body.cbn-ui nav#navigation ul#nav-list > li > a:visited {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    height: auto;
+    margin: 0;
+    padding: 0 13px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-navy-text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li > a:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li > a.active,
+body.cbn-ui nav#navigation ul#nav-list > li > a.active:link,
+body.cbn-ui nav#navigation ul#nav-list > li > a.active:hover {
+    padding: 0 13px;
+    border: 0;
+    border-bottom: 3px solid var(--c-gold);
+    background: transparent;
+    color: #fff;
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation ul#nav-list .nav-expand {
+    display: none !important;
+}
+
+// caret on items that have a sub-menu
+body.cbn-ui nav#navigation ul#nav-list > li:has(> ul) > a::after {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 2px;
+    border-right: 1.6px solid currentColor;
+    border-bottom: 1.6px solid currentColor;
+    transform: rotate(45deg);
+}
+
+// --- drop-down menus: white, 1px #BDBAB0, the only shadowed element ---
+body.cbn-ui nav#navigation ul#nav-list li > ul {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: none;
+    min-width: 220px;
+    margin: 0 !important;
+    padding: 4px 0;
+    background: var(--c-card);
+    border: 1px solid var(--c-input);
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+    box-shadow: var(--c-menu-shadow);
+    color: var(--c-ink);
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li {
+    display: block;
+    position: relative;
+    text-transform: none;
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a,
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a:link,
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a:visited,
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > button {
+    display: block;
+    margin: 0;
+    padding: 11px 18px !important;
+    border: 0;
+    border-top: 1px solid var(--c-line2);
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li:first-child > a {
+    border-top: 0;
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a:hover {
+    background: var(--c-bg);
+    color: var(--c-blue);
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a.active,
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > a.active:link {
+    border-left: 0;
+    border-top: 1px solid var(--c-line2);
+    background: transparent;
+    color: var(--c-blue);
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li:first-child > a.active {
+    border-top: 0;
+}
+
+body.cbn-ui nav#navigation ul#nav-list li > ul > li > ul {
+    top: 0;
+    left: 100%;
+    border-top: 1px solid var(--c-input);
+    border-radius: 6px;
+}
+
+// --- tools on the right: search / language / bell / user ---
+body.cbn-ui nav#navigation #user-links {
+    position: static;
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 0;
+    margin-left: auto;
+    padding: 0;
+    color: var(--c-navy-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation #user-links > ul {
+    margin: 0;
+    padding: 0;
+}
+
+body.cbn-ui nav#navigation #user-links a,
+body.cbn-ui nav#navigation #user-links a:link,
+body.cbn-ui nav#navigation #user-links a:visited {
+    color: var(--c-navy-text);
+}
+
+body.cbn-ui nav#navigation #user-links #cbn-search,
+body.cbn-ui nav#navigation #user-links #report-issue,
+body.cbn-ui nav#navigation #user-links #theme-toggle,
+body.cbn-ui nav#navigation #user-links > a[href*="misc_config"],
+body.cbn-ui nav#navigation #user-links #notification-nav > li > a.notification-bell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    margin: 0 !important;
+    padding: 0;
+    border: 1px solid var(--c-navy-line);
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-navy-text);
+    font-size: 15px;
+}
+
+body.cbn-ui nav#navigation #user-links #cbn-search:hover,
+body.cbn-ui nav#navigation #user-links #report-issue:hover,
+body.cbn-ui nav#navigation #user-links #theme-toggle:hover,
+body.cbn-ui nav#navigation #user-links #notification-nav > li > a.notification-bell:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+body.cbn-ui nav#navigation #user-links #report-issue .hide-on-small {
+    display: none;
+}
+
+body.cbn-ui nav#navigation #user-links #report-issue .fa,
+body.cbn-ui nav#navigation #user-links .fa-gear {
+    color: var(--c-navy-text) !important;
+}
+
+body.cbn-ui nav#navigation #user-links #theme-toggle img {
+    width: 18px;
+    height: 18px;
+    filter: invert(85%);
+}
+
+// language: the drawing shows plain "VI" text instead of a flag
+body.cbn-ui nav#navigation #user-links #flag_en,
+body.cbn-ui nav#navigation #user-links #flag_vi {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-navy-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation #user-links #flag_en img,
+body.cbn-ui nav#navigation #user-links #flag_vi img {
+    display: none;
+}
+
+body.cbn-ui nav#navigation #user-links .cbn-lang {
+    display: inline;
+}
+
+body.cbn-ui nav#navigation #user-links #notification-nav {
+    margin: 0;
+    padding: 0;
+}
+
+body.cbn-ui nav#navigation #user-links .notification-bell {
+    position: relative;
+}
+
+body.cbn-ui nav#navigation .nav-divider {
+    display: none;
+}
+
+// user chip: square avatar + user name only (the greeting is hidden with font-size 0)
+body.cbn-ui nav#navigation #user-links > ul > li > a > span:not(.notification-badge) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 200px;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0;
+}
+
+body.cbn-ui nav#navigation #user-links > ul > li > a > span > img {
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+body.cbn-ui nav#navigation #user-links > ul > li > a > span > span {
+    color: #fff;
+    font-size: 0;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.cbn-ui nav#navigation #user-links > ul > li > a > span > span b,
+body.cbn-ui nav#navigation #user-links > ul > li > a > span > span strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+}
+
+// user / notification drop-downs open to the left
+body.cbn-ui nav#navigation #user-links ul ul {
+    top: 100%;
+    right: 0;
+    left: auto;
+    min-width: 190px;
+    margin: 8px 0 0 !important;
+    padding: 4px 0;
+    background: var(--c-card);
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    box-shadow: var(--c-menu-shadow);
+}
+
+// invisible bridge over the 8px gap (and a little sideways) so the pointer can
+// travel from the avatar to the menu without it closing
+body.cbn-ui nav#navigation #user-links ul ul::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    right: -12px;
+    top: -14px;
+    height: 14px;
+}
+
+body.cbn-ui nav#navigation #user-links ul ul li {
+    display: block;
+    text-transform: none;
+}
+
+body.cbn-ui nav#navigation #user-links ul ul li a,
+body.cbn-ui nav#navigation #user-links ul ul li a:link,
+body.cbn-ui nav#navigation #user-links ul ul li a:visited,
+body.cbn-ui nav#navigation #user-links ul ul li button {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 18px !important;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-ink) !important;
+    font-family: var(--cbn-sans);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+}
+
+body.cbn-ui nav#navigation #user-links ul ul li a:hover,
+body.cbn-ui nav#navigation #user-links ul ul li button:hover {
+    background: var(--c-bg);
+    color: var(--c-blue) !important;
+}
+
+// the notification panel keeps its own markup; only make sure it sits on the card colour
+body.cbn-ui nav#navigation #user-links ul.notification-panel {
+    background: var(--c-card);
+    color: var(--c-ink);
+}
+
+// not logged in: "Log in" ghost + "Sign up" gold; the word "or" between them is hidden
+body.cbn-ui nav#navigation #user-links .anon {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0;
+}
+
+body.cbn-ui nav#navigation #user-links .anon a,
+body.cbn-ui nav#navigation #user-links .anon a:link,
+body.cbn-ui nav#navigation #user-links .anon a:visited {
+    display: inline-block;
+    padding: 8px 14px;
+    border: 1px solid var(--c-navy-line);
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation #user-links .anon a b {
+    font-weight: 600;
+}
+
+body.cbn-ui nav#navigation #user-links .anon a + a,
+body.cbn-ui nav#navigation #user-links .anon a + a:link,
+body.cbn-ui nav#navigation #user-links .anon a + a:visited {
+    border-color: var(--c-gold);
+    background: var(--c-gold);
+    color: #0f1a44;
+}
+
+// --- collapsed (phones / not enough room): hamburger + full-width panel ---
+body.cbn-ui nav#navigation #navicon {
+    display: none;
+    order: 0;
+    float: none;
+    align-self: center;
+    box-sizing: border-box;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--c-navy-line);
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: #fff;
+    font-size: 16px;
+    line-height: 34px;
+    text-align: center;
+}
+
+@mixin cbn-nav-collapsed {
+    #navicon {
+        display: block;
+    }
+
+    #nav-container {
+        position: static;
+        gap: 14px;
+    }
+
+    ul#nav-list {
+        display: none;
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        width: auto;
+        max-height: calc(100vh - 64px);
+        overflow-y: auto;
+        padding: 8px 20px 16px;
+        background: var(--c-navy);
+        border-top: 1px solid var(--c-navy-line);
+        z-index: 600;
+
+        &.show-list {
+            display: flex;
+        }
+
+        > li {
+            display: block;
+
+            > a, > a:link, > a:visited, > a.active, > a.active:link {
+                padding: 12px 4px;
+                border: 0;
+                border-bottom: 1px solid var(--c-navy-line);
+
+                &.active {
+                    color: var(--c-gold);
+                }
+            }
+
+            > a::after {
+                margin-left: auto;
+            }
+
+            li > ul, &:hover > ul, & > ul {
+                position: static;
+                min-width: 0;
+                margin: 0 !important;
+                padding: 0 0 0 14px;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            > ul.show-list {
+                display: block !important;
+            }
+
+            > ul > li > a, > ul > li > a:link, > ul > li > a:visited {
+                color: var(--c-navy-text) !important;
+                border-top: 0;
+                padding: 10px 4px !important;
+            }
+
+            > ul > li > a:hover {
+                background: transparent;
+                color: #fff !important;
+            }
+        }
+    }
+
+    #user-links {
+        gap: 8px;
+
+        #report-issue, #cbn-search, #flag_en, #flag_vi, > a[href*="misc_config"] {
+            display: none;
+        }
+    }
+}
+
+body.cbn-ui nav#navigation.nav-overflow {
+    @include cbn-nav-collapsed;
+}
+
+@media (max-width: 760px) {
+    body.cbn-ui nav#navigation {
+        @include cbn-nav-collapsed;
+
+        #nav-container {
+            padding: 0 16px;
+        }
+
+        #user-links > ul > li > a > span > span {
+            display: none;
+        }
+    }
+}
+
+// ===================================================================================================================
+// 4. Page header: white band, 32px title, 3px underlined tabs (Problems.dc.html, Ranking.dc.html ...)
+// ===================================================================================================================
+// full-bleed white band painted behind the title (and tabs) with a pseudo-element
+body.cbn-ui #content > h2,
+body.cbn-ui .tabs {
+    position: relative;
+    isolation: isolate;
+}
+
+body.cbn-ui #content > h2::after,
+body.cbn-ui .tabs::before {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    height: auto;
+    background: var(--c-card);
+    border-bottom: 1px solid var(--c-line);
+}
+
+body.cbn-ui #content > h2 {
+    display: block !important;
+    margin: 0 0 28px;
+    padding: 28px 0;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--c-ink);
+}
+
+body.cbn-ui #content > h2::before {
+    content: none !important;
+    display: none !important;
+}
+
+body.cbn-ui #content > hr {
+    display: none;
+}
+
+body.cbn-ui .tabs {
+    margin: 0 0 4px;
+    padding: 28px 0 0;
+}
+
+body.cbn-ui .tabs h2 {
+    margin: 0 0 20px;
+    padding: 0;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .tabs h2::before, body.cbn-ui .tabs h2::after {
+    content: none !important;
+    display: none !important;
+}
+
+body.cbn-ui .tabs > ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0 28px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.cbn-ui .tabs > ul > li {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+body.cbn-ui .tabs > ul > li > a,
+body.cbn-ui .tabs > ul > li > a:link,
+body.cbn-ui .tabs > ul > li > a:visited,
+body.cbn-ui .tabs > ul > li > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 0;
+    padding: 0 0 12px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-mute);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+body.cbn-ui .tabs > ul > li > a:hover {
+    background: transparent;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .tabs > ul > li.active > a,
+body.cbn-ui .tabs > ul > li.active > a:hover,
+body.cbn-ui .tabs > ul > li.active > a:focus,
+body.cbn-ui .tabs > ul > li.active > span {
+    border-bottom-color: var(--c-blue);
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-ink);
+    font-weight: 700;
+}
+
+body.cbn-ui .tabs .tab-icon {
+    display: none;
+}
+
+// the .tabs block is followed by a 28px gap before the page body
+body.cbn-ui .tabs + #content-body,
+body.cbn-ui .tabs ~ #content-body {
+    padding-top: 28px;
+}
+
+@media (max-width: 760px) {
+    body.cbn-ui #content > h2, body.cbn-ui .tabs h2 {
+        font-size: 26px;
+    }
+
+    body.cbn-ui .tabs > ul {
+        gap: 0 18px;
+    }
+}
+
+// ===================================================================================================================
+// 5. Buttons, inputs, forms
+// ===================================================================================================================
+body.cbn-ui .button, body.cbn-ui button, body.cbn-ui input[type=submit],
+body.cbn-ui input[type=button], body.cbn-ui a.button {
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--c-blue);
+    box-shadow: none;
+    color: #fff;
+    font-family: var(--cbn-sans);
+    font-size: 14px;
+    font-weight: 600;
+    transform: none;
+    text-shadow: none;
+}
+
+body.cbn-ui .button:hover, body.cbn-ui button:hover, body.cbn-ui input[type=submit]:hover,
+body.cbn-ui input[type=button]:hover, body.cbn-ui a.button:hover {
+    background: var(--c-blue-h);
+    color: #fff;
+    filter: none;
+    transform: none;
+}
+
+body.cbn-ui .button:active, body.cbn-ui button:active, body.cbn-ui input[type=submit]:active,
+body.cbn-ui a.button:active {
+    transform: none;
+    box-shadow: none;
+}
+
+body.cbn-ui .button.disabled {
+    background: var(--c-ce-bg) !important;
+    color: var(--c-mute) !important;
+    box-shadow: none;
+}
+
+// buttons that live inside the nav menus keep their flat look
+body.cbn-ui nav#navigation button {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+body.cbn-ui input[type=text], body.cbn-ui input[type=password], body.cbn-ui input[type=email],
+body.cbn-ui input[type=number], body.cbn-ui input[type=search], body.cbn-ui input[type=url],
+body.cbn-ui input[type=date], body.cbn-ui input[type=datetime-local], body.cbn-ui select, body.cbn-ui textarea {
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 6px 12px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+    color: var(--c-ink);
+    font-family: var(--cbn-sans);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+body.cbn-ui textarea {
+    min-height: 0;
+}
+
+body.cbn-ui input[type=text]:hover, body.cbn-ui input[type=password]:hover, body.cbn-ui input[type=email]:hover,
+body.cbn-ui input[type=number]:hover, body.cbn-ui input[type=search]:hover, body.cbn-ui select:hover,
+body.cbn-ui textarea:hover {
+    border-color: var(--c-input);
+}
+
+body.cbn-ui input[type=text]:focus, body.cbn-ui input[type=password]:focus, body.cbn-ui input[type=email]:focus,
+body.cbn-ui input[type=number]:focus, body.cbn-ui input[type=search]:focus, body.cbn-ui input[type=url]:focus,
+body.cbn-ui input[type=date]:focus, body.cbn-ui select:focus, body.cbn-ui textarea:focus {
+    border-color: var(--c-blue);
+    outline: 2px solid var(--c-blue);
+    outline-offset: -1px;
+    box-shadow: none;
+}
+
+body.cbn-ui input[type=checkbox], body.cbn-ui input[type=radio] {
+    accent-color: var(--c-blue);
+}
+
+// select2 (kept working; only colours / radius / height follow the drawings)
+body.cbn-ui .select2-container .select2-selection--single {
+    height: 40px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 38px;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .select2-container .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+}
+
+body.cbn-ui .select2-container .select2-selection--multiple {
+    min-height: 40px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .select2-container--focus .select2-selection,
+body.cbn-ui .select2-container--open .select2-selection {
+    border-color: var(--c-blue);
+}
+
+body.cbn-ui .select2-dropdown {
+    border: 1px solid var(--c-input);
+    background: var(--c-card);
+    color: var(--c-ink);
+}
+
+body.cbn-ui label {
+    font-family: var(--cbn-sans);
+}
+
+// ===================================================================================================================
+// 6. Tables, pagination, cards, alerts
+// ===================================================================================================================
+body.cbn-ui .table {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--c-card);
+    box-shadow: none;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+}
+
+body.cbn-ui .table th {
+    padding: 10px 16px;
+    border: 0;
+    border-bottom: 2px solid var(--c-ink);
+    background: transparent;
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+    height: auto;
+}
+
+body.cbn-ui .table th a, body.cbn-ui .table th a:link, body.cbn-ui .table th a:visited {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .table td {
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--c-line);
+    font-size: 14px;
+}
+
+body.cbn-ui .table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+body.cbn-ui .table tbody tr:hover td {
+    background: var(--c-soft);
+}
+
+body.cbn-ui .table.striped tbody tr:nth-child(even) td {
+    background: transparent;
+}
+
+body.cbn-ui ul.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin: 16px 0;
+    padding: 0;
+}
+
+body.cbn-ui ul.pagination > li > a, body.cbn-ui ul.pagination > li > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 36px;
+    height: 36px;
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+body.cbn-ui ul.pagination > li > a:hover {
+    background: var(--c-soft);
+    color: var(--c-ink);
+}
+
+body.cbn-ui ul.pagination > li.active-page > a, body.cbn-ui ul.pagination > li.active-page > span,
+body.cbn-ui ul.pagination > li.current-page > a, body.cbn-ui ul.pagination > li.active > a,
+body.cbn-ui ul.pagination > li.active > span {
+    border-color: var(--c-blue);
+    background: var(--c-blue);
+    box-shadow: none;
+    color: #fff;
+    font-weight: 600;
+}
+
+body.cbn-ui ul.pagination > li.disabled-page > span, body.cbn-ui ul.pagination > li.disabled-page > a {
+    border-color: transparent;
+    background: transparent;
+    color: var(--c-mute);
+}
+
+// cards: flat, 1px border, 6px corners, no shadow
+body.cbn-ui .sidebox, body.cbn-ui section.post, body.cbn-ui .problem-rows, body.cbn-ui #submissions-table,
+body.cbn-ui .hm-me, body.cbn-ui .hm-goal, body.cbn-ui .hm-streak, body.cbn-ui .hm-card,
+body.cbn-ui .hm-stats > div, body.cbn-ui .cl-card, body.cbn-ui .cl-seg, body.cbn-ui .course-card,
+body.cbn-ui .lesson-card, body.cbn-ui .lesson-doc, body.cbn-ui .up-card, body.cbn-ui .up-tile,
+body.cbn-ui .gr-stat, body.cbn-ui .gr-card, body.cbn-ui .ct-card, body.cbn-ui .ep-card,
+body.cbn-ui .submission-info, body.cbn-ui .rk-pod, body.cbn-ui .course-search,
+body.cbn-ui #content-left:has(.content-description),
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) .info-float {
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    box-shadow: none;
+    transform: none;
+}
+
+body.cbn-ui .cl-card:hover, body.cbn-ui .course-card:hover, body.cbn-ui .hm-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+// plain pages: the body is one card (same exclusion list as the old theme)
+body.cbn-ui #content-body:not(:has(.sidebox, #content-left, .blog-content, .magazine-layout, .cl-bar, .neo-flat, .up, .lesson-doc, .course-hero, .course-grid, .course-search, .course-empty, .gr-stats, .gr-card, .ct-hero, .ep, .rs-grid, .rp-head)),
+body.cbn-ui #content-left:not(.problems) {
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    box-shadow: none;
+    padding: 24px 28px;
+}
+
+body.cbn-ui #content-body:not(:has(.sidebox, #content-left, .blog-content, .magazine-layout, .cl-bar, .neo-flat, .up, .lesson-doc, .course-hero, .course-grid, .course-search, .course-empty, .gr-stats, .gr-card, .ct-hero, .ep, .rs-grid, .rp-head)) {
+    margin-top: 28px;
+    padding-top: 24px;
+}
+
+body.cbn-ui #content-left.users, body.cbn-ui #content-left:has(#submissions-table) {
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+body.cbn-ui .sidebox h3,
+body.cbn-ui .sidebox:nth-of-type(4n+2) h3, body.cbn-ui .sidebox:nth-of-type(4n+3) h3,
+body.cbn-ui .sidebox:nth-of-type(4n+4) h3 {
+    padding: 16px 20px 6px;
+    background: transparent;
+    color: var(--c-ink);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .sidebox h3 .fa {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .sidebox .sidebox-content {
+    padding: 8px 20px 16px;
+}
+
+body.cbn-ui .blog-content.sidebox {
+    background: transparent;
+    border: 0;
+}
+
+body.cbn-ui .alert, body.cbn-ui .form-area, body.cbn-ui details, body.cbn-ui #form-errors,
+body.cbn-ui .form-errors {
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .alert {
+    border: 1px solid var(--c-line);
+}
+
+body.cbn-ui .alert-info {
+    background: var(--c-blue-soft);
+    border-color: transparent;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .alert-success {
+    background: var(--c-ok-bg);
+    border-color: transparent;
+    color: var(--c-ok-fg);
+}
+
+body.cbn-ui .alert-warning {
+    background: var(--c-warn-bg);
+    border-color: transparent;
+    color: var(--c-warn-fg);
+}
+
+body.cbn-ui .alert-danger, body.cbn-ui .alert-error {
+    background: var(--c-bad-bg);
+    border-color: transparent;
+    color: var(--c-bad-fg);
+}
+
+// ===================================================================================================================
+// 7. Status chips (4px): AC green / WA red / TLE amber / CE grey
+// ===================================================================================================================
+body.cbn-ui .sub-result, body.cbn-ui .cl-state, body.cbn-ui .cl-chip, body.cbn-ui .ct-chip,
+body.cbn-ui .cat-pill, body.cbn-ui .type-tag, body.cbn-ui .cbadge {
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-result {
+    width: auto;
+    min-width: 64px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+    box-shadow: none;
+    color: var(--c-ce-fg);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-result.AC {
+    background: var(--c-ok-bg);
+    color: var(--c-ok-fg);
+    box-shadow: none;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-result._AC,
+body.cbn-ui #submissions-table .submission-row .sub-result.TLE,
+body.cbn-ui #submissions-table .submission-row .sub-result.MLE,
+body.cbn-ui #submissions-table .submission-row .sub-result.OLE,
+body.cbn-ui #submissions-table .submission-row .sub-result.IR,
+body.cbn-ui #submissions-table .submission-row .sub-result.RTE,
+body.cbn-ui #submissions-table .submission-row .sub-result.OTH {
+    background: var(--c-warn-bg);
+    color: var(--c-warn-fg);
+    box-shadow: none;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-result.WA,
+body.cbn-ui #submissions-table .submission-row .sub-result.IE {
+    background: var(--c-bad-bg);
+    color: var(--c-bad-fg);
+    box-shadow: none;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-result.CE,
+body.cbn-ui #submissions-table .submission-row .sub-result.AB,
+body.cbn-ui #submissions-table .submission-row .sub-result.QU,
+body.cbn-ui #submissions-table .submission-row .sub-result.G {
+    background: var(--c-ce-bg);
+    color: var(--c-ce-fg);
+    box-shadow: none;
+}
+
+// ===================================================================================================================
+// 8. Problem list (Problems.dc.html): filter column on the left, one card of rows on the right
+// ===================================================================================================================
+@media (min-width: 700px) {
+    body.cbn-ui #common-content:has(> #content-right.problems) {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 24px;
+    }
+
+    body.cbn-ui #content-right.problems {
+        flex: 0 0 240px;
+        max-width: 240px;
+        padding: 0;
+    }
+
+    body.cbn-ui #content-left.problems {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+    }
+}
+
+body.cbn-ui #content-right.problems .info-float {
+    top: 84px;
+}
+
+body.cbn-ui #content-right.problems .sidebox {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: var(--c-ink);
+    margin: 0 0 20px;
+}
+
+body.cbn-ui #content-right.problems .sidebox::before, body.cbn-ui #content-right.problems .sidebox::after {
+    display: none;
+}
+
+body.cbn-ui #content-right.problems .sidebox h3 {
+    position: static;
+    max-width: none;
+    padding: 0 0 8px;
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.cbn-ui #content-right.problems .sidebox h3 .fa {
+    position: static;
+    display: inline-block;
+    width: auto;
+    height: auto;
+    background: transparent;
+    color: var(--c-mute);
+    font-size: 12px;
+    line-height: inherit;
+    margin-left: 4px;
+}
+
+body.cbn-ui #content-right.problems .sidebox .sidebox-content {
+    padding: 0;
+}
+
+body.cbn-ui #content-right.problems .sidebox label,
+body.cbn-ui #content-right.problems .sidebox label[for="category"],
+body.cbn-ui #content-right.problems .sidebox label[for="type"],
+body.cbn-ui #content-right.problems .sidebox .form-label {
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+body.cbn-ui #content-right.problems .sidebox label i {
+    font-style: normal;
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.cbn-ui #content-right.problems .sidebox form > div {
+    margin-bottom: 14px;
+}
+
+body.cbn-ui #content-right.problems .sidebox input[type=text],
+body.cbn-ui #content-right.problems .sidebox select {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    box-shadow: none;
+    color: var(--c-ink);
+    background: var(--c-card);
+}
+
+body.cbn-ui #content-right.problems .sidebox .select2-container .select2-selection {
+    border-radius: 6px;
+}
+
+body.cbn-ui #content-right.problems .sidebox input[type=checkbox] {
+    accent-color: var(--c-blue);
+}
+
+body.cbn-ui #content-right.problems .sidebox #point-slider {
+    background: var(--c-track);
+}
+
+body.cbn-ui #content-right.problems .sidebox #point-slider .noUi-connect {
+    background: var(--c-blue);
+}
+
+body.cbn-ui #content-right.problems .sidebox #point-slider .noUi-handle {
+    border-color: var(--c-blue);
+    background: var(--c-card);
+}
+
+body.cbn-ui #content-right.problems .sidebox .form-submit-group {
+    display: flex;
+    gap: 10px;
+}
+
+body.cbn-ui #content-right.problems .sidebox .form-submit-group .button {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 6px;
+    box-shadow: none;
+    font-size: 14px;
+    text-align: center;
+}
+
+body.cbn-ui #content-right.problems .sidebox #go {
+    background: var(--c-blue);
+    color: #fff !important;
+    box-shadow: none;
+}
+
+body.cbn-ui #content-right.problems .sidebox #random {
+    background: transparent;
+    border: 1px solid var(--c-ink);
+    padding: 9px 0;
+    color: var(--c-ink) !important;
+    box-shadow: none;
+}
+
+// rows: caps header with a 2px ink rule, 1px rows
+body.cbn-ui .problem-rows {
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.cbn-ui .problem-rows .pr-head {
+    padding: 10px 16px;
+    border-bottom: 2px solid var(--c-ink);
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+body.cbn-ui .problem-rows .pr-head a, body.cbn-ui .problem-rows .pr-head a:link,
+body.cbn-ui .problem-rows .pr-head a:visited {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .problem-rows .pr-row {
+    gap: 14px;
+    padding: 12px 16px;
+    border: 0;
+    border-top: 1px solid var(--c-line);
+    border-radius: 0;
+    background: transparent;
+    font-size: 14px;
+}
+
+body.cbn-ui .problem-rows .pr-head + .pr-row {
+    border-top: 0;
+}
+
+body.cbn-ui .problem-rows .pr-row:hover {
+    background: var(--c-soft);
+    transform: none;
+}
+
+body.cbn-ui .problem-rows .pr-name, body.cbn-ui .problem-rows .pr-name:link,
+body.cbn-ui .problem-rows .pr-name:visited {
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.cbn-ui .problem-rows .pr-name:hover {
+    color: var(--c-blue);
+}
+
+body.cbn-ui .problem-rows .pr-code, body.cbn-ui .problem-rows .pr-code:link,
+body.cbn-ui .problem-rows .pr-code:visited {
+    background: transparent;
+    padding: 0;
+    color: var(--c-mute);
+    font: 500 13px var(--cbn-mono);
+}
+
+body.cbn-ui .problem-rows .cat-pill, body.cbn-ui .problem-rows .type-tag {
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+body.cbn-ui .problem-rows .pr-pbubble {
+    min-width: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    color: var(--c-ink) !important;
+    font: 500 14px var(--cbn-sans);
+}
+
+body.cbn-ui .problem-rows .pr-ac, body.cbn-ui .problem-rows .pr-users {
+    color: var(--c-ink);
+    font: 500 14px var(--cbn-sans);
+}
+
+body.cbn-ui .problem-rows .pr-bar {
+    height: 4px;
+    background: var(--c-track);
+}
+
+body.cbn-ui .problem-rows .pr-bar i {
+    height: 4px;
+    background: var(--c-blue);
+}
+
+// status bubble becomes the 10px dot of the drawing
+body.cbn-ui .problem-rows .pr-bubble {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: none;
+    font-size: 0;
+}
+
+body.cbn-ui .problem-rows .pr-bubble i {
+    display: none;
+}
+
+body.cbn-ui .problem-rows .pr-bubble.pr-done {
+    background: var(--c-ok-fg);
+    box-shadow: none;
+}
+
+body.cbn-ui .problem-rows .pr-bubble.pr-tried {
+    background: var(--c-bad-fg);
+    box-shadow: none;
+}
+
+body.cbn-ui .problem-rows .pr-bubble.pr-todo {
+    background: var(--c-line);
+    border: 0;
+    box-shadow: none;
+}
+
+// ===================================================================================================================
+// 9. Problem page (ProblemDetail.dc.html)
+// ===================================================================================================================
+body.cbn-ui .problem-title h2 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+body.cbn-ui .problem-title .view-pdf, body.cbn-ui .problem-title .view-pdf:link,
+body.cbn-ui .problem-title .view-pdf:visited {
+    padding: 8px 14px;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .problem-title .button.clarify {
+    background: var(--c-card);
+    border: 1px solid var(--c-ink);
+    color: var(--c-ink) !important;
+    box-shadow: none;
+}
+
+body.cbn-ui #content-left:has(.content-description) {
+    padding: 28px 32px;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+body.cbn-ui #content-left:has(.content-description) pre {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    font-family: var(--cbn-mono);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+body.cbn-ui .content-description h2, body.cbn-ui .content-description h3 {
+    margin: 22px 0 8px;
+    color: var(--c-ink);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .content-description code {
+    font-family: var(--cbn-mono);
+}
+
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) .info-float > .button.full,
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) .info-float > a.button {
+    padding: 11px 0;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) .info-float hr {
+    border-top-color: var(--c-line);
+}
+
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) .problem-info-entry .pi-value {
+    font-family: var(--cbn-sans);
+    font-weight: 700;
+}
+
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) #problem-types,
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) #allowed-langs,
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) #available-judges,
+body.cbn-ui #common-content > #content-right:has(.problem-info-entry) #contest-problems-list {
+    border-radius: 6px;
+    background: var(--c-soft);
+}
+
+// ===================================================================================================================
+// 10. Submissions (Submissions.dc.html): one card, caps rows, chips
+// ===================================================================================================================
+body.cbn-ui #submissions-table {
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.cbn-ui #submissions-table .submission-row {
+    padding: 11px 16px;
+    border: 0;
+    border-top: 1px solid var(--c-line);
+    border-radius: 0;
+    background: transparent;
+    font-size: 14px;
+}
+
+body.cbn-ui #submissions-table .submission-row:first-child {
+    border-top: 0;
+}
+
+body.cbn-ui #submissions-table .submission-row:hover {
+    background: var(--c-soft);
+    transform: none;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-main .sub-info .name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-main .sub-testcase,
+body.cbn-ui #submissions-table .submission-row .sub-main .sub-prop > div a {
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+}
+
+body.cbn-ui #submissions-table .submission-row .sub-usage {
+    font-family: var(--cbn-mono);
+    color: var(--c-mute);
+}
+
+body.cbn-ui .sub-head .sub-title, body.cbn-ui .sub-hero .sub-title {
+    text-decoration: none;
+}
+
+// ===================================================================================================================
+// 11. Ranking (Ranking.dc.html): three podium cards (1-2-3) and a table
+// ===================================================================================================================
+body.cbn-ui .rk-podium {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: stretch;
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+body.cbn-ui .rk-pod, body.cbn-ui .rk-pod:link, body.cbn-ui .rk-pod:visited {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0 16px;
+    min-width: 0;
+    padding: 18px 20px;
+    border-top: 4px solid var(--c-line);
+    text-align: left;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .rk-pod-1 { order: 1; border-top-color: var(--c-gold); }
+body.cbn-ui .rk-pod-2 { order: 2; border-top-color: #9aa1b2; }
+body.cbn-ui .rk-pod-3 { order: 3; border-top-color: #b87333; }
+
+body.cbn-ui .rk-pod-block, body.cbn-ui .rk-pod-1 .rk-pod-block, body.cbn-ui .rk-pod-3 .rk-pod-block {
+    order: -1;
+    width: auto;
+    min-width: 30px;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-ink);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+body.cbn-ui .rk-pod-av, body.cbn-ui .rk-pod-1 .rk-pod-av, body.cbn-ui .rk-pod-3 .rk-pod-av {
+    order: 0;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .rk-pod-name {
+    order: 1;
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+body.cbn-ui .rk-pod-user {
+    order: 2;
+    font-size: 13px;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .rk-pod-pts {
+    order: 3;
+    margin-left: auto;
+    color: var(--c-ink);
+    font: 700 14px var(--cbn-sans);
+}
+
+body.cbn-ui .users-table td:first-child {
+    font-weight: 700;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .users-table td.user-points, body.cbn-ui .users-table td:last-child {
+    font: 700 14px var(--cbn-sans);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .users-table .user-name a {
+    font-weight: 600;
+}
+
+body.cbn-ui .users-table .personal-info {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+// ===================================================================================================================
+// 12. Contests (Contests.dc.html): "live" card with a 6px blue edge + one table-like list
+// ===================================================================================================================
+body.cbn-ui .cl-hero, body.cbn-ui .ct-hero, body.cbn-ui .hm-banner, body.cbn-ui .course-hero, body.cbn-ui .up-hero {
+    background: var(--c-navy);
+    border: 0;
+    border-radius: 6px;
+    box-shadow: none;
+    color: #fff;
+}
+
+body.cbn-ui .hm-banner-art, body.cbn-ui .hm-banner::before {
+    display: none;
+}
+
+body.cbn-ui .cl-bar {
+    margin-bottom: 20px;
+}
+
+body.cbn-ui .cl-seg {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    gap: 28px;
+}
+
+body.cbn-ui .cl-seg-btn, body.cbn-ui .cl-seg-btn:hover {
+    min-height: 0;
+    padding: 0 0 12px;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-mute) !important;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+body.cbn-ui .cl-seg-btn.active {
+    border-bottom-color: var(--c-blue);
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-ink) !important;
+    font-weight: 700;
+}
+
+body.cbn-ui .cl-seg-btn span {
+    border-radius: 4px;
+    background: transparent;
+    color: var(--c-mute);
+    padding: 0;
+}
+
+body.cbn-ui .cl-seg-btn.active span {
+    background: transparent;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .cl-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+body.cbn-ui .cl-card {
+    padding: 20px 22px;
+}
+
+body.cbn-ui .cl-live {
+    border-left: 6px solid var(--c-blue);
+}
+
+body.cbn-ui .cl-card-title {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+body.cbn-ui .cl-state-live {
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+}
+
+body.cbn-ui .cl-btn, body.cbn-ui a.cl-btn, body.cbn-ui input[type=submit].cl-btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .cl-btn-go, body.cbn-ui input[type=submit].cl-btn-go {
+    background: var(--c-blue);
+    color: #fff;
+}
+
+body.cbn-ui .cl-btn-soft, body.cbn-ui a.cl-btn-soft, body.cbn-ui input[type=submit].cl-btn-soft {
+    background: transparent;
+    border: 1px solid var(--c-ink);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-date {
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+// ===================================================================================================================
+// 13. Courses (Courses.dc.html): search + grid of cards with a coloured top bar and a progress bar
+// ===================================================================================================================
+body.cbn-ui .course-search input[type=text], body.cbn-ui .course-search input[type=search] {
+    height: 44px;
+    border-radius: 6px;
+}
+
+body.cbn-ui .course-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+body.cbn-ui .course-card {
+    border-top: 8px solid var(--c-blue);
+    border-radius: 6px;
+    transform: none;
+}
+
+body.cbn-ui .course-card a, body.cbn-ui .course-card .course-title {
+    font-weight: 700;
+}
+
+body.cbn-ui .cbadge {
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+    font-weight: 600;
+}
+
+body.cbn-ui .course-btn, body.cbn-ui a.course-btn, body.cbn-ui a.course-btn:link,
+body.cbn-ui a.course-btn:visited, body.cbn-ui button.course-btn, body.cbn-ui .course-join,
+body.cbn-ui .course-join:link, body.cbn-ui .course-join:visited {
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .course-section-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+// ===================================================================================================================
+// 14. Home (Main.dc.html): flat cards, stat strip, 18px section titles
+// ===================================================================================================================
+body.cbn-ui .hm {
+    gap: 24px;
+}
+
+body.cbn-ui .hm h1, body.cbn-ui .hm h2, body.cbn-ui .hm h3 {
+    letter-spacing: 0;
+}
+
+body.cbn-ui .hm-banner {
+    padding: 28px 32px;
+}
+
+body.cbn-ui .hm-banner h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+body.cbn-ui .hm-tag {
+    border-radius: 4px;
+    background: var(--c-gold);
+    color: #0f1a44;
+    font-weight: 700;
+}
+
+body.cbn-ui .hm-btn, body.cbn-ui a.hm-btn, body.cbn-ui a.hm-btn:link, body.cbn-ui a.hm-btn:visited {
+    padding: 10px 18px;
+    border-radius: 6px;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.cbn-ui .hm-btn:active {
+    transform: none;
+}
+
+body.cbn-ui .hm-btn-light {
+    background: #fff;
+    color: var(--c-navy) !important;
+    box-shadow: none;
+}
+
+body.cbn-ui .hm-btn-ghost {
+    padding: 9px 17px;
+    border: 1px solid #fff;
+}
+
+body.cbn-ui .hm-btn-gold {
+    background: var(--c-gold);
+    color: #0f1a44 !important;
+    box-shadow: none;
+}
+
+body.cbn-ui .hm-btn-blue {
+    background: var(--c-blue);
+    color: #fff !important;
+    box-shadow: none;
+}
+
+// stat strip = one bordered box with hairline dividers
+body.cbn-ui .hm-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .hm-stats > div {
+    flex: 1 1 120px;
+    padding: 14px 24px;
+    border: 0;
+    border-left: 1px solid var(--c-line);
+    border-radius: 0;
+    background: transparent;
+}
+
+body.cbn-ui .hm-stats > div:first-child {
+    border-left: 0;
+}
+
+body.cbn-ui .hm-stats dd {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .hm-stats dt {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .hm-head h2, body.cbn-ui .hm-card h3, body.cbn-ui .hm-card-head h3 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+body.cbn-ui .hm-head small {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+body.cbn-ui .hm-link, body.cbn-ui a.hm-link:link, body.cbn-ui a.hm-link:visited,
+body.cbn-ui .hm-card-head a {
+    color: var(--c-blue);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cbn-ui .hm-goal-bar, body.cbn-ui .hm-bar-stack {
+    background: var(--c-track);
+}
+
+body.cbn-ui .hm-goal-bar i {
+    background: var(--c-blue);
+}
+
+body.cbn-ui .hm-date {
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .hm-date-live {
+    border-color: var(--c-blue);
+    color: var(--c-blue);
+}
+
+body.cbn-ui .hm-rank-n {
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .hm-mono, body.cbn-ui .hm-mono i {
+    font: 500 13px var(--cbn-mono);
+}
+
+body.cbn-ui .hm-pill {
+    border-radius: 4px;
+}
+
+body.cbn-ui .hm-node {
+    box-shadow: none;
+}
+
+// ===================================================================================================================
+// 15. Profile (Profile.dc.html)
+// ===================================================================================================================
+body.cbn-ui .up-btn, body.cbn-ui a.up-btn, body.cbn-ui a.up-btn:link, body.cbn-ui a.up-btn:visited {
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .up-avatar {
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+body.cbn-ui .pf-avatar {
+    position: relative;
+    overflow: hidden;
+}
+
+body.cbn-ui .pf-avatar img {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--c-card);
+}
+
+// Labels after user names (admin, teacher, staff, ... banned), see link_user().
+body.cbn-ui .user-tag {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border: 1px solid var(--c-line);
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+    color: var(--c-ce-fg);
+    font: 600 11px/1.5 var(--cbn-sans);
+    letter-spacing: 0;
+}
+
+body.cbn-ui .user-tag-admin {
+    border-color: transparent;
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+}
+
+body.cbn-ui .user-tag-teacher {
+    border-color: transparent;
+    background: var(--c-ok-bg);
+    color: var(--c-ok-fg);
+}
+
+body.cbn-ui .user-tag-staff, body.cbn-ui .user-tag-setter, body.cbn-ui .user-tag-daor {
+    border-color: transparent;
+    background: var(--c-warn-bg);
+    color: var(--c-warn-fg);
+}
+
+body.cbn-ui .user-tag-banned {
+    border-color: transparent;
+    background: var(--c-bad-bg);
+    color: var(--c-bad-fg);
+}
+
+body.cbn-ui .up-tag {
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+body.cbn-ui .up-tile {
+    padding: 16px 18px;
+}
+
+body.cbn-ui .up-card h2, body.cbn-ui .up-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .ep-card {
+    border-radius: 6px;
+}
+
+// ===================================================================================================================
+// 16. Login / Register (Login.dc.html, Register.dc.html): navy panel on the left, form on the right
+// ===================================================================================================================
+body.cbn-ui:has(.auth-page) nav#navigation {
+    display: none;
+}
+
+body.cbn-ui:has(.auth-page) #page-container {
+    padding: 0;
+    min-height: 100vh;
+    margin: 0;
+}
+
+body.cbn-ui:has(.auth-page) footer,
+body.cbn-ui:has(.auth-page) #footer-content,
+body.cbn-ui:has(.auth-page) .footer-wrap {
+    display: none;
+}
+
+body.cbn-ui:has(.auth-page) {
+    background: var(--c-bg);
+}
+
+body.cbn-ui:has(.auth-page) #content {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+body.cbn-ui:has(.auth-page) #content-body {
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+body.cbn-ui .auth-page {
+    font-family: var(--cbn-sans);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .auth-page .auth-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: none;
+    min-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    background: var(--c-bg);
+    box-shadow: none;
+    overflow: visible;
+}
+
+body.cbn-ui .auth-page .auth-brand {
+    flex: 1 1 440px;
+    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 48px;
+    padding: 56px 56px 48px;
+    background: var(--c-navy);
+    color: #fff;
+}
+
+body.cbn-ui .auth-page .auth-brand .auth-chip, body.cbn-ui .auth-page .auth-brand ul:not(.auth-steps) {
+    display: none;
+}
+
+body.cbn-ui .auth-page .auth-logo, body.cbn-ui .auth-page .auth-logo:link, body.cbn-ui .auth-page .auth-logo:visited {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.cbn-ui .auth-page .auth-logo-mark {
+    display: block;
+    height: 44px;
+    width: auto;
+}
+
+body.cbn-ui .auth-page .auth-logo-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--c-gold);
+    color: #0f1a44;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+body.cbn-ui .auth-page .auth-brand h2 {
+    margin: 0;
+    max-width: 460px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+
+body.cbn-ui .auth-page .auth-brand p {
+    margin: 20px 0 0;
+    max-width: 460px;
+    color: var(--c-navy-text);
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+body.cbn-ui .auth-page .auth-school {
+    color: var(--c-navy-text);
+    font-size: 14px;
+}
+
+body.cbn-ui .auth-page .auth-brand-steps {
+    flex: 1 1 380px;
+    justify-content: flex-start;
+    gap: 40px;
+    padding: 56px;
+}
+
+body.cbn-ui .auth-page .auth-brand-steps h2 {
+    font-size: 36px;
+    line-height: 1.2;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .auth-page .auth-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 420px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.cbn-ui .auth-page .auth-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin: 0;
+    color: var(--c-navy-text);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+body.cbn-ui .auth-page .auth-steps li > span:first-child {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #5a6aa8;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+body.cbn-ui .auth-page .auth-main {
+    flex: 1 1 480px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 56px;
+    background: var(--c-bg);
+}
+
+body.cbn-ui .auth-page .auth-main > * {
+    width: 100%;
+    max-width: 380px;
+}
+
+body.cbn-ui .auth-page .auth-wrap.auth-narrow .auth-main {
+    flex-basis: 560px;
+}
+
+body.cbn-ui .auth-page .auth-wrap.auth-narrow .auth-main > * {
+    max-width: 520px;
+}
+
+body.cbn-ui .auth-page .auth-main h1 {
+    margin: 0 0 6px;
+    color: var(--c-ink);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+body.cbn-ui .auth-page .auth-sub {
+    margin: 0;
+    color: var(--c-mute);
+    font-size: 15px;
+}
+
+body.cbn-ui .auth-page .auth-social {
+    gap: 10px;
+}
+
+body.cbn-ui .auth-page .auth-social a, body.cbn-ui .auth-page .auth-social a:link,
+body.cbn-ui .auth-page .auth-social a:visited {
+    height: 48px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    background: var(--c-card);
+    color: var(--c-ink);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.cbn-ui .auth-page .auth-social a:hover {
+    border-color: var(--c-blue);
+    color: var(--c-blue);
+}
+
+body.cbn-ui .auth-page .auth-divider {
+    color: var(--c-mute);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+body.cbn-ui .auth-page .auth-divider::before, body.cbn-ui .auth-page .auth-divider::after {
+    background: var(--c-line);
+}
+
+body.cbn-ui .auth-page .auth-field {
+    gap: 6px;
+}
+
+body.cbn-ui .auth-page .auth-field > label, body.cbn-ui .auth-page .auth-label {
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body.cbn-ui .auth-page .auth-field > label a {
+    color: var(--c-blue);
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+body.cbn-ui .auth-page .auth-label small, body.cbn-ui .auth-page .auth-hint {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+body.cbn-ui .auth-page .auth-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+body.cbn-ui .auth-page input[type=text], body.cbn-ui .auth-page input[type=password],
+body.cbn-ui .auth-page input[type=email], body.cbn-ui .auth-page select {
+    width: 100% !important;
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+    color: var(--c-ink);
+    font-family: var(--cbn-sans);
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+}
+
+body.cbn-ui .auth-page input:focus, body.cbn-ui .auth-page select:focus {
+    outline: 2px solid var(--c-blue);
+    outline-offset: 1px;
+    border-color: var(--c-input);
+}
+
+body.cbn-ui .auth-page .select2-container .select2-selection--single {
+    height: 46px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .auth-page .select2-selection--single .select2-selection__rendered {
+    line-height: 44px;
+    padding-left: 14px;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .auth-page .select2-selection--single .select2-selection__arrow {
+    height: 44px;
+}
+
+body.cbn-ui .auth-page .select2-container .select2-selection--multiple {
+    min-height: 46px;
+    border: 1px solid var(--c-input);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .auth-page .auth-btn {
+    height: 48px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--c-blue);
+    box-shadow: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0;
+}
+
+body.cbn-ui .auth-page .auth-btn:hover {
+    background: var(--c-blue-h);
+    filter: none;
+}
+
+body.cbn-ui .auth-page .auth-err {
+    color: var(--c-bad-fg);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+body.cbn-ui .auth-page .auth-alert {
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--c-bad-bg);
+    color: var(--c-bad-fg);
+    font-weight: 500;
+}
+
+body.cbn-ui .auth-page .auth-alert a {
+    color: var(--c-bad-fg);
+    text-decoration: underline;
+}
+
+body.cbn-ui .auth-page .auth-foot, body.cbn-ui .auth-page .auth-tos {
+    color: var(--c-mute);
+    font-size: 14px;
+}
+
+body.cbn-ui .auth-page .auth-tos {
+    font-size: 13px;
+    text-align: left;
+}
+
+body.cbn-ui .auth-page .auth-foot a {
+    color: var(--c-blue);
+    font-weight: 700;
+}
+
+body.cbn-ui .auth-page .pass-req {
+    border-radius: 6px;
+    background: var(--c-blue-soft);
+    color: var(--c-ink);
+}
+
+@media (max-width: 700px) {
+    body.cbn-ui .auth-page .auth-brand, body.cbn-ui .auth-page .auth-brand-steps, body.cbn-ui .auth-page .auth-main {
+        padding: 32px 22px;
+    }
+
+    body.cbn-ui .auth-page .auth-brand h2 {
+        font-size: 30px;
+    }
+}
+
+// ===================================================================================================================
+// 17. Footer + the in-contest timer
+// ===================================================================================================================
+body.cbn-ui footer {
+    max-width: 1200px;
+    margin: 24px auto 0;
+    padding: 20px 32px 0;
+    box-sizing: border-box;
+    background: transparent;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-mute);
+    font-size: 13px;
+    text-align: center;
+}
+
+body.cbn-ui footer a, body.cbn-ui footer a:link, body.cbn-ui footer a:visited {
+    color: var(--c-mute) !important;
+}
+
+body.cbn-ui footer a:hover {
+    color: var(--c-blue) !important;
+}
+
+body.cbn-ui #contest-info {
+    border-radius: 6px;
+    box-shadow: var(--c-menu-shadow);
+}
+
+/* ---- Exam room (quiz take page): navy bar, flat cards, round letters --------------------------------------------- */
+body.cbn-ui .moet-room {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, sans-serif;
+    background: #F6F5F1;
+    color: #15171C;
+
+    .moet-top { background: #0F1A44; border-bottom: 0; padding: 12px 28px; }
+    .moet-meta { opacity: 1; color: #C5CBE4; font-weight: 600; }
+    .moet-name { font-weight: 700; }
+    .qz-timer {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-weight: 500;
+        background: #1B2A66;
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 14px;
+    }
+    .moet-submit { background: #F2B705; color: #0F1A44; border: 0; border-radius: 6px; font-weight: 700; }
+    .moet-icon { border-radius: 6px; }
+    .moet-actions { background: #fff; border-bottom: 1px solid #DAD8D0; }
+    .moet-btn { background: #1F3FBF; color: #fff; border: 0; border-radius: 6px; font-weight: 600; }
+    .moet-btn.moet-btn-ghost { background: #fff; color: #15171C; border: 1px solid #15171C; }
+    .moet-right { background: transparent; }
+
+    .qz-question {
+        background: #fff;
+        border: 1px solid #DAD8D0;
+        border-radius: 6px;
+        margin: 0 0 16px;
+        padding: 20px 54px 20px 28px;
+
+        &.current { background: #fff; border-color: #1F3FBF; box-shadow: 0 0 0 1px #1F3FBF; }
+    }
+    .qz-question .qz-no { color: #1F3FBF; font-weight: 700; }
+    .qz-question .qz-options { gap: 10px; }
+    .qz-question .qz-option {
+        border: 2px solid #DAD8D0;
+        border-radius: 6px;
+        padding: 12px 16px;
+        background: #fff;
+
+        &:hover { background: #FAF9F6; }
+        &:has(input:checked) { background: #E8ECFA; border-color: #1F3FBF; }
+        .qz-letter { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #BDBAB0; color: #15171C; font-weight: 700; }
+        &:has(input:checked) .qz-letter { background: #1F3FBF; border-color: #1F3FBF; color: #fff; }
+    }
+}
+
+// ===================================================================================================================
+// 18. Round 2: home band, problem workspace, contest rows, course/quiz cards, profile, organization header,
+//     quiz result, comments (drawings: Main, ProblemDetail, Contests, Courses, Profile, Org*, Quiz*)
+// ===================================================================================================================
+
+// ---- 18.1 Home: greeting band (full-bleed white) + stat strip ----------------------------------------------------
+body.cbn-ui .hm-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    margin: -28px 0 0;
+    padding: 40px 0 32px;
+}
+
+body.cbn-ui .hm-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: var(--c-card);
+    border-bottom: 1px solid var(--c-line);
+}
+
+body.cbn-ui .hm-hero h1 {
+    margin: 0;
+    font-size: 36px;
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .hm-hero p {
+    margin: 8px 0 0;
+    color: var(--c-mute);
+    font-size: 15px;
+}
+
+body.cbn-ui .hm-hero .hm-hero-stats {
+    flex: 0 1 auto;
+    margin: 0;
+}
+
+body.cbn-ui .hm-hero .hm-hero-stats > div {
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+body.cbn-ui .hm-hero .hm-hero-stats dd {
+    margin: 0;
+}
+
+body.cbn-ui .hm-col-main > .hm-head {
+    margin-top: 0;
+}
+
+@media (max-width: 760px) {
+    body.cbn-ui .hm-hero h1 {
+        font-size: 26px;
+    }
+}
+
+// ---- 18.2 Problem workspace (problem-ws.html): same tokens, flat cards, 6px corners ------------------------------
+body.cbn-ui, body.cbn-ui[data-theme="dark"], body.cbn-ui[data-theme="auto"] {
+    --ws-panel: var(--c-card);
+    --ws-bar: var(--c-soft);
+    --ws-line: var(--c-line);
+    --ws-box: var(--c-soft);
+    --ws-chip: var(--c-ce-bg);
+    --ws-strong: var(--c-ink);
+    --ws-text: var(--c-ink);
+    --ws-muted: var(--c-mute);
+    --ws-soft: var(--c-mute);
+    --ws-field: var(--c-card);
+    --ws-title: var(--c-ink);
+    --ws-link: var(--c-blue);
+    --ws-shadow: transparent;
+    --ws-ok: var(--c-ok-fg);
+    --ws-bad: var(--c-bad-fg);
+    --ws-warn: var(--c-warn-fg);
+    --ws-focus: var(--c-blue);
+}
+
+body.cbn-ui .ws-card {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .ws-crumb {
+    margin: 0 0 6px;
+    color: var(--c-mute);
+    font-size: 13px;
+}
+
+body.cbn-ui .ws-crumb a {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .ws-code {
+    font-family: var(--cbn-mono);
+}
+
+body.cbn-ui .ws-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+body.cbn-ui .ws-chip {
+    border-radius: 4px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+body.cbn-ui .ws-btn {
+    border-radius: 6px;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+body.cbn-ui .ws-btn.go {
+    background: var(--c-blue);
+    color: #fff !important;
+    box-shadow: none;
+}
+
+body.cbn-ui .ws-btn.run {
+    background: var(--c-card);
+    color: var(--c-ink) !important;
+    border: 1px solid var(--c-ink);
+    box-shadow: none;
+}
+
+body.cbn-ui .ws-btn.ghost {
+    border: 1px solid var(--c-line);
+    background: transparent;
+    color: var(--c-mute) !important;
+}
+
+body.cbn-ui #ws .ws-tabs button, body.cbn-ui #ws .ws-tabs a {
+    font-weight: 500;
+    border-bottom-width: 3px;
+}
+
+body.cbn-ui #ws .ws-tabs .active {
+    font-weight: 700;
+    border-bottom-color: var(--c-blue);
+}
+
+body.cbn-ui #ws .ws-seg {
+    border-radius: 6px;
+}
+
+body.cbn-ui #ws .ws-seg button {
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+body.cbn-ui #ws .ws-seg button[aria-checked="true"], body.cbn-ui #ws .ws-tests button.t.active {
+    background: var(--c-blue);
+    box-shadow: none;
+}
+
+body.cbn-ui #ws .ws-tests button.t {
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+body.cbn-ui .ws-box, body.cbn-ui #ws textarea.ws-box {
+    border-radius: 6px;
+    font-family: var(--cbn-mono);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+body.cbn-ui .ws-label {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+body.cbn-ui .ws-verdict b {
+    font-weight: 700;
+}
+
+// ---- 18.3 Contest list: live card (white, 6px blue edge) + one table-like list of rows -----------------------------
+body.cbn-ui .cl-hero {
+    padding: 22px 26px;
+    border: 1px solid var(--c-line);
+    border-left: 6px solid var(--c-blue);
+    background: var(--c-card);
+    color: var(--c-ink);
+    box-shadow: none;
+}
+
+body.cbn-ui .cl-hero::before {
+    display: none;
+}
+
+body.cbn-ui .cl-hero .cl-hero-main h2 {
+    margin: 6px 0 6px;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-hero .cl-hero-main h2 a, body.cbn-ui .cl-hero .cl-hero-main h2 a:link,
+body.cbn-ui .cl-hero .cl-hero-main h2 a:visited {
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-hero .cl-hero-main p {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .cl-hero .cl-hero-tag {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-blue);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+body.cbn-ui .cl-hero .cl-hero-tag .cl-dot {
+    width: 7px;
+    height: 7px;
+}
+
+body.cbn-ui .cl-hero .cl-hero-timer {
+    min-width: 0;
+    padding: 0;
+    background: transparent;
+    text-align: right;
+}
+
+body.cbn-ui .cl-hero .cl-hero-timer .time-remaining {
+    font: 500 24px var(--cbn-mono);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-hero .cl-hero-timer small {
+    color: var(--c-mute);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+body.cbn-ui .cl-hero .cl-btn, body.cbn-ui .cl-hero input[type=submit].cl-btn, body.cbn-ui .cl-hero a.cl-btn {
+    padding: 11px 22px;
+    background: var(--c-blue);
+    color: #fff !important;
+    box-shadow: none;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+body.cbn-ui .cl-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui .cl-grid > .cl-card {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 24px;
+    padding: 14px 20px;
+    border: 0;
+    border-top: 1px solid var(--c-line);
+    border-radius: 0;
+    background: transparent;
+}
+
+body.cbn-ui .cl-grid > .cl-card:first-child {
+    border-top: 0;
+}
+
+body.cbn-ui .cl-grid > .cl-card.cl-live {
+    box-shadow: inset 4px 0 0 var(--c-blue);
+}
+
+body.cbn-ui .cl-grid > .cl-card .cl-card-top {
+    flex: 1 1 300px;
+    min-width: 0;
+}
+
+body.cbn-ui .cl-grid > .cl-card .cl-chips {
+    flex: 0 1 auto;
+}
+
+body.cbn-ui .cl-grid > .cl-card .cl-card-foot {
+    flex: 0 1 auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 16px;
+}
+
+body.cbn-ui .cl-card .cl-date, body.cbn-ui .cl-live .cl-date, body.cbn-ui .cl-past .cl-date {
+    width: 48px;
+    height: 52px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-card .cl-date b {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+body.cbn-ui .cl-card .cl-date span {
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .cl-card-title a, body.cbn-ui .cl-card-title a:link, body.cbn-ui .cl-card-title a:visited {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .cl-card-title a:hover {
+    color: var(--c-blue);
+}
+
+body.cbn-ui .cl-sub, body.cbn-ui .cl-meta {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .cl-btn-go, body.cbn-ui input[type=submit].cl-btn-go {
+    font-weight: 600;
+}
+
+body.cbn-ui .cl-btn-soft, body.cbn-ui a.cl-btn-soft, body.cbn-ui input[type=submit].cl-btn-soft {
+    font-weight: 600;
+}
+
+// ---- 18.4 Courses and quiz list --------------------------------------------------------------------------------------
+body.cbn-ui .course-card {
+    border-top: 8px solid var(--tone-line, var(--c-blue));
+}
+
+body.cbn-ui .course-card .course-thumb {
+    display: none;
+}
+
+body.cbn-ui .course-card .course-body {
+    padding: 22px 24px;
+    gap: 12px;
+}
+
+body.cbn-ui .course-card .course-badges {
+    position: static;
+    margin-top: 8px;
+}
+
+body.cbn-ui .course-card .course-title, body.cbn-ui .course-card .course-title:link,
+body.cbn-ui .course-card .course-title:visited {
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .course-card .course-desc {
+    color: var(--c-mute);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+body.cbn-ui .course-card .course-meta {
+    gap: 16px;
+}
+
+body.cbn-ui .course-card .course-meta > span {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-mute);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+body.cbn-ui .cbadge, body.cbn-ui .cbadge.cbadge-open, body.cbn-ui .cbadge.cbadge-closed,
+body.cbn-ui .cbadge.cbadge-private, body.cbn-ui .cbadge.cbadge-joined {
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+body.cbn-ui .cbadge.cbadge-open {
+    background: var(--c-ok-bg);
+    color: var(--c-ok-fg);
+}
+
+body.cbn-ui .cbadge.cbadge-closed {
+    background: var(--c-ce-bg);
+    color: var(--c-ce-fg);
+}
+
+body.cbn-ui .cbadge.cbadge-private {
+    background: var(--c-bad-bg);
+    color: var(--c-bad-fg);
+}
+
+body.cbn-ui .course-empty-blob {
+    border-radius: 6px;
+    background: var(--c-blue-soft);
+    color: var(--c-blue);
+}
+
+// quiz list (QuizList.dc.html): one card holding a table
+body.cbn-ui .ql-card {
+    overflow-x: auto;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+}
+
+body.cbn-ui table.ql-table {
+    width: 100%;
+    margin: 0;
+    border: 0;
+}
+
+body.cbn-ui table.ql-table td {
+    vertical-align: middle;
+}
+
+body.cbn-ui table.ql-table .ql-name {
+    font-weight: 600;
+    color: var(--c-ink);
+}
+
+body.cbn-ui table.ql-table .ql-sub {
+    display: block;
+    margin-top: 2px;
+    color: var(--c-mute);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+body.cbn-ui table.ql-table .ql-num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+body.cbn-ui .ql-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c-line);
+}
+
+body.cbn-ui .ql-dot.ok {
+    background: var(--c-ok-fg);
+}
+
+body.cbn-ui .ql-dot.mid {
+    background: var(--c-warn-fg);
+}
+
+body.cbn-ui .ql-dot.bad {
+    background: var(--c-bad-fg);
+}
+
+body.cbn-ui a.ql-cta, body.cbn-ui a.ql-cta:link, body.cbn-ui a.ql-cta:visited {
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    color: var(--c-ink);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+// ---- 18.5 Profile: flat hero, 28px numbers -------------------------------------------------------------------------
+body.cbn-ui .up-hero {
+    padding: 28px 32px;
+    border: 1px solid var(--c-line);
+    background: var(--c-card);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .up-avatar {
+    width: 80px;
+    height: 80px;
+    border: 0;
+}
+
+body.cbn-ui .up-id h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .up-handle, body.cbn-ui .up-facts, body.cbn-ui .up-facts a, body.cbn-ui .up-facts a:link,
+body.cbn-ui .up-facts a:visited {
+    color: var(--c-mute);
+    font-size: 14px;
+    font-weight: 400;
+}
+
+body.cbn-ui .up-streak {
+    border-radius: 6px;
+    background: var(--c-soft);
+}
+
+body.cbn-ui .up-streak-cells > div {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+body.cbn-ui .up-streak-cells span b, body.cbn-ui .up-tile b {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+body.cbn-ui .up-eyebrow {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+body.cbn-ui .up-btn, body.cbn-ui a.up-btn, body.cbn-ui a.up-btn:link, body.cbn-ui a.up-btn:visited {
+    border: 1px solid var(--c-ink);
+    background: transparent;
+    color: var(--c-ink);
+    font-weight: 600;
+}
+
+// ---- 18.6 Organization header: logo chip + title, 3px underlined tabs (OrgHome/OrgMembers/OrgExams) --------------
+body.cbn-ui .org-logo {
+    display: none;
+}
+
+body.cbn-ui .page-title {
+    position: relative;
+    isolation: isolate;
+    margin: 0 0 4px;
+}
+
+body.cbn-ui .page-title::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: var(--c-card);
+    border-bottom: 1px solid var(--c-line);
+}
+
+body.cbn-ui .page-title > br {
+    display: none;
+}
+
+body.cbn-ui .page-title > h2 {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 0;
+    padding: 28px 0 22px;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .page-title > h2::before, body.cbn-ui .page-title > h2::after {
+    content: none;
+    display: none;
+}
+
+body.cbn-ui .page-title > .tabs {
+    padding-top: 0;
+    margin-bottom: 0;
+}
+
+body.cbn-ui .page-title > .tabs::before {
+    display: none;
+}
+
+body.cbn-ui .org-logo, body.cbn-ui .tabs h2 .org-logo, body.cbn-ui .page-title > h2 .org-logo {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 56px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: var(--c-navy);
+    color: var(--c-gold);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .tabs h2 {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+// ---- 18.7 Quiz result (QuizResult.dc.html): white summary card with a big score, cards with a 6px verdict edge -----
+body.cbn-ui .course-hero {
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    color: var(--c-ink);
+}
+
+body.cbn-ui .course-hero .course-section-title, body.cbn-ui .course-hero h3 {
+    margin: 0;
+    color: var(--c-ink);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+body.cbn-ui .course-hero .course-about, body.cbn-ui .course-hero .course-meta, body.cbn-ui .course-hero .course-meta > span {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .qz-score {
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--c-ink);
+}
+
+body.cbn-ui .qz-score small {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .qz-question:not(.moet-room *) {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+    padding: 20px 24px;
+}
+
+body.cbn-ui .qz-question.qz-right:not(.moet-room *) {
+    border-left: 6px solid var(--c-ok-fg);
+}
+
+body.cbn-ui .qz-question.qz-wrong:not(.moet-room *) {
+    border-left: 6px solid var(--c-bad-fg);
+}
+
+body.cbn-ui .qz-question .qz-no:not(.moet-room *) {
+    min-width: 0;
+    height: auto;
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+body.cbn-ui .qz-question .qz-pts:not(.moet-room *) {
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+    color: var(--c-ce-fg);
+    font-weight: 700;
+}
+
+body.cbn-ui .qz-question .qz-kind:not(.moet-room *) {
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+body.cbn-ui .qz-right .qz-kind {
+    color: var(--c-ok-fg);
+}
+
+body.cbn-ui .qz-wrong .qz-kind {
+    color: var(--c-bad-fg);
+}
+
+body.cbn-ui .qz-answer-line span {
+    color: var(--c-mute);
+    font-weight: 400;
+}
+
+body.cbn-ui .qz-answer-line b.ok {
+    color: var(--c-ok-fg);
+}
+
+body.cbn-ui .qz-answer-line b.bad {
+    color: var(--c-bad-fg);
+}
+
+body.cbn-ui .qz-explain {
+    padding: 10px 0 0;
+    border-top: 1px solid var(--c-line2);
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-mute);
+}
+
+// ---- 18.8 Comments ---------------------------------------------------------------------------------------------------
+body.cbn-ui .new-comments .comment-display {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+}
+
+body.cbn-ui .new-comments .comment .detail .header {
+    border-bottom: 1px solid var(--c-line2);
+    color: var(--c-mute);
+}
+
+body.cbn-ui .new-comments .comment:target > .comment-display {
+    border-color: var(--c-blue);
+    border-left-width: 6px;
+}
+
+body.cbn-ui .comment-submit, body.cbn-ui .form-area.comment-submit {
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    box-shadow: none;
+}
+
+body.cbn-ui .comment-edit-form, body.cbn-ui .comment-post-wrapper textarea {
+    border-radius: 6px;
+}
+
+// ===================================================================================================================
+// 19. Round 3: problems found by looking at the real pages in a browser (screenshots at 1360 and 390 px wide)
+// ===================================================================================================================
+// the top bar: wider than the 1200px content so all nine items fit, tighter item padding
+body.cbn-ui nav#navigation #nav-container {
+    max-width: 1440px;
+    padding: 0 24px;
+}
+
+body.cbn-ui nav#navigation ul#nav-list > li > a,
+body.cbn-ui nav#navigation ul#nav-list > li > a:link,
+body.cbn-ui nav#navigation ul#nav-list > li > a:visited,
+body.cbn-ui nav#navigation ul#nav-list > li > a.active,
+body.cbn-ui nav#navigation ul#nav-list > li > a.active:link,
+body.cbn-ui nav#navigation ul#nav-list > li > a.active:hover {
+    padding: 0 9px;
+    font-size: 13.5px;
+}
+
+// the full-bleed white band of a tab bar must not be painted over the neighbouring column of the home page
+body.cbn-ui .hm-col-main .tabs::before,
+body.cbn-ui .hm-col-side .tabs::before {
+    display: none;
+}
+
+// the footer is absolutely positioned in the old theme: centre it under the 1200px content
+body.cbn-ui footer {
+    left: 50%;
+    width: min(1200px, 100%);
+    transform: translateX(-50%);
+}
+
+// select2 hides the real <select>; rules that size every <select> must not undo that
+body.cbn-ui select.select2-hidden-accessible {
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+@media (max-width: 520px) {
+    body.cbn-ui nav#navigation #user-links {
+        gap: 6px;
+    }
+
+    body.cbn-ui nav#navigation #user-links .anon {
+        gap: 6px;
+    }
+
+    body.cbn-ui nav#navigation #user-links .anon a,
+    body.cbn-ui nav#navigation #user-links .anon a:link,
+    body.cbn-ui nav#navigation #user-links .anon a:visited {
+        padding: 6px 9px;
+        font-size: 12px;
+    }
+}
+
+// quiz list: the quiz name column reads left to right like the other tables
+body.cbn-ui table.ql-table td:nth-child(2),
+body.cbn-ui table.ql-table th:nth-child(2) {
+    text-align: left;
+}
+
+// ===================================================================================================================
+// 20. Round 3b: old rounded / old-blue leftovers found by scanning the real pages (radius >= 12px, link colour #0003d4)
+// ===================================================================================================================
+body.cbn-ui a#flag_vi,
+body.cbn-ui a#flag_en,
+body.cbn-ui a.hm-prob,
+body.cbn-ui a.hm-item,
+body.cbn-ui .up-rating-main,
+body.cbn-ui span.pv,
+body.cbn-ui .info-float a,
+body.cbn-ui .rk-podium,
+body.cbn-ui .martor-field,
+body.cbn-ui ul.sortedm2m-items,
+body.cbn-ui .ep-seg,
+body.cbn-ui .ep-check,
+body.cbn-ui .ep-editor,
+body.cbn-ui .ep-toc,
+body.cbn-ui .ep-savebar,
+body.cbn-ui .ep-cancel,
+body.cbn-ui button#ep-cancel {
+    border-radius: 6px;
+}
+
+body.cbn-ui a.pr-code,
+body.cbn-ui .ct-state,
+body.cbn-ui #time.ct-time,
+body.cbn-ui p.ct-empty,
+body.cbn-ui form.contest-join-pseudotab,
+body.cbn-ui input.contest-join {
+    border-radius: 4px;
+}
+
+body.cbn-ui hr {
+    border-radius: 0;
+    background: var(--c-line);
+}
+
+body.cbn-ui .submit-tab-content,
+body.cbn-ui form#problem_submit.form-area,
+body.cbn-ui .django-ace-editor,
+body.cbn-ui .alert,
+body.cbn-ui td.activity-0, body.cbn-ui td.activity-1, body.cbn-ui td.activity-2,
+body.cbn-ui td.activity-3, body.cbn-ui td.activity-4 {
+    border-radius: 6px;
+}
+
+body.cbn-ui .submit-tab-content {
+    background: transparent;
+    padding: 0;
+}
+
+// links and icons that kept the old pure-blue
+body.cbn-ui .info-float a,
+body.cbn-ui .info-float a:link,
+body.cbn-ui .info-float a:visited {
+    color: var(--c-blue);
+    font-weight: 500;
+}
+
+body.cbn-ui .problem-info-entry i,
+body.cbn-ui .hm-mono {
+    color: var(--c-blue);
+}
+
+body.cbn-ui .problem-info-entry .pi-name {
+    color: var(--c-mute);
+}
+
+body.cbn-ui .problem-info-entry .pi-value {
+    color: var(--c-ink);
+}
+
+// problem page tabs: pills -> underlined tabs like every other tab bar
+body.cbn-ui .problem-tabs > ul {
+    display: flex;
+    gap: 24px;
+    margin: 0 0 16px;
+    padding: 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--c-line);
+    background: transparent;
+}
+
+body.cbn-ui .problem-tabs > ul > li > a,
+body.cbn-ui .problem-tabs > ul > li > a:link,
+body.cbn-ui .problem-tabs > ul > li > a:visited {
+    display: block;
+    padding: 0 0 10px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--c-mute);
+    font-weight: 500;
+}
+
+body.cbn-ui .problem-tabs > ul > li > a.active,
+body.cbn-ui .problem-tabs > ul > li > a.active:link {
+    border-bottom-color: var(--c-blue);
+    background: transparent;
+    color: var(--c-ink);
+    font-weight: 700;
+}
+
+body.cbn-ui #content-right .info-float a,
+body.cbn-ui #content-right .info-float a:link,
+body.cbn-ui #content-right .info-float a:visited,
+body.cbn-ui #content-right .info-float a:hover {
+    color: var(--c-blue);
+}
+
+body.cbn-ui #content h2 a,
+body.cbn-ui #content h2 a:link,
+body.cbn-ui #content h2 a:visited,
+body.cbn-ui #content > h2,
+body.cbn-ui .tabs h2,
+body.cbn-ui .tabs h2 a {
+    color: var(--c-ink);
+}
+
+// ---- page partials (one file per area, each owned by one person) ----
+@import "cbn/home";
+@import "cbn/courses";
+@import "cbn/profile";
+@import "cbn/problems";
+@import "cbn/submissions";
+@import "cbn/ranking";
+@import "cbn/contests";
+@import "cbn/organizations";
+@import "cbn/quiz";
+@import "cbn/classes";
+@import "cbn/dark";

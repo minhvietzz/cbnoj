@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title_row %}
+    {% set tab = 'exams' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="og neo-flat">
+    <form method="get" action="" class="og-toolbar">
+        <select name="kind" aria-label="{{ _('Exam type') }}" class="og-input" onchange="this.form.submit()">
+            <option value="">{{ _('All types') }}</option>
+            <option value="contest"{% if filter_kind == 'contest' %} selected{% endif %}>{{ _('Programming') }}</option>
+            <option value="quiz"{% if filter_kind == 'quiz' %} selected{% endif %}>{{ _('Quiz') }}</option>
+        </select>
+        <select name="class" aria-label="{{ _('Class') }}" class="og-input" onchange="this.form.submit()">
+            <option value="">{{ _('All classes') }}</option>
+            {% for slug, name in filter_classes %}<option value="{{ slug }}"{% if filter_class == slug %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+        <select name="state" aria-label="{{ _('State') }}" class="og-input" onchange="this.form.submit()">
+            <option value="">{{ _('All states') }}</option>
+            <option value="live"{% if filter_state == 'live' %} selected{% endif %}>{{ _('Live') }}</option>
+            <option value="upcoming"{% if filter_state == 'upcoming' %} selected{% endif %}>{{ _('Upcoming') }}</option>
+            <option value="ended"{% if filter_state == 'ended' %} selected{% endif %}>{{ _('Ended') }}</option>
+        </select>
+        <span class="og-grow"></span>
+        {% if can_create_exam and org_can_edit %}<a href="{{ url('contest_create_organization', organization.slug) }}" class="og-btn">{{ _('Create exam') }}</a>{% endif %}
+    </form>
+    <section class="og-card og-flush">
+        {% if exams %}
+            <div class="og-scroll">
+                <table class="og-table">
+                    <thead><tr><th>{{ _('Exam') }}</th><th>{{ _('Exam type') }}</th><th>{{ _('Audience') }}</th><th>{{ _('Time') }}</th><th>{{ _('Duration') }}</th><th></th></tr></thead>
+                    <tbody>
+                        {% for e in exams %}
+                            <tr>
+                                <td><a href="{{ e.url }}" class="og-strong">{{ e.name }}</a></td>
+                                <td><span class="og-chip {{ 'ok' if e.kind == 'quiz' else 'blue' }}">{{ _('Quiz') if e.kind == 'quiz' else _('Programming') }}</span></td>
+                                <td class="og-mute">{{ e.audience|join(', ') if e.audience else _('whole organization') }}</td>
+                                <td class="og-nowrap">{% if e.start %}{{ e.start|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
+                                <td class="og-nowrap">{% if e.minutes %}{{ e.minutes }} {{ _('minutes') }}{% else %}—{% endif %}</td>
+                                <td class="r"><span class="og-chip {{ 'bad' if e.state == 'live' else ('warn' if e.state == 'upcoming' else '') }}">{{ _('Live') if e.state == 'live' else (_('Upcoming') if e.state == 'upcoming' else _('Ended')) }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="og-empty">{{ _('This organization has no exams yet.') }}</div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

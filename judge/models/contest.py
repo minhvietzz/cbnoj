@@ -157,6 +157,9 @@ class Contest(models.Model):
     organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
                                      on_delete=models.SET_NULL,
                                      help_text=_('If private, only this organization may see the contest'))
+    classes = models.ManyToManyField('judge.Classroom', verbose_name=_('classes'), blank=True,
+                                     related_name='contests',
+                                     help_text=_('Shown in the contest list of these classes.'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,

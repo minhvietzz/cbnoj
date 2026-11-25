@@ -1,4 +1,7 @@
 {% extends "tabs-base.html" %}
+{% set left_align_tabs = crs_head %}
+
+{% block post_tab_spacer %}{% if crs_head %}{% include "course/crs-head.html" %}{% endif %}{% endblock %}
 
 {% block tabs %}
     {{ make_tab('home', 'fa-home', url('course_detail', course.slug), _('Course home')) }}

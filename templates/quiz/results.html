@@ -38,26 +38,37 @@
 
 {% block body %}
     {% include "messages.html" %}
-    <section class="course-hero tone-sky">
-        <div class="course-hero-main">
-            <div class="course-meta">
-                <span><i class="fa fa-users"></i> {{ summary.taken }}{% if summary.enrolled is not none %}/{{ summary.enrolled }}{% endif %} {{ _('took the quiz') }}</span>
-                {% if summary.avg is not none %}
-                    <span><i class="fa fa-line-chart"></i> {{ _('Average') }}: <b>{{ summary.avg }}</b>/10</span>
-                    <span>{{ _('Median') }}: <b>{{ summary.median }}</b></span>
-                    <span>{{ _('Highest') }}: <b>{{ summary.best }}</b></span>
-                    <span>{{ _('Lowest') }}: <b>{{ summary.worst }}</b></span>
-                {% endif %}
-                {% if summary.auto_submitted %}<span class="qr-warn"><i class="fa fa-exclamation-triangle"></i> {{ summary.auto_submitted }} {{ _('auto-submitted') }}</span>{% endif %}
-                {% if quiz.extra_minutes %}<span><i class="fa fa-plus-circle"></i> +{{ quiz.extra_minutes }} {{ _('minutes for everyone') }}</span>{% endif %}
-            </div>
+    <div class="rp-head">
+        <span class="rp-sub">{{ summary.taken }}{% if summary.enrolled is not none %}/{{ summary.enrolled }}{% endif %} {{ _('took the quiz') }}{% if quiz.extra_minutes %} · +{{ quiz.extra_minutes }} {{ _('minutes for everyone') }}{% endif %}</span>
+        <span class="rp-btns">
+            <a href="?export=xlsx">{{ _('Export Excel') }}</a>
+            <a href="?export=csv">{{ _('Export CSV') }}</a>
+            {% if request.user.is_staff %}<a href="{{ url('admin:judge_quizattempt_changelist') }}?quiz__id__exact={{ quiz.id }}">{{ _('Admin') }}</a>{% endif %}
+        </span>
+    </div>
+    {% if summary.avg is not none %}
+        <div class="rp-tiles">
+            <div><b>{{ summary.avg }}</b><span>{{ _('Average') }} (/10)</span></div>
+            <div><b>{{ summary.median }}</b><span>{{ _('Median') }}</span></div>
+            <div><b>{{ summary.best }}</b><span>{{ _('Highest') }}</span></div>
+            <div><b>{{ summary.worst }}</b><span>{{ _('Lowest') }}</span></div>
+            {% if summary.auto_submitted %}<div class="rp-warn"><b>{{ summary.auto_submitted }}</b><span>{{ _('auto-submitted') }}</span></div>{% endif %}
         </div>
-        <div class="course-hero-side">
-            <a class="course-join" href="?export=xlsx"><i class="fa fa-file-excel-o"></i> {{ _('Export Excel') }}</a>
-            <div class="course-ring-caption"><a href="?export=csv">{{ _('Export CSV') }}</a>
-                {% if request.user.is_staff %} · <a href="{{ url('admin:judge_quizattempt_changelist') }}?quiz__id__exact={{ quiz.id }}">{{ _('Admin') }}</a>{% endif %}</div>
-        </div>
-    </section>
+        {% if rows %}
+            {% set tn = namespace(g=0, k=0, t=0, y=0) %}
+            {% for row in rows %}
+                {% set sc = row.score10|float %}
+                {% if sc >= 8 %}{% set tn.g = tn.g + 1 %}{% elif sc >= 6.5 %}{% set tn.k = tn.k + 1 %}{% elif sc >= 5 %}{% set tn.t = tn.t + 1 %}{% else %}{% set tn.y = tn.y + 1 %}{% endif %}
+            {% endfor %}
+            {% set tot = rows|length %}
+            <section class="rp-tiers">
+                <h3>{{ _('Grade tiers') }}</h3>
+                {% for name, n, cls in [(_('Excellent (8+)'), tn.g, 'g'), (_('Good (6.5-8)'), tn.k, 'k'), (_('Average (5-6.5)'), tn.t, 't'), (_('Weak (<5)'), tn.y, 'y')] %}
+                    <div class="rp-tier"><span class="rp-tn">{{ name }}</span><span class="rp-bar"><i class="rp-{{ cls }}" style="width: {{ (100 * n / tot)|round|int }}%"></i></span><b>{{ n }} ({{ (100 * n / tot)|round|int }}%)</b></div>
+                {% endfor %}
+            </section>
+        {% endif %}
+    {% endif %}
 
     <form method="post" action="{{ url('quiz_results_action', quiz.slug) }}" id="act-form">
         {% csrf_token %}
@@ -127,6 +138,26 @@
                 </table>
             </div>
 
+            {% set flagged_q = [] %}
+            {% for question, percent, answered in accuracy %}{% if review[question.id].flag %}{% set _ = flagged_q.append((loop.index, percent, review[question.id])) %}{% endif %}{% endfor %}
+            {% if flagged_q %}
+                <h3 class="course-section-title">{{ _('Questions to review') }}</h3>
+                <div class="h-scrollable-table">
+                    <table class="table rp-review">
+                        <thead><tr><th>{{ _('Question') }}</th><th class="qr-num">{{ _('Fully correct') }}</th><th class="qr-num">{{ _('Discrimination') }}</th><th>{{ _('Review') }}</th></tr></thead>
+                        <tbody>
+                        {% for no, percent, info in flagged_q %}
+                            <tr>
+                                <td><b>{{ _('Question') }} {{ no }}</b></td>
+                                <td class="qr-num">{{ percent }}%</td>
+                                <td class="qr-num">{% if info.discrimination is none %}–{% else %}{{ '%+.2f'|format(info.discrimination) }}{% endif %}</td>
+                                <td><span class="rp-flag {{ 'bad' if info.flag == 'inverse' else 'warn' }}">{% if info.flag == 'inverse' %}{{ _('Check the answer key') }}{% else %}{{ _('Very few correct') }}{% endif %}</span></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
             <h3 class="course-section-title">{{ _('Accuracy per question') }}</h3>
             <div class="h-scrollable-table">
                 <table class="table">
@@ -209,22 +240,22 @@
                     .replace('{1}', data.finished).replace('{2}', data.not_started));
                 var $box = $('#live-box').empty();
                 if (!data.in_progress.length) { $box.append($('<p class="qz-note">').text(T.none)); return; }
-                var $head = $('<tr>').append($('<th>'), $('<th>').text(T.candidate), $('<th>').text(T.left).addClass('qr-num'),
-                    $('<th>').text(T.violations).addClass('qr-num'), $('<th>').text(T.extra).addClass('qr-num'), $('<th>'));
-                var $body = $('<tbody>');
+                var $grid = $('<div class="mn-grid">');
                 data.in_progress.forEach(function (row) {
+                    var state = row.violations ? 'bad' : (row.online ? 'ok' : 'off');
                     var $dot = $('<span class="qr-live-dot">').addClass(row.online ? '' : (row.idle === null ? 'off' : 'idle'));
-                    var $tr = $('<tr>').append(
-                        $('<td>').append($('<input type="checkbox" name="ids" class="pick">').val(row.id)),
-                        $('<td>').append($dot, document.createTextNode(row.user)),
-                        cell(clock(row.seconds_left), 'qr-num'),
-                        cell(row.violations, 'qr-num' + (row.violations ? ' qr-warn' : '')),
-                        cell(row.extra ? '+' + row.extra : '', 'qr-num'),
-                        cell(row.online ? T.online : T.offline));
-                    $body.append($tr);
+                    var $card = $('<label class="mn-card">').addClass('mn-' + state).append(
+                        $('<span class="mn-top">').append(
+                            $('<input type="checkbox" name="ids" class="pick">').val(row.id),
+                            $('<b>').append($dot, document.createTextNode(row.user)),
+                            $('<span class="mn-clock">').text(clock(row.seconds_left))),
+                        $('<span class="mn-bot">').append(
+                            $('<span>').text(row.online ? T.online : T.offline),
+                            $('<span>').text(row.violations ? T.violations + ': ' + row.violations : '').addClass(row.violations ? 'qr-warn' : ''),
+                            $('<span>').text(row.extra ? '+' + row.extra : '')));
+                    $grid.append($card);
                 });
-                $box.append($('<div class="h-scrollable-table">').append(
-                    $('<table class="table">').append($('<thead>').append($head), $body)));
+                $box.append($grid);
             }
 
             // keep ticked rows ticked across refreshes

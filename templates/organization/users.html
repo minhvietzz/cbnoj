@@ -1,49 +1,4 @@
-{% extends "user/base-users.html" %}
-
-{% block users_media %}
-    <style>
-        .kick-form .button {
-            margin: -8px 0;
-        }
-
-        form.kick-form a.button {
-            visibility: hidden;
-        }
-
-        tr:hover td > form.kick-form a.button {
-            visibility: visible;
-        }
-
-        td.organization-user-actions {
-            white-space: nowrap;
-        }
-    </style>
-
-    {% if is_admin %}
-        <style>
-            th.username, td.user-name {
-                border-right: none;
-            }
-        </style>
-    {% endif %}
-{% endblock %}
-
-{% block user_search_select2_ajax %}{{ url('org_user_search_select2_ajax', organization.slug) }}{% endblock %}
-
-{% block users_js_media %}
-    <script type="text/javascript">
-        $(function () {
-            $('form.kick-form').find('a.button').click(function () {
-                if (confirm({{ _('Are you sure you want to kick this user?')|htmltojs }})) {
-                    $(this).parent().submit();
-                }
-                return false;
-            })
-
-            document.getElementById('search-form').action = "{{ url('org_user_ranking_redirect', organization.slug) }}"
-        });
-    </script>
-{% endblock %}
+{% extends "base.html" %}
 
 {% block title_row %}
     {% set tab = 'users' %}
@@ -51,7 +6,74 @@
 {% endblock %}
 {% block title_ruler %}{% endblock %}
 
-{% block users_table %}
-    {% set table_id='organization-users-table' %}
-    {% include "organization/users-table.html" %}
+{% block body %}
+<div class="og neo-flat">
+    <form method="get" action="" class="og-toolbar" id="org-member-filter">
+        <input type="search" name="q" value="{{ filters.q }}" aria-label="{{ _('Search members') }}" placeholder="{{ _('Search by name or username') }}" class="og-input og-search">
+        {% if show_classes %}
+            <select name="class" aria-label="{{ _('Class') }}" class="og-input" onchange="this.form.submit()">
+                <option value="">{{ _('All classes') }}</option>
+                {% for slug, name in filter_classes %}<option value="{{ slug }}"{% if filters['class'] == slug %} selected{% endif %}>{{ name }}</option>{% endfor %}
+            </select>
+            <select name="role" aria-label="{{ _('Role') }}" class="og-input" onchange="this.form.submit()">
+                <option value="">{{ _('All roles') }}</option>
+                <option value="student"{% if filters.role == 'student' %} selected{% endif %}>{{ _('Pupil') }}</option>
+                <option value="teacher"{% if filters.role == 'teacher' %} selected{% endif %}>{{ _('Teacher') }}</option>
+                <option value="admin"{% if filters.role == 'admin' %} selected{% endif %}>{{ _('Administrator') }}</option>
+            </select>
+        {% endif %}
+        <span class="og-grow"></span>
+        {% if is_admin %}<a href="{{ url('class_import') }}" class="og-btn">{{ _('Import a class list') }}</a>{% endif %}
+    </form>
+    <section class="og-card og-flush">
+        {% if rows %}
+            <div class="og-scroll">
+                <table class="og-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Member list') }}</th>
+                            <th>{{ _('Username') }}</th>
+                            {% if show_classes %}<th>{{ _('Class') }}</th>{% endif %}
+                            <th>{{ _('Role') }}</th>
+                            <th class="r">{{ _('Points') }}</th>
+                            {% if is_admin %}<th></th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rows %}
+                            {% set parts = r.name.split() %}
+                            <tr>
+                                <td>
+                                    <span class="og-person">
+                                        <span class="og-ini" aria-hidden="true">{{ ((parts[-2][0] ~ parts[-1][0]) if parts|length > 1 else r.name[:2])|upper }}</span>
+                                        <a href="{{ url('user_page', r.username) }}" class="og-strong">{{ r.name }}</a>{{ user_tag(r.profile) }}
+                                    </span>
+                                </td>
+                                <td class="og-mono">{{ r.username }}</td>
+                                {% if show_classes %}<td>{{ r.classes or '—' }}</td>{% endif %}
+                                <td><span class="og-chip {{ {'admin': 'blue', 'teacher': 'ok'}.get(r.role_key, '') }}">{{ r.role }}</span></td>
+                                <td class="r">{{ r.profile.performance_points|floatformat(0) }}</td>
+                                {% if is_admin %}
+                                    <td class="r og-acts">
+                                        <a href="{{ url('organization_user_solved', organization.slug, r.username) }}">{{ _('Solved problems') }}</a>
+                                        <form action="{{ kick_url }}" method="POST" class="og-inline" data-confirm="{{ _('Are you sure you want to kick this user?') }}" onsubmit="return confirm(this.dataset.confirm)">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="user" value="{{ r.profile.id }}">
+                                            <button type="submit" class="og-linkbtn">{{ _('Kick') }}</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="og-empty">{{ _('No members match.') }}</div>
+        {% endif %}
+    </section>
+    {% if page_obj and page_obj.has_other_pages() %}
+        <div class="og-pages">{% include "list-pages.html" %}</div>
+    {% endif %}
+</div>
 {% endblock %}

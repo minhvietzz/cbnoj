@@ -445,6 +445,32 @@ else:
                         'judge.ContestTag',
                     ],
                 },
+                {
+                    'model': 'judge.Quiz',
+                    'icon': 'fa-list-alt',
+                    'children': [
+                        'judge.QuizQuestion',
+                        'judge.QuizAttempt',
+                        'judge.BankQuestion',
+                        'judge.BankTag',
+                    ],
+                },
+                {
+                    'model': 'judge.Classroom',
+                    'icon': 'fa-graduation-cap',
+                    'children': [
+                        'judge.ClassAssignment',
+                        'judge.ClassAnnouncement',
+                        'judge.Subject',
+                    ],
+                },
+                {
+                    'model': 'judge.Course',
+                    'icon': 'fa-book',
+                    'children': [
+                        'judge.CourseLesson',
+                    ],
+                },
                 ('judge.Ticket', 'fa-bell'),
                 {
                     'model': 'auth.User',

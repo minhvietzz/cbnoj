@@ -30,6 +30,11 @@ class Course(models.Model):
     is_open = models.BooleanField(verbose_name=_('public registration'), default=False,
                                   help_text=_('Anyone logged in can join without approval.'))
     created = models.DateTimeField(auto_now_add=True, verbose_name=_('created'))
+    subject = models.ForeignKey('judge.Subject', verbose_name=_('subject'), null=True, blank=True,
+                                on_delete=models.SET_NULL, related_name='courses')
+    classes = models.ManyToManyField('judge.Classroom', verbose_name=_('classes'), blank=True,
+                                     related_name='courses',
+                                     help_text=_('Members of these classes are students of the course.'))
 
     class Meta:
         ordering = ('-created', 'name')
@@ -50,6 +55,8 @@ class Course(models.Model):
         if not profile:
             return None
         role = CourseRole.objects.filter(course=self, user=profile).values_list('role', flat=True).first()
+        if role is None and self.pk is not None and self.classes.filter(members__user=profile).exists():
+            return RoleInCourse.STUDENT
         return role
 
     def is_accessible_by(self, user):
@@ -57,7 +64,9 @@ class Course(models.Model):
             return False
         if user.is_superuser:
             return True
-        return CourseRole.objects.filter(course=self, user=user.profile).exists()
+        if CourseRole.objects.filter(course=self, user=user.profile).exists():
+            return True
+        return self.pk is not None and self.classes.filter(members__user=user.profile).exists()
 
     def is_editable_by(self, user):
         if not user.is_authenticated:
@@ -78,8 +87,10 @@ class Course(models.Model):
             .select_related('user')
 
     def get_students(self):
-        return Profile.objects.filter(course_roles__course=self, course_roles__role=RoleInCourse.STUDENT) \
-            .select_related('user').order_by('user__username')
+        from django.db.models import Q
+        direct = Q(course_roles__course=self, course_roles__role=RoleInCourse.STUDENT)
+        via_class = Q(class_roles__classroom__in=self.classes.all(), class_roles__role='ST')
+        return Profile.objects.filter(direct | via_class).distinct().select_related('user').order_by('user__username')
 
     def get_lessons(self, include_hidden=False):
         lessons = self.lessons.all()

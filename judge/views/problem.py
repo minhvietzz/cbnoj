@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import BooleanField, Case, Prefetch, Q, When
+from django.db.models import BooleanField, Case, Count, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -30,7 +30,7 @@ from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Subject, Submission, SubmissionSource
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -40,6 +40,7 @@ from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.run_service import RUN_LANGUAGES, language_family
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
+from judge.utils.task_counts import visible_quiz_count
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
@@ -279,7 +280,18 @@ class ProblemSubmitMixin:
         # If old_submission exists (for resubmit), use its language
         if hasattr(self, 'old_submission') and self.old_submission is not None:
             return self.old_submission.language
+        last = self.last_submission
+        if last is not None:
+            return last.language
         return self.request.profile.language
+
+    @cached_property
+    def last_submission(self):
+        """The newest submission of this user to this problem, so the editor reopens on their own code."""
+        if not self.request.user.is_authenticated:
+            return None
+        return (Submission.objects.filter(user=self.request.profile, problem=self.object, source__isnull=False)
+                .select_related('language', 'source').order_by('-id').first())
 
     def get_submit_form(self, **kwargs):
         if not self.request.user.is_authenticated:
@@ -345,6 +357,14 @@ class ProblemSubmitMixin:
                 text = by_family.get(language_family(lang.key))
                 if text and text.strip():
                     user_templates[lang.id] = text.replace('\r\n', '\n')
+            # the user's own latest submission to this problem (per language) wins over any template
+            seen = set()
+            for sub in (Submission.objects.filter(user=profile, problem=self.object, source__isnull=False,
+                                                  language__in=form.fields['language'].queryset)
+                        .select_related('source').order_by('-id')[:60]):
+                if sub.language_id not in seen:
+                    seen.add(sub.language_id)
+                    user_templates[sub.language_id] = sub.source.source.replace('\r\n', '\n')
         return {
             'has_test_data': has_test_data,
             'user_templates': user_templates,
@@ -464,17 +484,20 @@ class ProblemSubmitMixin:
 class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin, ProblemSubmitMixin,
                     CommentedDetailView):
     context_object_name = 'problem'
-    template_name = 'problem/problem.html'
+    template_name = 'problem/problem-ws.html'
 
     def get_template_names(self):
-        # The old page is the default; a user picks the workspace (statement | editor + try-run) in the profile.
-        if self.request.user.is_authenticated:
-            ui = self.request.profile.problem_ui
-        else:
-            ui = self.request.COOKIES.get('cbnoj_ui', 'old')
-        if ui != 'new' or not getattr(settings, 'RUN_ENABLED', True):
+        # One layout for everybody: the workspace (statement | editor + try-run, resizable panes).
+        if not getattr(settings, 'RUN_ENABLED', True):
             return ['problem/problem.html']
         return ['problem/problem-ws.html']
+
+    def get_recent_submissions(self):
+        """The viewer's last few submissions to this problem (inside a contest: only those made in it)."""
+        queryset = Submission.objects.filter(user=self.request.profile, problem=self.object)
+        if self.contest_problem is not None:
+            queryset = queryset.filter(contest_object=self.contest_problem.contest)
+        return list(queryset.select_related('language').order_by('-id')[:5])
 
     def get_context_data(self, **kwargs):
         context = super(ProblemDetail, self).get_context_data(**kwargs)
@@ -483,6 +506,8 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
         contest_problem = self.contest_problem
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
+        context['recent_submissions'] = self.get_recent_submissions() if context['has_submissions'] else []
+        context['run_enabled'] = getattr(settings, 'RUN_ENABLED', True)
         context['contest_problem'] = contest_problem
         context.update(self.get_clarifications_context())
         if contest_problem:
@@ -645,6 +670,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
     # Default sort by date
     default_sort = '-date'
 
+    @property
+    def use_infinite_pagination(self):
+        # the list shows "showing a-b of N problems", so it needs the real total
+        return False
+
     def order_queryset(self, queryset):
         """
         Order the queryset based on the sort order.
@@ -715,10 +745,12 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         _filter = self.get_filter()
         queryset = Problem.available.filter(_filter).select_related('group').defer('description', 'summary')
 
-        if self.profile is not None and self.hide_solved:
-            queryset = queryset.exclude(id__in=Submission.objects
-                                        .filter(user=self.profile, result='AC')
-                                        .values_list('problem_id', flat=True))
+        if self.profile is not None and self.status_filter:
+            solved_ids = Submission.objects.filter(user=self.profile, result='AC').values_list('problem_id', flat=True)
+            if self.status_filter == 'solved':
+                queryset = queryset.filter(id__in=solved_ids)
+            else:
+                queryset = queryset.exclude(id__in=solved_ids)
         if self.show_types:
             queryset = queryset.prefetch_related('types')
         queryset = queryset.annotate(has_public_editorial=Case(
@@ -728,8 +760,14 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         ))
         if self.has_public_editorial:
             queryset = queryset.filter(has_public_editorial=True)
-        if self.category is not None:
+        if self.category is not None and not getattr(self, 'skip_category', False):
             queryset = queryset.filter(group__id=self.category)
+        if self.subject:
+            # Problems without a subject are the original ones: they belong to the first subject (Tin hoc).
+            subject_filter = Q(subject__slug=self.subject)
+            if self.subject == getattr(settings, 'DEFAULT_SUBJECT_SLUG', 'tin-hoc'):
+                subject_filter |= Q(subject__isnull=True)
+            queryset = queryset.filter(subject_filter)
         if self.selected_types:
             queryset = queryset.filter(id__in=Problem.types.through.objects
                                        .filter(problemtype__in=self.selected_types).values('problem_id'))
@@ -755,6 +793,31 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         queryset = self.get_normal_queryset()
         return self.order_queryset(queryset)
 
+    def get_group_counts(self):
+        """Problems per group under every filter except the group itself, for the "Nhóm bài" list."""
+        self.skip_category = True
+        try:
+            queryset = self.get_normal_queryset()
+        finally:
+            self.skip_category = False
+        return dict(queryset.order_by().values_list('group_id').annotate(n=Count('id', distinct=True)))
+
+    def get_group_list(self):
+        counts = self.get_group_counts()
+        query = self.request.GET.copy()
+        query.pop('page', None)
+        query.pop('category', None)
+        base = self.request.path + '?'
+        groups = [{'name': _('All'), 'count': sum(counts.values()), 'active': self.category is None,
+                   'href': base + query.urlencode() if query else self.request.path}]
+        for group in ProblemGroup.objects.all():
+            if not counts.get(group.id) and group.id != self.category:
+                continue
+            query['category'] = str(group.id)
+            groups.append({'name': group.full_name, 'count': counts.get(group.id, 0),
+                           'active': group.id == self.category, 'href': base + query.urlencode()})
+        return groups
+
     def get_hot_problems(self):
         return hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
 
@@ -766,6 +829,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         context['full_text'] = int(self.full_text)
         context['category'] = self.category
         context['categories'] = ProblemGroup.objects.all()
+        context['subject'] = self.subject
+        context['subjects'] = list(Subject.objects.filter(is_active=True))
+        context['status_filter'] = self.status_filter
+        context['group_list'] = self.get_group_list()
+        context['task_counts'] = self.get_task_counts()
         context['selected_types'] = self.selected_types
         context['problem_types'] = ProblemType.objects.all()
         context['has_fts'] = settings.ENABLE_FTS
@@ -777,6 +845,13 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
+
+    def get_task_counts(self):
+        """Numbers shown on the "Lập trình / Trắc nghiệm" tabs."""
+        return {
+            'code': Problem.available.filter(Q(is_public=True) & Q(is_organization_private=False)).count(),
+            'quiz': visible_quiz_count(self.request.user),
+        }
 
     def get_noui_slider_points(self):
         points = sorted(self.prepoint_queryset.values_list('points', flat=True).distinct())
@@ -820,7 +895,15 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         if settings.VNOJ_LOW_POWER_MODE:
             self.all_sorts &= {'points', 'user_count'}
 
+        # "Trạng thái": ?status=solved / ?status=unsolved (both or neither = everything); hide_solved is the old switch
+        statuses = set(request.GET.getlist('status')) & {'solved', 'unsolved'}
+        if len(statuses) == 1:
+            self.status_filter = statuses.pop()
+        else:
+            self.status_filter = 'unsolved' if (self.hide_solved and not statuses) else None
+
         self.category = safe_int_or_none(request.GET.get('category'))
+        self.subject = request.GET.get('subject', '').strip()[:64]
         if 'type' in request.GET:
             try:
                 self.selected_types = list(map(int, request.GET.getlist('type')))

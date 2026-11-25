@@ -1,0 +1,42 @@
+{% load cbn_admin %}
+<nav id="cba-nav" aria-label="Menu quản trị">
+    <a class="cba-brand" href="{% url 'admin:index' %}"><span class="cba-logo">CB</span><span><b>CBNoj</b> <i>Quản trị</i></span></a>
+    <button type="button" class="cba-burger" aria-label="Mở menu" aria-expanded="false">Menu</button>
+    <div class="cba-navbody">
+        <a class="cba-home{% if request.path == '/admin/' %} on{% endif %}" href="{% url 'admin:index' %}">Tổng quan</a>
+        {% cba_nav as nav_groups %}
+        {% for g in nav_groups %}
+        <div class="cba-grp{% if g.open %} open{% endif %}">
+            <button type="button" class="cba-gh" aria-expanded="{% if g.open %}true{% else %}false{% endif %}"><span>{{ g.title|upper }}</span><small>{{ g.count }}</small></button>
+            <div class="cba-items">
+                {% for m in g.models %}{% if m.admin_url %}<a href="{{ m.admin_url }}" class="{% if m.active %}on{% endif %}">{{ m.label }}</a>{% endif %}{% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <div class="cba-user">
+            <span>{{ user.get_username }}</span>
+            <a href="/">Xem trang web</a>
+            <a href="{% url 'admin:password_change' %}">Đổi mật khẩu</a>
+            <a href="{% url 'admin:logout' %}">Đăng xuất</a>
+        </div>
+    </div>
+</nav>
+<script>
+(function () {
+    var nav = document.getElementById('cba-nav');
+    if (!nav) return;
+    nav.querySelectorAll('.cba-gh').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var g = b.parentNode, o = g.classList.toggle('open');
+            b.setAttribute('aria-expanded', o ? 'true' : 'false');
+        });
+    });
+    var bg = nav.querySelector('.cba-burger');
+    bg.addEventListener('click', function () {
+        var o = nav.classList.toggle('show');
+        bg.setAttribute('aria-expanded', o ? 'true' : 'false');
+    });
+    var on = nav.querySelector('.cba-items a.on');
+    if (on && on.scrollIntoView) { on.scrollIntoView({block: 'nearest'}); }
+})();
+</script>

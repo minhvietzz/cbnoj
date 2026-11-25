@@ -1,56 +1,91 @@
 {% extends "base.html" %}
 
-{% block body %}
-    <div class="auth-flow-form">
-        <form action="" method="post" class="form-area">
-            {% csrf_token %}
-            {% if form.errors %}
-                <div id="form-errors" style="max-width: fit-content;">
-                    {% if form.turnstile and form.turnstile.errors %}
-                        {% for error in form.turnstile.errors %}<p class="error">{{ error }}</p>{% endfor %}
-                    {% endif %}
-                    {% if not (form.turnstile and form.turnstile.errors and form.errors|length == 1) %}
-                    <p class="error">{{ _('Invalid username or password.') }}</p>
-                    {% endif %}
-                    {% for error in form.non_field_errors() %}
-                        <p class="error">{{error}}</p>
-                    {% endfor %}
-                    {% if form.cheating_contests %}
-                        <p>{{ _('Disqualified contests:') }}</p>
-                        <ul>
-                            {% for participation in form.cheating_contests %}
-                                <li><a href="{{ url('contest_view', participation.contest.key) }}">{{ participation.contest.name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    {% if form.errors and misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
-                    {{ _('If you have problems with your account, feel free to shoot us a message at: ') }}<a href="{{ misc_config.discord_invite_link }}"><img src="{{ misc_config.discord_invite_shieldio }}"></a>
-                    {% endif %}
-                </div>
-            {% endif %}
-            <table border="0" style="text-align:left">
-                <tr>
-                    <th><i class="fa fa-user fa-fw"></i>
-                    </th>
-                    <td>{{ form.username }}
-                    </td>
-                </tr>
-                <tr>
-                    <th><i class="fa fa-key fa-fw"></i>
-                    </th>
-                    <td>{{ form.password }}
-                    </td>
-                </tr>
-            </table>
-            {% if form.turnstile %}
-                <div style="margin: 0.6em 0 0.2em">{{ form.turnstile }}</div>
-            {% endif %}
-            <hr>
-            <button style="float:right;" type="submit">{{ _('Login!') }}</button>
-            <input type="hidden" name="next" value="{{ next }}">
-        </form>
-        <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
+{% block media %}
+    {% include "registration/auth_style.html" %}
+{% endblock %}
 
-        {% include "registration/oauth.html" %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="auth-page neo-flat">
+    <div class="auth-wrap">
+        <section class="auth-brand">
+            {% if CBN_UI %}
+                <a class="auth-logo" href="{{ url('home') }}"><img class="auth-logo-mark" src="{{ static('icons/logo-white.svg') }}" alt="{{ SITE_NAME }}"></a>
+            {% endif %}
+            <div>
+                <span class="auth-chip">{{ _('Bac Ninh Gifted High School') }}</span>
+                <h2>{{ _('Practice coding every day, take mock exams every week.') }}</h2>
+                <p>{{ _('Submit solutions, see judging results instantly and track your progress in one place.') }}</p>
+            </div>
+            <ul>
+                <li><i class="fa fa-code"></i>{{ _('Automatic judging in many languages') }}</li>
+                <li><i class="fa fa-check-square-o"></i>{{ _('Quizzes and online contests') }}</li>
+                <li><i class="fa fa-bar-chart"></i>{{ _('Rankings and class courses') }}</li>
+            </ul>
+            {% if CBN_UI %}<div class="auth-school">{{ _('Bac Ninh Gifted High School') }}</div>{% endif %}
+        </section>
+
+        <section class="auth-main">
+            <div>
+                <h1>{{ _('Login') }}</h1>
+                <p class="auth-sub">{{ _('Welcome back to CBNoj.') }}</p>
+            </div>
+
+            {% include "registration/oauth.html" %}
+            {% if oauth.has_google_auth or oauth.has_facebook_auth or oauth.has_github_auth %}
+                <div class="auth-divider">{{ _('or use your CBNoj account') }}</div>
+            {% endif %}
+
+            <form action="" method="post" style="display:flex;flex-direction:column;gap:18px">
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div id="form-errors" class="auth-alert">
+                        {% if form.turnstile and form.turnstile.errors %}
+                            {% for error in form.turnstile.errors %}<p>{{ error }}</p>{% endfor %}
+                        {% endif %}
+                        {% if not (form.turnstile and form.turnstile.errors and form.errors|length == 1) %}
+                            <p>{{ _('Invalid username or password.') }}</p>
+                        {% endif %}
+                        {% for error in form.non_field_errors() %}
+                            <p>{{error}}</p>
+                        {% endfor %}
+                        {% if form.cheating_contests %}
+                            <p>{{ _('Disqualified contests:') }}</p>
+                            <ul>
+                                {% for participation in form.cheating_contests %}
+                                    <li><a href="{{ url('contest_view', participation.contest.key) }}">{{ participation.contest.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% if form.errors and misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
+                            {{ _('If you have problems with your account, feel free to shoot us a message at: ') }}<a href="{{ misc_config.discord_invite_link }}"><img src="{{ misc_config.discord_invite_shieldio }}"></a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div class="auth-field">
+                    <label for="{{ form.username.id_for_label }}">{{ _('Username') }}</label>
+                    {{ form.username }}
+                </div>
+                <div class="auth-field">
+                    <label for="{{ form.password.id_for_label }}">{{ _('Password') }}
+                        <a href="{{ url('password_reset') }}" style="font-size:14px;font-weight:700;text-decoration:none">{{ _('Forgot your password?') }}</a>
+                    </label>
+                    {{ form.password }}
+                </div>
+                {% if form.turnstile %}
+                    <div>{{ form.turnstile }}</div>
+                {% endif %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <button class="auth-btn" type="submit">{{ _('Log in') }}</button>
+            </form>
+
+            {% if REGISTRATION_OPEN %}
+                <p class="auth-foot">{{ _("Don't have an account?") }} <a href="{{ url('registration_register') }}">{{ _('Sign up') }}</a></p>
+            {% endif %}
+        </section>
     </div>
+</div>
 {% endblock %}

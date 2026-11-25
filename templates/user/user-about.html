@@ -4,145 +4,125 @@
 
 {% block title_row %}
     {% set tab = 'about' %}
+    {% set pf_head = true %}
     {% set title = link_user(user) %}
     {% include "user/user-tabs.html" %}
 {% endblock %}
 
-{% block user_content %}
-    <div class="up-stack">
-    <section class="up-card content-description">
-        {% with orgs=user.organizations.filter(is_unlisted=False) %}
-            {% if orgs %}
-                <p style="margin-top: 0"><b>{{ _('From') }}</b>
-                    {% for org in orgs -%}
-                        <a href="{{ org.get_absolute_url() }}">{{ org.name }}</a>
-                        {%- if not loop.last %}, {% endif %}
-                    {% endfor %}
-                </p>
-            {% endif %}
-        {% endwith %}
-        {% if perms.judge.change_profile %}
-            {% with notes=user.notes %}
-                {% if notes %}
-                    <b>{{ _('Admin notes:') }}</b>
-                    <pre style="margin-top: 0">{{ notes }}</pre>
-                {% endif %}
-            {% endwith %}
-        {% endif %}
-
-        {% if user.about %}
-            <h4>{{ _('About') }}</h4>
-            {% cache 86400 'user_about' user.id MATH_ENGINE %}
-                {{ user.about|markdown('self-description', MATH_ENGINE)|reference|str|safe }}
-            {% endcache %}
-        {% else %}
-            <i>
-                {% if user.user == request.user %}
-                    {{ _('You have not shared any information.') }}
-                {% else %}
-                    {{ _('This user has not shared any information.') }}
-                {% endif %}
-            </i>
-            <br>
-        {% endif %}
-
-    </section>
-
-    <section class="up-card content-description">
-        <h4>{{ _('Badges & Awards') }}</h4>
-        {% for badge in user.badges.all() %}
-            <div style="display: inline-block; margin-left: 1em; margin-right: 1em;">
-                <img src="{{ badge.full_size or badge.mini or '' }}" title="{{ badge.name }}" style="height: 10em; width: auto; display: block; margin: 0 auto;" />
-                <p style="text-align: center; font-weight: bold; text-transform: uppercase;">{{ badge.name }}</p>
+{% block user_body %}
+    {% set own = user.user == request.user %}
+    <div class="pf-grid">
+        <div class="pf-main">
+            <div class="pf-stats">
+                <div class="pf-stat"><b>{{ user.problem_count }}</b><span>{{ _('Problems solved') }}</span></div>
+                <div class="pf-stat"><b title="{{ user.performance_points|floatformat(2) }}">{{ user.performance_points|floatformat(0) }}</b><span>{{ _('Points') }}</span></div>
+                <div class="pf-stat"><b>{{ streak.current }}</b><span>{{ _('Day streak') }}</span></div>
+                <div class="pf-stat"><b>{% if rank is defined and not user.is_unlisted %}#{{ rank }}{% else %}&mdash;{% endif %}</b><span>{{ _('School-wide rank') }}</span></div>
             </div>
-        {% else %}
-            <i>{{ _('This user has not earned any badges or awards.') }}</i>
-        {% endfor %}
 
-    </section>
-
-    <section class="up-card content-description">
-        <h4 id="submission-activity-header"></h4>
-        <div id="submission-activity" style="display: none;">
-            <div id="submission-activity-actions">
-                <a href="javascript:void(0)" id="prev-year-action">&laquo;</a>
-                &nbsp;<span id="year"></span>&nbsp;
-                <a href="javascript:void(0)" id="next-year-action">&raquo;</a>
-            </div>
-            <div id="submission-activity-display">
-                <table id="submission-activity-table">
-                    <tr id="submission-0">
-                        <th class="submission-date-col info-text">
-                            {{ _('Sun') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-1">
-                        <th class="submission-date-col info-text">
-                            {{ _('Mon') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-2">
-                        <th class="submission-date-col info-text">
-                            {{ _('Tues') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-3">
-                        <th class="submission-date-col info-text">
-                            {{ _('Wed') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-4">
-                        <th class="submission-date-col info-text">
-                            {{ _('Thurs') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-5">
-                        <th class="submission-date-col info-text">
-                            {{ _('Fri') }}
-                        </th>
-                    </tr>
-                    <tr id="submission-6">
-                        <th class="submission-date-col info-text">
-                            {{ _('Sat') }}
-                        </th>
-                    </tr>
-                </table>
-                <div class="info-bar">
-                    <span id="submission-total-count" class="info-text">
-                    </span>
-                    <table class="info-table">
-                        <tr>
-                            <th class="info-table-text info-text">{{ _('Less') }}</th>
-                            <td class="activity-0"><div></div></td>
-                            <td class="activity-1"><div></div></td>
-                            <td class="activity-2"><div></div></td>
-                            <td class="activity-3"><div></div></td>
-                            <td class="activity-4"><div></div></td>
-                            <th class="info-table-text info-text">{{ _('More') }}</th>
-                        <tr>
-                    </table>
+            <section class="pf-card">
+                <h2>{{ _('Activity, last 26 weeks') }}</h2>
+                <div class="pf-heat">
+                    {% for c in pf_heat %}<i class="lv{{ c.level }}" title="{{ c.day|date('d/m/Y') }}: {{ c.count }}"></i>{% endfor %}
                 </div>
-            </div>
+                <div class="pf-legend"><span>{{ _('Less') }}</span><span>{{ _('Longest streak:') }} {{ streak.best }} {{ _('days') }}</span><span>{{ _('More') }}</span></div>
+            </section>
+
+            <section class="pf-card">
+                <h2>{{ _('Skills by topic') }}</h2>
+                {% if pf_skills %}
+                    <div class="pf-skills">
+                        {% for k in pf_skills %}
+                            <div class="pf-skill" title="{{ k.solved }}/{{ k.total }}">
+                                <span class="pf-skill-name">{{ k.name }}</span>
+                                <span class="pf-bar"><i style="width: {{ k.percent }}%"></i></span>
+                                <b>{{ k.percent }}%</b>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="pf-empty">{{ _('No problems have been attempted yet.') }}</p>
+                {% endif %}
+            </section>
+
+            <section class="pf-card content-description">
+                <h2>{{ _('About') }}</h2>
+                {% if perms.judge.change_profile %}
+                    {% with notes=user.notes %}
+                        {% if notes %}
+                            <b>{{ _('Admin notes:') }}</b>
+                            <pre style="margin-top: 0">{{ notes }}</pre>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+                {% if user.about %}
+                    {% cache 86400 'user_about' user.id MATH_ENGINE %}
+                        {{ user.about|markdown('self-description', MATH_ENGINE)|reference|str|safe }}
+                    {% endcache %}
+                {% else %}
+                    <p class="pf-empty">{% if own %}{{ _('You have not shared any information.') }}{% else %}{{ _('This user has not shared any information.') }}{% endif %}</p>
+                {% endif %}
+            </section>
+
+            {% if rating %}
+            <section class="pf-card">
+                <h2>{{ _('Rating history') }}</h2>
+                <div id="rating-chart">
+                    <canvas></canvas>
+                </div>
+                <div id="rating-tooltip">
+                    <div class="contest"></div>
+                    <div class="date"></div>
+                    <div class="rate-group">
+                        <span class="rate-box"><span></span></span>
+                        <span class="rating"></span>, #<span class="rank"></span>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
         </div>
 
-    </section>
+        <aside class="pf-side">
+            {% if pf_classes %}
+            <section class="pf-card">
+                <h2>{% if own %}{{ _('My classes') }}{% else %}{{ _('Classes') }}{% endif %}</h2>
+                {% for c in pf_classes %}
+                    <a class="pf-row" href="{{ c.classroom.get_absolute_url() }}"><b>{{ c.classroom.name }}</b><span>{{ c.role }}</span></a>
+                {% endfor %}
+            </section>
+            {% endif %}
 
-    {% if rating %}
-    <section class="up-card content-description">
-            <h4>{{ _('Rating history') }}</h4>
-            <div id="rating-chart">
-                <canvas></canvas>
-            </div>
-            <div id="rating-tooltip">
-                <div class="contest"></div>
-                <div class="date"></div>
-                <div class="rate-group">
-                    <span class="rate-box"><span></span></span>
-                    <span class="rating"></span>, #<span class="rank"></span>
-                </div>
-            </div>
-    </section>
-    {% endif %}
+            <section class="pf-card">
+                <h2>{{ _('Badges') }}</h2>
+                {% if pf_badges %}
+                    <div class="pf-badges">
+                        {% for b in pf_badges %}
+                            <span class="pf-badge">
+                                {%- if b.image %}<img src="{{ b.image }}" alt="" height="18">{% endif -%}
+                                {%- if not b.computed %}{{ b.name }}
+                                {%- elif b.kind == 'streak' %}{{ _('%(n)s day streak', n=b.name) }}
+                                {%- else %}{{ _('%(n)s AC problems', n=b.name) }}{% endif -%}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="pf-empty">{{ _('This user has not earned any badges or awards.') }}</p>
+                {% endif %}
+            </section>
+
+            <section class="pf-card">
+                <h2>{{ _('Rating and contribution') }}</h2>
+                <dl class="pf-kv">
+                    <div><dt>{{ _('Rating') }}</dt><dd>{% if rating %}{{ rating_number(rating) }}{% else %}&mdash;{% endif %}</dd></div>
+                    <div><dt>{{ _('Rank by rating') }}</dt><dd>{% if ratings and not user.is_unlisted and rating_rank is defined %}#{{ rating_rank }}{% else %}&mdash;{% endif %}</dd></div>
+                    <div><dt>{{ _('Max rating') }}</dt><dd>{% if ratings %}{{ rating_number(max_rating) }}{% else %}&mdash;{% endif %}</dd></div>
+                    <div><dt>{{ _('Contests written') }}</dt><dd>{{ ratings|length if ratings else 0 }}</dd></div>
+                    <div><dt>{{ _('Contribution points:') }}</dt><dd>{{ user.contribution_points }}</dd></div>
+                    <div><dt>{{ _('Submissions') }}</dt><dd>{{ submission_count }}</dd></div>
+                </dl>
+                <a class="pf-link" href="{{ url('all_user_submissions', user.user.username) }}">{{ _('View submissions') }}</a>
+            </section>
+        </aside>
     </div>
 {% endblock %}
 
@@ -151,12 +131,6 @@
         {% include "mathjax-load.html" %}
     {% endif %}
 
-    <script type="text/javascript" src="{{ static('user_profile.js') }}"></script>
-    <script type="text/javascript">
-        $(function () {
-            window.init_submission_table($, {{ submission_data }}, "{{ LANGUAGE_CODE }}");
-        });
-    </script>
 
     {% if ratings %}
         <script type="text/javascript" src="{{ static('libs/chart.js/Chart.js') }}"></script>

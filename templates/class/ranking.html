@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    <div style="display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="cx-seg">
+            {% for p, label in [('week', _('This week')), ('month', _('Month')), ('term', _('Term')), ('year', _('Whole year'))] %}<a href="{{ url('class_ranking', classroom.slug) }}?period={{ p }}" class="{{ 'on' if period == p }}">{{ label }}</a>{% endfor %}
+        </div>
+        <span class="cx-hint">{{ _('Score') }} = {{ _('Programming') }} {{ weights.code|int }}% + {{ _('Quizzes') }} {{ weights.quiz|int }}% + {{ _('Attendance') }} {{ weights.att|int }}% ({{ _('set by the teacher') }})</span>
+    </div>
+    <section class="cx-card">
+        {% if rows %}
+        <div class="cx-scroll"><table class="cx-table">
+            <thead><tr><th style="width:60px">{{ _('Rank') }}</th><th style="width:90px">{{ _('Change') }}</th><th>{{ _('Pupil') }}</th><th class="r">{{ _('Programming') }}</th><th class="r">{{ _('Quizzes') }}</th><th class="r">{{ _('Attendance') }}</th><th class="r">{{ _('Total') }}</th></tr></thead>
+            <tbody>
+            {% for r in rows %}
+                <tr class="{{ 'me' if r.profile_id == me }}">
+                    <td style="font-weight:700">{{ r.rank }}</td>
+                    <td>{% if r.delta is none or r.delta == 0 %}<span style="color:var(--c-muted)">—</span>{% elif r.delta > 0 %}<b style="color:var(--c-ok)">▲ {{ r.delta }}</b>{% else %}<b style="color:var(--c-bad)">▼ {{ -r.delta }}</b>{% endif %}</td>
+                    <td style="font-weight:600"><a href="{{ url('user_page', r.profile.user.username) }}">{{ r.profile.user.first_name or r.profile.user.username }}</a>{{ user_tag(r.profile) }}</td>
+                    <td class="r">{{ r.raw.code|round(1) }}</td><td class="r">{{ r.raw.quiz|round(1) }}</td><td class="r">{{ r.raw.att|int }} {{ _('days') }}</td>
+                    <td class="r" style="font-weight:700">{{ r.total }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        {% else %}<div class="cx-empty">{{ _('No students yet.') }}</div>{% endif %}
+    </section>
+    <p class="cx-hint">{{ _('Change compares with the ranking seven days ago. Counted since') }} {{ period_start|date('d/m/Y') }}.</p>
+</div>
+{% endblock %}

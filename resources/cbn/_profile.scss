@@ -1,0 +1,427 @@
+// User profile (Profile.dc.html): white header (letter avatar, name, facts line, edit button) with the page tabs under
+// it, four stat tiles, 26-week activity grid, skills by topic, and a right column with classes / badges / rating.
+// Class prefix: pf-   (mixins and --la-* colour tokens come from _home.scss)
+
+// header: the .tabs block of the page already paints the white full-bleed band, the head sits inside it
+body.cbn-ui .pf-head {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    margin: 0 0 24px;
+}
+
+body.cbn-ui .pf-id {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+}
+
+body.cbn-ui .pf-avatar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    background: var(--c-blue);
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+body.cbn-ui .pf-id-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+
+    h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--c-ink);
+        overflow-wrap: anywhere;
+    }
+}
+
+body.cbn-ui .pf-tag {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border: 1px solid var(--c-line);
+    border-radius: 4px;
+    background: var(--c-ce-bg);
+    color: var(--c-ce-fg);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+body.cbn-ui .pf-line {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--c-mute);
+    overflow-wrap: anywhere;
+
+    > * + *::before {
+        content: "\00b7";
+        display: inline-block;
+        margin: 0 8px;
+        color: var(--c-mute);
+    }
+
+    a {
+        color: inherit;
+
+        &:hover {
+            color: var(--c-blue);
+        }
+    }
+}
+
+body.cbn-ui a.pf-btn, body.cbn-ui a.pf-btn:link, body.cbn-ui a.pf-btn:visited {
+    display: inline-block;
+    padding: 10px 18px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    background: var(--c-card);
+    color: var(--c-ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+
+    &:hover {
+        background: var(--c-bg);
+        color: var(--c-ink);
+    }
+}
+
+// the tab row sits tight under the head; leave a little air above the content
+body.cbn-ui .tabs:has(.pf-head) {
+    padding-top: 32px;
+    margin-bottom: 0;
+}
+
+body.cbn-ui .tabs:has(.pf-head) + #content-body {
+    padding-top: 28px;
+}
+
+// the content of profile pages starts under the tab row, not under the top bar
+body.cbn-ui #content-body:has(> .pf) {
+    padding-top: 28px;
+}
+
+// ---- layout -----------------------------------------------------------------------------------------------------
+body.cbn-ui .pf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+body.cbn-ui .pf-main, body.cbn-ui .pf-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    body.cbn-ui .pf-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.cbn-ui .pf-avatar {
+        width: 64px;
+        height: 64px;
+        font-size: 24px;
+    }
+
+    body.cbn-ui .pf-id-text h1 {
+        font-size: 24px;
+    }
+}
+
+// ---- stat tiles -------------------------------------------------------------------------------------------------
+body.cbn-ui .pf-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+body.cbn-ui .pf-stat {
+    @include la-card;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+
+    b {
+        font-size: 28px;
+        line-height: 1.2;
+        font-weight: 700;
+        color: var(--c-ink);
+        font-variant-numeric: tabular-nums;
+    }
+
+    span {
+        font-size: 13px;
+        color: var(--c-mute);
+    }
+}
+
+@media (max-width: 520px) {
+    body.cbn-ui .pf-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+}
+
+// ---- cards ------------------------------------------------------------------------------------------------------
+body.cbn-ui .pf-card {
+    @include la-card;
+    padding: 20px 24px;
+
+    h2 {
+        margin: 0 0 14px;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--c-ink);
+    }
+
+    &.pf-card-wide {
+        padding: 20px 24px 24px;
+    }
+}
+
+body.cbn-ui .pf-single {
+    min-width: 0;
+}
+
+body.cbn-ui .pf-empty {
+    margin: 0;
+    color: var(--c-mute);
+    font-size: 14px;
+    font-style: normal;
+}
+
+body.cbn-ui .pf-heat {
+    display: grid;
+    grid-template-columns: repeat(26, minmax(0, 1fr));
+    gap: 4px;
+
+    @include la-heat-cells;
+}
+
+body.cbn-ui .pf-legend {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--c-mute);
+}
+
+body.cbn-ui .pf-skills {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+body.cbn-ui .pf-skill {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+
+    b {
+        flex: none;
+        width: 44px;
+        text-align: right;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+body.cbn-ui .pf-skill-name {
+    flex: none;
+    width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.cbn-ui .pf-bar {
+    flex: 1 1 auto;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--c-track);
+    overflow: hidden;
+
+    i {
+        display: block;
+        height: 8px;
+        background: var(--c-blue);
+    }
+}
+
+@media (max-width: 520px) {
+    body.cbn-ui .pf-skill {
+        gap: 10px;
+    }
+
+    body.cbn-ui .pf-skill-name {
+        width: 92px;
+    }
+}
+
+// ---- side column ------------------------------------------------------------------------------------------------
+body.cbn-ui a.pf-row, body.cbn-ui a.pf-row:link, body.cbn-ui a.pf-row:visited {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--c-line);
+    color: var(--c-ink);
+
+    b {
+        font-weight: 600;
+    }
+
+    span {
+        flex: none;
+        color: var(--c-mute);
+        font-size: 13px;
+    }
+
+    &:hover b {
+        color: var(--c-blue);
+    }
+}
+
+body.cbn-ui .pf-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.cbn-ui .pf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--c-ink);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-ink);
+}
+
+body.cbn-ui dl.pf-kv {
+    margin: 0 0 12px;
+
+    > div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+        border-top: 1px solid var(--c-line);
+        font-size: 14px;
+    }
+
+    dt {
+        color: var(--c-mute);
+        font-weight: 400;
+    }
+
+    dd {
+        margin: 0;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+body.cbn-ui a.pf-link, body.cbn-ui a.pf-link:link, body.cbn-ui a.pf-link:visited {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-blue);
+}
+
+// the rating chart keeps its own canvas; only size it
+body.cbn-ui .pf-card #rating-chart {
+    position: relative;
+    height: 260px;
+}
+
+// ---- edit profile (settings page): flat, canvas colours --------------------------------------------------------
+body.cbn-ui .ep {
+    --ep-box: var(--c-soft); --ep-chip: var(--c-ce-bg); --ep-line: var(--c-line); --ep-muted: var(--c-mute);
+    --ep-text: var(--c-ink); --ep-title: var(--c-ink); --ep-field: var(--c-card); --ep-bar: var(--c-soft); --ep-shadow: transparent;
+}
+body.cbn-ui .ep-toc { border: 1px solid var(--c-line); box-shadow: none; background: var(--c-card); padding: 8px; }
+body.cbn-ui .ep-toc a, body.cbn-ui .ep-toc a:link, body.cbn-ui .ep-toc a:visited { border-radius: 4px; font-weight: 500; font-size: 14px; color: var(--c-ink); padding: 9px 12px; }
+body.cbn-ui .ep-toc a.on { background: var(--c-blue-bg, #e8ecfa); color: var(--c-blue); font-weight: 600; }
+body.cbn-ui .ep-avatar { border-radius: 6px; box-shadow: none; border: 1px solid var(--c-line); }
+body.cbn-ui .ep-eyebrow { color: var(--c-mute); letter-spacing: .06em; font-weight: 600; }
+body.cbn-ui .ep-card input[type=text], body.cbn-ui .ep-card input[type=search], body.cbn-ui .ep-card input:not([type]), body.cbn-ui .ep-card select, body.cbn-ui .ep-card textarea,
+body.cbn-ui .ep-card .select2-container .select2-selection--single { border: 1px solid var(--c-input); border-radius: 6px; box-shadow: none; background: var(--c-card); }
+body.cbn-ui .ep-links a, body.cbn-ui .ep-links a:link, body.cbn-ui .ep-links a:visited {
+    border-radius: 6px; background: var(--c-card); border: 1px solid var(--c-ink); color: var(--c-ink); font-weight: 600; box-shadow: none; padding: 7px 14px;
+}
+body.cbn-ui .ep-links a:hover { background: var(--c-soft); }
+body.cbn-ui .ep-seg { background: var(--c-soft); border: 1px solid var(--c-line); padding: 3px; }
+body.cbn-ui .ep-seg button, body.cbn-ui .ep-seg button:hover {
+    border-radius: 4px; background: transparent !important; color: var(--c-mute) !important; font-weight: 600; box-shadow: none; border: 0;
+}
+body.cbn-ui .ep-seg button[aria-checked="true"] { background: var(--c-blue) !important; color: #fff !important; box-shadow: none; }
+body.cbn-ui button.ep-btn, body.cbn-ui .ep-btn:hover {
+    border-radius: 6px; border: 1px solid var(--c-ink); background: var(--c-card) !important; color: var(--c-ink) !important; font-weight: 600; box-shadow: none; padding: 0 14px;
+}
+body.cbn-ui .ep-btn:hover { background: var(--c-soft) !important; }
+body.cbn-ui .ep-check { background: var(--c-soft); border: 1px solid var(--c-line); font-weight: 500; }
+body.cbn-ui .ep-editor { border: 1px solid var(--c-line); box-shadow: none; }
+body.cbn-ui .ep-gutter { background: var(--c-soft); }
+body.cbn-ui .ep-savebar { border: 1px solid var(--c-line); border-radius: 6px; box-shadow: 0 6px 18px rgba(21, 23, 28, .1); background: var(--c-card); }
+body.cbn-ui .ep-savebar .msg { font-weight: 600; font-size: 14px; }
+body.cbn-ui .ep-savebar .dot { background: var(--c-mute); }
+body.cbn-ui .ep-savebar.dirty .dot { background: #c98a00; }
+body.cbn-ui .ep-savebar .cancel { border: 1px solid var(--c-ink); border-radius: 6px; font-weight: 600; font-size: 14px; height: 42px; line-height: 38px; }
+body.cbn-ui .ep-savebar input[type=submit] { border-radius: 6px; height: 42px; font-weight: 600; font-size: 14px; box-shadow: none; background: var(--c-blue); color: #fff; border: 0; }
+body.cbn-ui .ep-actions a.button, body.cbn-ui .ep-actions .button.inline-button, body.cbn-ui .ep-row a.button {
+    border-radius: 6px; box-shadow: none; background: var(--c-blue); color: #fff; font-weight: 600; padding: 8px 16px;
+}
+body.cbn-ui .ep-row b, body.cbn-ui .ep-row strong { font-weight: 600; }
+// martor editor inside the profile
+body.cbn-ui .ep .martor-toolbar, body.cbn-ui .ep .martor-field { border-radius: 6px; }
+body.cbn-ui .ep .nav-tabs a, body.cbn-ui .ep .martor-toolbar .nav-tabs a { color: var(--c-ink); }
+
+// ---- generic form pages (password, new blog, tickets...): flat form instead of grey box in a white card ----------
+body.cbn-ui #content-body > .centered-form, body.cbn-ui #content-body > form.form-area { max-width: 640px; }
+body.cbn-ui form.form-area { background: transparent; border: 0; box-shadow: none; padding: 0; }
+body.cbn-ui .django-as-table { width: 100%; border-collapse: separate; border-spacing: 0 14px; }
+body.cbn-ui .django-as-table th, body.cbn-ui .django-as-table td { padding: 0; vertical-align: top; text-align: left; }
+body.cbn-ui .django-as-table th { width: 190px; padding-right: 16px; font-weight: 600; font-size: 14px; padding-top: 9px; }
+body.cbn-ui .django-as-table input[type=text], body.cbn-ui .django-as-table input[type=password], body.cbn-ui .django-as-table input[type=email],
+body.cbn-ui .django-as-table input[type=number], body.cbn-ui .django-as-table select, body.cbn-ui .django-as-table textarea { width: 100%; max-width: 420px; height: 40px; padding: 0 12px; border: 1px solid var(--c-input); border-radius: 6px; background: var(--c-card); box-shadow: none; }
+body.cbn-ui .django-as-table textarea { height: auto; padding: 10px 12px; }
+body.cbn-ui .django-as-table .helptext, body.cbn-ui .django-as-table ul { font-size: 13px; color: var(--c-mute); }
+body.cbn-ui .centered-form form.form-area button.submit-bar, body.cbn-ui form.form-area button.submit-bar { border-radius: 6px; background: var(--c-blue); color: #fff; border: 0; padding: 10px 22px; font-weight: 600; box-shadow: none; }
+
+// martor / ace markdown editors follow the theme (they stayed white in dark mode)
+body.cbn-ui .martor-field .ace_editor, body.cbn-ui .ep .ace_editor { background: var(--c-card) !important; color: var(--c-ink) !important; }
+body.cbn-ui .martor-field .ace_gutter, body.cbn-ui .ep .ace_gutter { background: var(--c-soft) !important; color: var(--c-mute) !important; }
+body.cbn-ui .martor-field .ace_cursor, body.cbn-ui .ep .ace_cursor { color: var(--c-ink) !important; }
+body.cbn-ui .martor-field .ace_marker-layer .ace_active-line, body.cbn-ui .martor-field .ace_gutter-active-line { background: var(--c-soft) !important; }
+body.cbn-ui .martor-field .ace_print-margin { display: none; }

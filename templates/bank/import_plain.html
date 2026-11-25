@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "quiz/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    {% include "bank/import_plain_style.html" %}
+{% endblock %}
+
+{% block body %}
+    {% include "messages.html" %}
+    <div class="bi-page">
+        <h2 class="bi-title">{{ _('Import an exam paper') }}</h2>
+        <div class="bi-steps">
+            <span class="bi-step is-now">1 · {{ _('Upload file') }}</span>
+            <span class="bi-step">2 · {{ _('Review and edit') }}</span>
+            <span class="bi-step">3 · {{ _('Save to the bank') }}</span>
+        </div>
+        <div class="bi-cols">
+            <form method="post" enctype="multipart/form-data" class="bi-card bi-main">
+                {% csrf_token %}
+                <h3>{{ _('Upload the exam') }}</h3>
+                <p class="bi-note">{{ _('Upload an ordinary exam paper: Word (.docx) or a PDF that contains text. The questions are recognised automatically and you can check and fix them on the next page before anything is saved.') }}</p>
+                {% if error %}<div class="bi-error">{{ error }}</div>{% endif %}
+                {% if form.file.errors %}<div class="bi-error">{% for e in form.file.errors %}{{ e }} {% endfor %}</div>{% endif %}
+                <div class="bi-field">
+                    <label class="bi-label" for="{{ form.file.id_for_label }}">{{ _('File (.docx or .pdf)') }}, {{ _('up to') }} {{ max_mb }} MB</label>
+                    <input type="file" name="file" id="{{ form.file.id_for_label }}" accept=".docx,.pdf" required>
+                </div>
+                <button type="submit" class="bi-btn">{{ _('Read the file') }}</button>
+            </form>
+            <aside class="bi-card bi-side">
+                <h3>{{ _('What is recognised') }}</h3>
+                <ul class="bi-list">
+                    <li>{{ _('Questions that start with "Câu 1.", "Câu 1:" or "1."') }}</li>
+                    <li>{{ _('Options A. B. C. D. (or a) b) c) d)), on separate lines or on one line') }}</li>
+                    <li>{{ _('The correct answer from an "Đáp án: C" line, from the answer table at the end, or from underlined or bold options in Word') }}</li>
+                    <li>{{ _('Sections "Phần I", "Phần II (đúng sai)", "Phần III (trả lời ngắn)"') }}</li>
+                </ul>
+                <p class="bi-note">{{ _('Scanned or photographed PDFs cannot be read: use the Word file or a PDF exported from Word. Pictures are not imported.') }}</p>
+                <p class="bi-note"><a href="{{ url('bank_import') }}">{{ _('Use the [qus] marker format instead') }}</a></p>
+            </aside>
+        </div>
+    </div>
+{% endblock %}

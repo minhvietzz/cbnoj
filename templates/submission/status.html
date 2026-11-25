@@ -1,4 +1,5 @@
 {% extends "submission/info-base.html" %}
+{% from "bp/macros.html" import chip_class %}
 {% block js_media %}
     {% if not submission.is_graded and EVENT_LAST_MSG %}
         <script type="text/javascript">
@@ -75,52 +76,59 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    <div class="sub-head">
-        <span class="sub-kicker">{{ _('Submission') }} #{{ submission.id }}</span>
-        <h2 class="sub-title">
-            <a href="{{ url('problem_detail', submission.problem.code) }}">{{ submission.problem.translated_name(LANGUAGE_CODE) }}</a>
-            <small>{{ _('by') }} {{ link_user(submission.user) }}</small>
-        </h2>
-    </div>
+    <header class="bp-head bp-head-row sd-head">
+        <div class="pd-title">
+            <div class="pd-crumb">
+                <a href="{{ url('all_submissions') }}">{{ _('Submissions (title)') }}</a> /
+                <span class="bp-code">#{{ submission.id }}</span>
+            </div>
+            <h1>
+                <a href="{{ url('problem_detail', submission.problem.code) }}">{{ submission.problem.translated_name(LANGUAGE_CODE) }}</a>
+                <small>{{ _('by') }} {{ link_user(submission.user) }}</small>
+            </h1>
+        </div>
+    </header>
 {% endblock %}
 
 {% block body %}
     {% set can_edit = submission.problem.is_editable_by(request.user) %}
     {% set show_usage = can_view_testcase_status and submission.is_graded and submission.status not in ('IE', 'CE', 'AB') %}
-    <section class="sub-hero" id="sub-hero">
-        <div class="sub-hero-main">
-            <div class="sub-verdict-line">
+    <div class="bp-page sd-page">
+    <section class="bp-card sd-hero" id="sub-hero">
+        <div class="sd-hero-top">
+            <div class="sd-verdict">
                 {% if not submission.is_graded %}<i class="fa fa-spinner fa-pulse"></i>{% endif %}
-                <span class="sub-verdict {{ submission.result_class }}">{{ submission.long_status }}</span>
-                {% if submission.is_graded and submission.status not in ('IE', 'CE', 'AB') %}
-                    <span class="sub-score">{{ submission.case_points|floatformat(-3) }}<small>/ {{ submission.case_total|floatformat(0) }}</small></span>
-                {% endif %}
+                <span class="bp-chip sd-big {{ chip_class(submission.result_class) }}">{{ submission.short_status }}</span>
+                <span>{{ submission.long_status }}</span>
             </div>
-            <div class="sub-meta">
-                <span><i class="fa fa-clock-o"></i> {{ submission.date|date(_('N j, Y, g:i a')) }}</span>
-                {% if can_edit and submission.judged_on %}<span><i class="fa fa-server"></i> {{ submission.judged_on.name }}</span>{% endif %}
-                {% if submission.contest_object_id and not request.in_contest %}<span><i class="fa fa-dot-circle-o"></i> <a href="{{ url('contest_view', submission.contest_object.key) }}">{{ submission.contest_object.name }}</a></span>{% endif %}
-            </div>
+            {% if submission.is_graded and submission.status not in ('IE', 'CE', 'AB') %}
+                <div class="sd-score">{{ submission.case_points|floatformat(-3) }}<small>/ {{ submission.case_total|floatformat(0) }}</small></div>
+            {% endif %}
         </div>
-        <div class="sub-tiles">
-            <div class="sub-tile"><span>{{ _('Language') }}</span><b>{{ submission.language }}</b></div>
+        <div class="pd-meta sd-tiles">
+            <span><b>{{ submission.language }}</b><span>{{ _('Language') }}</span></span>
             {% if show_usage %}
-                <div class="sub-tile"><span>{{ _('Time') }}</span><b>{% if submission.result == 'TLE' %}---{% else %}{{ submission.time|floatformat(3) }}s{% endif %}</b></div>
-                <div class="sub-tile"><span>{{ _('Memory') }}</span><b>{{ submission.memory|kbdetailformat }}</b></div>
+                <span><b>{% if submission.result == 'TLE' %}---{% else %}{{ submission.time|floatformat(3) }} s{% endif %}</b><span>{{ _('Time') }}</span></span>
+                {% if submission.memory is not none %}<span><b>{{ submission.memory|kbdetailformat }}</b><span>{{ _('Memory') }}</span></span>{% endif %}
             {% endif %}
             {% if submission.is_graded and submission.status not in ('IE', 'CE', 'AB') %}
-                <div class="sub-tile"><span>{{ _('Points') }}</span><b>{{ submission.points|floatformat(2) }}/{{ submission.problem.points|floatformat(2) }}</b></div>
+                <span><b>{{ submission.points|floatformat(2) }}/{{ submission.problem.points|floatformat(2) }}</b><span>{{ _('Points') }}</span></span>
             {% endif %}
         </div>
-        <div class="sub-actions">
+        <div class="sd-meta">
+            <span>{{ submission.date|date(_('N j, Y, g:i a')) }}</span>
+            {% if can_edit and submission.judged_on %}<span>{{ _('Judge') }}: {{ submission.judged_on.name }}</span>{% endif %}
+            {% if submission.contest_object_id and not request.in_contest %}<span><a href="{{ url('contest_view', submission.contest_object.key) }}">{{ submission.contest_object.name }}</a></span>{% endif %}
+        </div>
+        <div class="sd-actions">
             {% if not submission.language.file_only or request.user.is_superuser %}
-                <a href="{{ url('submission_source', submission.id) }}"><i class="fa fa-file-code-o"></i> {{ _('View source') }}</a>
+                <a class="bp-btn line" href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a>
             {% endif %}
             {% if submission.language.file_only %}
-                <a href="{{ url('submission_source_download', submission.id) }}"><i class="fa fa-download"></i> {{ _('Download') }}</a>
+                <a class="bp-btn line" href="{{ url('submission_source_download', submission.id) }}">{{ _('Download') }}</a>
             {% endif %}
             {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
-                <a href="{{ url('problem_submit', submission.problem.code, submission.id) }}"><i class="fa fa-repeat"></i> {{ _('Resubmit') }}</a>
+                <a class="bp-btn line" href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a>
             {% endif %}
             {% if perms.judge.rejudge_submission and can_edit and not submission.is_locked %}
                 {% compress js %}
@@ -134,35 +142,32 @@
                 {% endcompress %}
                 <form action="{{ url('submission_rejudge') }}" method="post" style="display: inline">
                     {% csrf_token %}
-                    <a href="#" onclick="confirm_and_rejudge(parentNode); return false;"><i class="fa fa-refresh"></i> {{ _('Rejudge') }}</a>
+                    <button type="button" class="bp-btn line" onclick="confirm_and_rejudge(parentNode); return false;">{{ _('Rejudge') }}</button>
                     <input type="hidden" name="id" value="{{ submission.id }}">
                     <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
                 </form>
             {% endif %}
             {% if can_edit and not submission.language.file_only %}
-                <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}"><i class="fa fa-files-o"></i> {{ _('Diff this submission') }}</a>
+                <a class="bp-btn line" href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">{{ _('Diff this submission') }}</a>
             {% endif %}
             {% if request.user.is_superuser %}
-                <a href="{{ url('admin:judge_submission_change', submission.id) }}"><i class="fa fa-cog"></i> {{ _('Admin') }}</a>
+                <a class="bp-btn line" href="{{ url('admin:judge_submission_change', submission.id) }}">{{ _('Admin') }}</a>
             {% endif %}
         </div>
     </section>
 
-    <section class="sub-results"><div id="test-cases">{% include "submission/status-testcases.html" %}</div></section>
+    <section class="bp-card sd-results"><div id="test-cases">{% include "submission/status-testcases.html" %}</div></section>
 
     {% if not submission.is_graded %}
         {% if (request.user == submission.user.user and not request.official_contest_mode) or perms.judge.abort_any_submission %}
             <div id="abort-button">
-                <br>
-                <hr class="half-hr">
-                <br>
                 <form action="{{ url('submission_abort', submission.id) }}" method="post"
                       title="{{ _('Press Ctrl-Enter or Command-Enter to abort.') }}">
                     {% csrf_token %}
-                    <input style="float:left" type="submit" value="{{ _('Abort') }}" class="button">
-                    <br><br>
+                    <input type="submit" value="{{ _('Abort') }}" class="bp-btn line">
                 </form>
             </div>
         {% endif %}
     {% endif %}
+    </div>
 {% endblock %}

@@ -12,7 +12,7 @@ from judge.models.profile import Organization, Profile
 from judge.utils import quiz_grading
 
 __all__ = ['Quiz', 'QuizQuestion', 'QuizOption', 'QuizAttempt', 'QuizViolation', 'QuizTopicStat',
-           'QuizProfileStat', 'BankTag', 'BankQuestion']
+           'QuizProfileStat', 'BankTag', 'BankQuestion', 'ExamVariant']
 
 QUESTION_KINDS = (
     ('single', _('Single choice')),
@@ -86,6 +86,11 @@ class Quiz(models.Model):
                                            help_text=_('Optional. A mock exam without a course and with organizations '
                                                        'is open only to their members.'))
     track = models.CharField(max_length=3, choices=TRACKS, blank=True, default='', verbose_name=_('track'))
+    subject = models.ForeignKey('judge.Subject', verbose_name=_('subject'), null=True, blank=True,
+                                on_delete=models.SET_NULL, related_name='quizzes')
+    classes = models.ManyToManyField('judge.Classroom', verbose_name=_('classes'), blank=True,
+                                     related_name='quizzes',
+                                     help_text=_('Members of these classes may take the quiz.'))
     start_time = models.DateTimeField(verbose_name=_('exam start'), null=True, blank=True,
                                       help_text=_('Mock exam only. Nobody can start before this time.'))
     end_time = models.DateTimeField(verbose_name=_('exam end'), null=True, blank=True,
@@ -211,6 +216,8 @@ class Quiz(models.Model):
             return True
         if self.mode == 'personal':
             return user.is_authenticated and self.creator_id == user.profile.id
+        if self.pk and user.is_authenticated and self.classes.filter(members__user=user.profile).exists():
+            return True
         if self.is_exam:
             # A mock exam in a course is for its members; one without a course follows is_public.
             if self.course_id:
@@ -288,6 +295,8 @@ class QuizOption(models.Model):
 
 class QuizAttempt(models.Model):
     quiz = models.ForeignKey(Quiz, verbose_name=_('quiz'), on_delete=models.CASCADE, related_name='attempts')
+    variant = models.ForeignKey('judge.ExamVariant', verbose_name=_('exam code'), null=True, blank=True,
+                                on_delete=models.SET_NULL, related_name='attempts')
     user = models.ForeignKey(Profile, verbose_name=_('user'), on_delete=models.CASCADE,
                              related_name='quiz_attempts')
     started = models.DateTimeField(auto_now_add=True, verbose_name=_('started'))
@@ -542,6 +551,8 @@ class BankQuestion(models.Model):
     points = models.FloatField(verbose_name=_('points'), default=1, validators=[MinValueValidator(0)])
     level = models.PositiveSmallIntegerField(verbose_name=_('difficulty'), choices=LEVELS, default=0)
     tags = models.ManyToManyField(BankTag, verbose_name=_('tags'), blank=True, related_name='questions')
+    subject = models.ForeignKey('judge.Subject', verbose_name=_('subject'), null=True, blank=True,
+                                on_delete=models.SET_NULL, related_name='bank_questions')
     source_name = models.CharField(max_length=255, blank=True, verbose_name=_('source file'))
     creator = models.ForeignKey(Profile, verbose_name=_('creator'), null=True, blank=True,
                                 on_delete=models.SET_NULL, related_name='bank_questions')
@@ -567,3 +578,26 @@ class BankQuestion(models.Model):
     @property
     def kind_label(self):
         return dict(QUESTION_KINDS)[self.kind]
+
+
+class ExamVariant(models.Model):
+    """One printable version ("mã đề") of a quiz: a fixed order of its questions and of each question's options.
+
+    Questions and options are referred to by id, so statistics can always be merged back by the original question.
+    """
+    quiz = models.ForeignKey(Quiz, verbose_name=_('quiz'), on_delete=models.CASCADE, related_name='variants')
+    code = models.CharField(max_length=8, verbose_name=_('exam code'))
+    question_order = models.JSONField(default=list, blank=True,
+                                      help_text=_('Question ids in the order of this version.'))
+    option_orders = models.JSONField(default=dict, blank=True,
+                                     help_text=_('Option ids per question id, in the order of this version.'))
+    created = models.DateTimeField(auto_now_add=True, verbose_name=_('created'))
+
+    class Meta:
+        unique_together = ('quiz', 'code')
+        ordering = ('quiz', 'code')
+        verbose_name = _('exam code')
+        verbose_name_plural = _('exam codes')
+
+    def __str__(self):
+        return '%s / %s' % (self.quiz_id, self.code)

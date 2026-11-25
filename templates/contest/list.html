@@ -15,8 +15,8 @@
                 $(this).toggleClass('expanded');
             });
 
-            $('#contest-tag-filter').select2({theme: '{{ DMOJ_SELECT2_THEME }}'}).on('change', function () {
-                $('#search-form').submit();
+            $('#contest-tag-filter').select2({theme: '{{ DMOJ_SELECT2_THEME }}', width: '100%'}).on('change', function () {
+                $('#cx-form').submit();
             });
 
             {% if not request.official_contest_mode %}
@@ -52,17 +52,6 @@
                     window.location.href = parser.href;
                 });
             {% endif %}
-
-            // var tooltip_classes = 'tooltipped tooltipped-e';
-            //
-            // $('.contest-tag').each(function () {
-            //     var link = $(this);//
-            //     link.mouseenter(function (e) {
-            //         link.addClass(tooltip_classes).attr('aria-label', link.attr('data-description'));
-            //     }).mouseleave(function (e) {
-            //         link.removeClass(tooltip_classes).removeAttr('aria-label');
-            //     });
-            // });
         });
     </script>
 {% endblock %}
@@ -70,263 +59,107 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% set tab = 'list' %}
-    {% include "contest/contest-list-tabs.html" %}
+    <header class="bp-head">
+        <h1>{{ _('Contests (title)') }}</h1>
+        <div class="bp-tabs">
+            <a class="on" href="{{ url('contest_list') }}">{{ _('Programming') }}</a>
+            {% if QUIZ_ENABLED is not defined or QUIZ_ENABLED %}<a href="{{ url('quiz_list') }}">{{ _('Quizzes') }}</a>{% endif %}
+            <a href="{{ url('contest_calendar', now.year, now.month) }}">{{ _('Calendar') }}</a>
+            {% if perms.judge.add_contest %}<a href="{{ url('contest_new') }}">{{ _('Add new contest') }}</a>{% endif %}
+            {% if request.user.is_staff and (perms.judge.edit_all_contest or perms.judge.edit_own_contest) %}<a href="{{ url('admin:judge_contest_changelist') }}">{{ _('Admin') }}</a>{% endif %}
+        </div>
+    </header>
 {% endblock %}
 
-{% macro contest_head(contest) %}
-    {% spaceless %}
-        <a href="{{ url('contest_view', contest.key) }}" class="contest-list-title">
-            {{- contest.name -}}
-        </a>
-        <span class="contest-tags">
-            {% if not contest.is_visible %}
-                <span style="background-color: #000000; color: #ffffff" class="contest-tag">
-                    <i class="fa fa-eye-slash"></i> {{ _('hidden') }}
-                </span>
-            {% endif %}
-            {% if contest.is_organization_private and contest.organization %}
-                <span style="background-color: #cccccc" class="contest-tag">
-                    <a href="{{ contest.organization.get_absolute_url() }}" style="color: #000000">
-                        <i class="fa fa-lock"></i> {{ contest.organization.name }}
-                    </a>
-                </span>
-            {% elif contest.is_private %}
-                <span style="background-color: #666666; color: #ffffff" class="contest-tag">
-                    <i class="fa fa-lock"></i> {{ _('private') }}
-                </span>
-            {% endif %}
-            {% if contest.is_rated %}
-                <span style="background-color: #e54c14; color: #ffffff" class="contest-tag">
-                    <i class="fa fa-bar-chart"></i> {{ _('rated') }}
-                </span>
-            {% endif %}
-        </span>
-    {% endspaceless %}
-{% endmacro %}
-
-{% macro tag_pill(tag) %}
-    <a class="ctag" href="?tag={{ tag.id }}#past-contests"
-       style="background: color-mix(in srgb, {{ tag.color }} 13%, transparent); color: {{ tag.color }};">{{ tag.name }}</a>
-{% endmacro %}
-
-{% macro tags_cell(contest) %}
-    <td>
-        {% set tl = contest.tags.all()|list %}
-        {% if tl %}
-            <div class="ctag-wrap">
-                {% for tag in tl[:2] %}{{ tag_pill(tag) }}{% endfor %}
-                {% if tl|length > 2 %}
-                    <span class="contest-tag-extra" style="display:none">
-                        {% for tag in tl[2:] %}{{ tag_pill(tag) }}{% endfor %}
-                    </span>
-                    <span class="contest-tag-more" title="{{ tl[2:]|map(attribute='name')|join(', ') }}">+{{ tl|length - 2 }}</span>
-                {% endif %}
-            </div>
-        {% endif %}
-    </td>
-{% endmacro %}
-
-{% macro time_left(contest) %}
-    <div class="time time-left">
-        {% if contest.time_limit %}
-            {{ contest.start_time|date(_("M j, Y, G:i")) }} -
-            {{ contest.end_time|date(_("M j, Y, G:i")) }}
-        {% else %}
-            {{ contest.start_time|date(_("M j, Y, G:i")) }}
-        {% endif %}
-        <br>
-        {% if contest.time_limit %}
-            {% set time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
-            {{ _('%(time_limit)s window', time_limit=time_limit) }}
-        {% else %}
-            {% set duration=contest.contest_window_length|timedelta('localized-no-seconds') %}
-            {{ _('%(duration)s long', duration=duration) }}
-        {% endif %}
-    </div>
-{% endmacro %}
-
-{% macro user_count(contest, user) %}
-    {% if contest.can_see_own_scoreboard(user) %}
-        <a href="{{ url('contest_ranking', contest.key) }}">{{ contest.user_count }}</a>
-    {% else %}
-        {{ contest.user_count }}
-    {% endif %}
-    <span title="{%- trans count=contest.virtual_count -%}
-        This contest has {{count}} virtual participation
-        {%- pluralize -%}
-        This contest has {{count}} virtual participations
-        {%- endtrans -%}"
-        style="opacity: 50%;">({{ contest.virtual_count }})</span>
-{% endmacro %}
-
-{% macro contest_join(contest, request, finished_contests) %}
-    {% if request.in_contest and contest.key == request.participation.contest.key %}
-        <td><span>Already joined</span></td>
-    {% else %}
-        <td>
-            {% if contest.key in finished_contests or request.profile in contest.authors.all() or request.profile in contest.curators.all() or request.profile in contest.testers.all() %}
-                <form action="{{ url('contest_join', contest.key) }}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="unselectable button full participate-button spectate-warning"
-                           value="{{ _('Spectate') }}">
-                </form>
-            {% else %}
-                <form action="{{ url('contest_join', contest.key) }}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="unselectable button full participate-button join-warning"
-                        value="{{ _('Join') }}">
-                </form>
-            {% endif %}
-        </td>
-    {% endif %}
-{% endmacro %}
-
-{% macro contest_register(contest, request) %}
-    <td>
-        {% if request.profile not in contest.authors.all() and request.profile not in contest.curators.all() and request.profile not in contest.testers.all() %}
-            {% if request.profile and contest.id in request.profile.registered_contest_ids %}
-                <span style="color: #87ab69"><b>Already registered</b></span>
-            {% elif not contest.can_register %}
-                {% if contest.time_before_register %}
-                    <span class="time">{{ _('Registration opens in %(countdown)s', countdown=as_countdown(contest.time_before_register)) }}</span>
-                {% else %}
-                    <span>Registration closed</span>
-                {% endif %}
-            {% else %}
-                <form action="{{ url('contest_register', contest.key) }}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="unselectable button full participate-button register-warning" style="background: linear-gradient(to bottom, #87ab69 0, #4b6043 100%) repeat-x"
-                            value="{{ _('Register') }}">
-                </form>
-            {% endif %}
-        {% endif %}
-        {% if not contest.time_before_register %}
-            <div style="padding-top: 0.5em">
-                <span style="opacity: 50%">Registered users: </span>
-                <span>{{ contest.user_count }}</span>
-            </div>
-        {% endif %}
-    </td>
-{% endmacro %}
-
-{% macro cl_tags(contest) %}
+{# --- pieces ------------------------------------------------------------------------------------------------ #}
+{% macro cx_tags(contest) %}
     {% set tl = contest.tags.all()|list %}
-    {% for tag in tl[:3] %}<span class="cl-chip" style="color: {{ tag.color }}">{{ tag.name }}</span>{% endfor %}
-    {% if contest.is_rated %}<span class="cl-chip cl-chip-warn">{{ _('rated') }}</span>{% endif %}
-    {% if contest.is_organization_private and contest.organization %}<span class="cl-chip"><i class="fa fa-lock"></i> {{ contest.organization.name }}</span>
-    {% elif contest.is_private %}<span class="cl-chip"><i class="fa fa-lock"></i> {{ _('private') }}</span>{% endif %}
-    {% if not contest.is_visible %}<span class="cl-chip"><i class="fa fa-eye-slash"></i> {{ _('hidden') }}</span>{% endif %}
+    {% for tag in tl[:3] %}<span class="cx-tag" style="color: {{ tag.color }}">{{ tag.name }}</span>{% endfor %}
+    {% if contest.is_rated %}<span class="cx-tag cx-warn">{{ _('rated') }}</span>{% endif %}
+    {% if contest.is_organization_private and contest.organization %}<span class="cx-tag"><i class="fa fa-lock"></i> {{ contest.organization.name }}</span>
+    {% elif contest.is_private %}<span class="cx-tag"><i class="fa fa-lock"></i> {{ _('private') }}</span>{% endif %}
+    {% if not contest.is_visible %}<span class="cx-tag"><i class="fa fa-eye-slash"></i> {{ _('hidden') }}</span>{% endif %}
 {% endmacro %}
 
-{% macro cl_action(contest, kind) %}
+{% macro cx_length(contest) %}
+    {%- if contest.time_limit -%}
+        {{ (contest.time_limit.total_seconds() // 60)|int }} {{ _('minutes') }}
+    {%- else -%}
+        {{ (contest.contest_window_length.total_seconds() // 60)|int }} {{ _('minutes') }}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro cx_action(contest, kind, request, finished_contests) %}
     {% if kind == 'upcoming' %}
         {% if contest.require_registration %}
             {% if request.profile and contest.id in request.profile.registered_contest_ids %}
-                <span class="cl-btn cl-btn-ok">{{ _('Already registered') }}</span>
+                <span class="cx-act-note">{{ _('Already registered') }}</span>
             {% elif contest.can_register %}
                 <form action="{{ url('contest_register', contest.key) }}" method="post">{% csrf_token %}
-                    <input type="submit" class="cl-btn cl-btn-go register-warning" value="{{ _('Register') }}">
+                    <input type="submit" class="cx-act register-warning" value="{{ _('Register') }}">
                 </form>
             {% else %}
-                <span class="cl-btn cl-btn-off">{{ _('Registration closed') }}</span>
+                <span class="cx-act-note">{{ _('Registration closed') }}</span>
             {% endif %}
-        {% else %}
-            <a class="cl-btn cl-btn-soft" href="{{ url('contest_view', contest.key) }}">{{ _('Details') }}</a>
         {% endif %}
     {% elif kind == 'past' %}
         {% if not request.in_contest and not contest.disallow_virtual %}
             <form action="{{ url('contest_join', contest.key) }}" method="post">{% csrf_token %}
-                <input type="submit" class="cl-btn cl-btn-soft" value="{{ _('Virtual join') }}">
+                <input type="submit" class="cx-act" value="{{ _('Virtual join') }}">
             </form>
-        {% else %}
-            <a class="cl-btn cl-btn-soft" href="{{ url('contest_view', contest.key) }}">{{ _('Details') }}</a>
         {% endif %}
     {% else %}
         {% if request.in_contest and contest.key == request.participation.contest.key %}
-            <span class="cl-btn cl-btn-ok">{{ _('Already joined') }}</span>
+            <a class="bp-btn" href="{{ url('contest_view', contest.key) }}">{{ _('Enter contest') }}</a>
         {% elif contest.require_registration and not contest.can_register and not (request.profile and contest.id in request.profile.registered_contest_ids) %}
-            <span class="cl-btn cl-btn-off">{{ _('Registration closed') }}</span>
+            <span class="cx-act-note">{{ _('Registration closed') }}</span>
         {% else %}
             <form action="{{ url('contest_join', contest.key) }}" method="post">{% csrf_token %}
                 {% if contest.key in finished_contests or request.profile in contest.authors.all() or request.profile in contest.curators.all() or request.profile in contest.testers.all() %}
-                    <input type="submit" class="cl-btn cl-btn-soft spectate-warning" value="{{ _('Spectate') }}">
+                    <input type="submit" class="bp-btn line spectate-warning" value="{{ _('Spectate') }}">
                 {% else %}
-                    <input type="submit" class="cl-btn cl-btn-go join-warning" value="{{ _('Join') }}">
+                    <input type="submit" class="bp-btn join-warning" value="{{ _('Enter contest') }}">
                 {% endif %}
             </form>
         {% endif %}
     {% endif %}
 {% endmacro %}
 
-{% macro cl_card(contest, kind) %}
-    <article class="cl-card cl-{{ kind }}">
-        <div class="cl-card-top">
-            <span class="cl-date">
-                <b>{{ contest.start_time|date('d') }}</b>
-                <span>{{ contest.start_time|date('m/Y') }}</span>
-            </span>
-            <span class="cl-card-title">
-                <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
-                {% if contest.time_limit %}
-                    {% set dur = contest.time_limit|timedelta('localized-no-seconds') %}
-                    <span class="cl-sub">{{ _('%(time_limit)s window', time_limit=dur) }}</span>
-                {% else %}
-                    {% set dur = contest.contest_window_length|timedelta('localized-no-seconds') %}
-                    <span class="cl-sub">{{ _('%(duration)s long', duration=dur) }}</span>
-                {% endif %}
-            </span>
-        </div>
-        <div class="cl-chips">
-            <span class="cl-state cl-state-{{ kind }}">
-                {% if kind == 'upcoming' %}{{ _('Upcoming') }}{% elif kind == 'past' %}{{ _('Finished') }}{% else %}{{ _('Live now') }}{% endif %}
-            </span>
-            {{ cl_tags(contest) }}
-        </div>
-        <div class="cl-card-foot">
-            <span class="cl-meta">
-                <i class="fa fa-users"></i>
-                {% if contest.can_see_own_scoreboard(request.user) %}<a href="{{ url('contest_ranking', contest.key) }}">{{ contest.user_count }}</a>{% else %}{{ contest.user_count }}{% endif %}
-                {% if kind == 'upcoming' and contest.time_before_start %}
-                    · <span class="time-remaining" data-secs="{{ contest.time_before_start.total_seconds() }}">{{ as_countdown(contest.time_before_start) }}</span>
-                {% elif kind != 'past' and contest.time_before_end %}
-                    · <span class="time-remaining" data-secs="{{ contest.time_before_end.total_seconds() }}">{{ as_countdown(contest.time_before_end) }}</span>
-                {% endif %}
-            </span>
-            {{ cl_action(contest, kind) }}
-        </div>
-    </article>
+{% macro cx_row(contest, kind, request, finished_contests) %}
+    <tr>
+        <td>
+            <a class="bp-strong" href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
+            <div class="cx-tags">{{ cx_tags(contest) }}</div>
+        </td>
+        <td class="bp-mute cx-nowrap">{{ contest.start_time|date('d/m/Y · H:i') }}</td>
+        <td class="cx-nowrap">{{ cx_length(contest) }}</td>
+        <td>{{ contest.format_class.name }}</td>
+        <td class="bp-r">
+            {% if kind == 'upcoming' %}—{% elif contest.can_see_own_scoreboard(request.user) %}<a href="{{ url('contest_ranking', contest.key) }}">{{ contest.user_count }}</a>{% else %}{{ contest.user_count }}{% endif %}
+        </td>
+        <td class="bp-r cx-nowrap">
+            {{ cx_action(contest, kind, request, finished_contests) }}
+            {% if kind == 'upcoming' %}
+                <span class="bp-chip info" title="{{ as_countdown(contest.time_before_start) if contest.time_before_start }}">{{ _('Upcoming') }}</span>
+            {% else %}
+                <span class="bp-chip grey">{{ _('Finished') }}</span>
+            {% endif %}
+        </td>
+    </tr>
 {% endmacro %}
 
-{% macro cl_quiz_card(quiz, kind) %}
-    <article class="cl-card cl-{{ kind }}">
-        <div class="cl-card-top">
-            <span class="cl-date">
-                <b>{{ quiz.start_time|date('d') }}</b>
-                <span>{{ quiz.start_time|date('m/Y') }}</span>
-            </span>
-            <span class="cl-card-title">
-                <a href="{{ quiz.get_absolute_url() }}">{{ quiz.title }}</a>
-                <span class="cl-sub">{{ quiz.start_time|date(_("M j, Y, G:i")) }}{% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}</span>
-            </span>
-        </div>
-        <div class="cl-chips">
-            <span class="cl-state cl-state-{{ kind }}">
-                {% if kind == 'upcoming' %}{{ _('Upcoming') }}{% elif kind == 'past' %}{{ _('Finished') }}{% else %}{{ _('Live now') }}{% endif %}
-            </span>
-            <span class="cl-chip"><i class="fa fa-check-square-o"></i> {{ _('Quiz') }}</span>
-            {% for org in quiz.organizations.all() %}<span class="cl-chip"><i class="fa fa-lock"></i> {{ org.name }}</span>{% endfor %}
-        </div>
-        <div class="cl-card-foot">
-            <span class="cl-meta">
-                <i class="fa fa-users"></i> {{ quiz.taken }}
-                {% if kind != 'past' and quiz.secs is not none %}
-                    · <span class="time-remaining" data-secs="{{ quiz.secs }}">{{ as_countdown(quiz.left) }}</span>
-                {% endif %}
-            </span>
-            <a class="cl-btn {{ 'cl-btn-go' if kind == 'live' else 'cl-btn-soft' }}" href="{{ quiz.get_absolute_url() }}">{{ _('Take the quiz') if kind == 'live' else _('Details') }}</a>
-        </div>
-    </article>
+{% macro cx_quiz_row(quiz, kind) %}
+    <tr>
+        <td><a class="bp-strong" href="{{ quiz.get_absolute_url() }}">{{ quiz.title }}</a>
+            <div class="cx-tags">{% for org in quiz.organizations.all() %}<span class="cx-tag"><i class="fa fa-lock"></i> {{ org.name }}</span>{% endfor %}</div></td>
+        <td class="bp-mute cx-nowrap">{{ quiz.start_time|date('d/m/Y · H:i') }}</td>
+        <td class="cx-nowrap">{% if quiz.time_limit %}{{ quiz.time_limit }} {{ _('minutes') }}{% else %}—{% endif %}</td>
+        <td>{{ _('Quiz') }}</td>
+        <td class="bp-r">{% if kind == 'upcoming' %}—{% else %}{{ quiz.taken }}{% endif %}</td>
+        <td class="bp-r cx-nowrap">
+            <span class="bp-chip {{ 'info' if kind == 'upcoming' else 'grey' }}">{{ _('Upcoming') if kind == 'upcoming' else _('Finished') }}</span>
+        </td>
+    </tr>
 {% endmacro %}
 
 {% block body %}
@@ -337,89 +170,83 @@
     {% for participation in active_participations %}{% set _x = live.append(participation.contest) %}{% endfor %}
     {% for contest in current_contests %}{% if contest not in live %}{% set _x = live.append(contest) %}{% endif %}{% endfor %}
 
-    {% if live %}
-        {% set hero = live[0] %}
-        <section class="cl-hero">
-            <div class="cl-hero-main">
-                <span class="cl-hero-tag"><i class="cl-dot"></i> {{ _('Live now') }}</span>
-                <h2><a href="{{ url('contest_view', hero.key) }}">{{ hero.name }}</a></h2>
-                <p>
-                    {{ hero.start_time|date(_("M j, Y, G:i")) }} - {{ hero.end_time|date(_("M j, Y, G:i")) }}
-                    · <i class="fa fa-users"></i> {{ hero.user_count }}
-                </p>
-            </div>
-            {% if hero.time_before_end %}
-                <div class="cl-hero-timer">
-                    <span class="time-remaining" data-secs="{{ hero.time_before_end.total_seconds() }}">{{ as_countdown(hero.time_before_end) }}</span>
-                    <small>{{ _('left') }}</small>
+    <div class="bp-wrap cx-page">
+        {% for contest in live %}
+            <section class="bp-card cx-live">
+                <div class="cx-live-main">
+                    <span class="cx-live-tag">{{ _('LIVE NOW') }}</span>
+                    <h2><a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a></h2>
+                    <span class="cx-live-meta">
+                        {{ _('Contest format (col)') }} {{ contest.format_class.name }} · {{ contest.contest_problems.count() }} {{ _('problems (count)') }}
+                        {% if contest.time_before_end %}· {{ _('time left (inline)') }} <b class="time-remaining" data-secs="{{ contest.time_before_end.total_seconds() }}">{{ as_countdown(contest.time_before_end) }}</b>{% endif %}
+                        · {{ contest.user_count }} {{ _('contestants') }}
+                    </span>
                 </div>
-            {% endif %}
-            <div class="cl-hero-action">{{ cl_action(hero, 'live') }}</div>
-        </section>
-    {% endif %}
+                {{ cx_action(contest, 'live', request, finished_contests) }}
+            </section>
+        {% endfor %}
+        {% for quiz in quiz_live %}
+            <section class="bp-card cx-live">
+                <div class="cx-live-main">
+                    <span class="cx-live-tag">{{ _('LIVE NOW') }}</span>
+                    <h2><a href="{{ quiz.get_absolute_url() }}">{{ quiz.title }}</a></h2>
+                    <span class="cx-live-meta">
+                        {{ _('Quiz') }}{% if quiz.time_limit %} · {{ quiz.time_limit }} {{ _('minutes') }}{% endif %}
+                        {% if quiz.secs is not none %}· {{ _('time left (inline)') }} <b class="time-remaining" data-secs="{{ quiz.secs }}">{{ as_countdown(quiz.left) }}</b>{% endif %}
+                        · {{ quiz.taken }} {{ _('contestants') }}
+                    </span>
+                </div>
+                <a class="bp-btn" href="{{ quiz.get_absolute_url() }}">{{ _('Take the quiz') }}</a>
+            </section>
+        {% endfor %}
 
-    <div class="cl-bar">
-        <div class="cl-seg" role="tablist">
-            <button type="button" class="cl-seg-btn" data-pane="live">{{ _('Ongoing contests') }}<span>{{ live|length + quiz_live|length }}</span></button>
-            <button type="button" class="cl-seg-btn" data-pane="upcoming">{{ _('Upcoming contests') }}<span>{{ future_contests|length + quiz_upcoming|length }}</span></button>
-            <button type="button" class="cl-seg-btn" data-pane="past">{{ _('Past contests') }}</button>
-        </div>
-        <form id="search-form" name="form" action="" method="get" class="cl-search">
-            <select id="contest-tag-filter" name="tag" style="width: 180px;">
-                <option value="">{{ _('All tags') }}</option>
-                {% for tag in contest_tags %}
-                    <option value="{{ tag.id }}" {{ 'selected' if tag.id == selected_tag }}>{{ tag.name }}</option>
-                {% endfor %}
-            </select>
-            <input id="search" type="text" name="search" value="{{ search_query or '' }}" placeholder="{{ _('Search contest...') }}">
-        </form>
-        {% if can_create_exam %}
-            <a class="cl-btn cl-btn-go" href="{{ url('quiz_upload') }}?org={{ organization.id }}"><i class="fa fa-plus"></i> {{ _('Create quiz exam') }}</a>
-        {% endif %}
-    </div>
-
-    <div class="cl-pane" data-pane="live">
-        {% if live or quiz_live %}
-            <div class="cl-grid">
-                {% for quiz in quiz_live %}{{ cl_quiz_card(quiz, 'live') }}{% endfor %}
-                {% for contest in live %}{{ cl_card(contest, 'live') }}{% endfor %}
+        <section class="bp-card" id="past-contests">
+            <div class="cx-bar">
+                <h2 class="bp-card-h bp-lg">{{ _('Upcoming and finished') }}</h2>
+                <form id="cx-form" name="form" action="" method="get" class="cx-filters">
+                    <div class="cx-sel">
+                        <select id="contest-tag-filter" name="tag">
+                            <option value="">{{ _('All tags') }}</option>
+                            {% for tag in contest_tags %}
+                                <option value="{{ tag.id }}" {{ 'selected' if tag.id == selected_tag }}>{{ tag.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input id="cx-search" type="text" name="search" value="{{ search_query or '' }}" placeholder="{{ _('Search contest...') }}">
+                    {% if hide_private_contests is not none %}
+                        <label class="cx-check"><input id="hide-private-contests-checkbox" type="checkbox"> {{ _('Hide private contests') }}</label>
+                    {% endif %}
+                    {% if can_create_exam %}
+                        <a class="bp-btn line" href="{{ url('quiz_upload') }}?org={{ organization.id }}">{{ _('Create quiz exam') }}</a>
+                    {% endif %}
+                </form>
             </div>
-        {% else %}
-            <p class="cl-empty">{{ _('There are no ongoing contests.') }}</p>
-        {% endif %}
-    </div>
-
-    <div class="cl-pane" data-pane="upcoming">
-        {% if future_contests or quiz_upcoming %}
-            <div class="cl-grid">{% for quiz in quiz_upcoming %}{{ cl_quiz_card(quiz, 'upcoming') }}{% endfor %}{% for contest in future_contests %}{{ cl_card(contest, 'upcoming') }}{% endfor %}</div>
-        {% else %}
-            <p class="cl-empty">{{ _('There are no scheduled contests at this time.') }}</p>
-        {% endif %}
-    </div>
-
-    <div class="cl-pane" data-pane="past" id="past-contests">
-        {% if past_contests or quiz_past %}
-            {% if page_obj %}<div class="top-pagination-bar">{% include "list-pages.html" %}</div>{% endif %}
-            <div class="cl-grid">{% for quiz in quiz_past %}{{ cl_quiz_card(quiz, 'past') }}{% endfor %}{% for contest in past_contests %}{{ cl_card(contest, 'past') }}{% endfor %}</div>
+            <div class="bp-scroll">
+                <table class="bp-table cx-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Contest') }}</th>
+                            <th>{{ _('Time') }}</th>
+                            <th>{{ _('Duration') }}</th>
+                            <th>{{ _('Contest format (col)') }}</th>
+                            <th class="bp-r">{{ _('Contestants') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in quiz_upcoming %}{{ cx_quiz_row(quiz, 'upcoming') }}{% endfor %}
+                        {% for contest in future_contests %}{{ cx_row(contest, 'upcoming', request, finished_contests) }}{% endfor %}
+                        {% for quiz in quiz_past %}{{ cx_quiz_row(quiz, 'past') }}{% endfor %}
+                        {% for contest in past_contests %}{{ cx_row(contest, 'past', request, finished_contests) }}{% endfor %}
+                        {% if not (quiz_upcoming or future_contests or quiz_past or past_contests) %}
+                            <tr><td colspan="6" class="bp-empty">{{ _('There are no scheduled or past contests.') }}</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
             {% if page_obj and page_obj.has_other_pages() %}
-                <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+                <div class="bp-pages">{% include "list-pages.html" %}</div>
             {% endif %}
-        {% else %}
-            <p class="cl-empty">{{ _('There are no past contests.') }}</p>
-        {% endif %}
+        </section>
     </div>
-
-    <script>
-        $(function () {
-            var hasLive = {{ 'true' if (live or quiz_live) else 'false' }};
-            var hasFuture = {{ 'true' if (future_contests or quiz_upcoming) else 'false' }};
-            var wantPast = {{ 'true' if (search_query or selected_tag or (page_obj and page_obj.number > 1)) else 'false' }};
-            function show(name) {
-                $('.cl-pane').hide().filter('[data-pane="' + name + '"]').show();
-                $('.cl-seg-btn').removeClass('active').filter('[data-pane="' + name + '"]').addClass('active');
-            }
-            $('.cl-seg-btn').on('click', function () { show($(this).data('pane')); });
-            show(wantPast ? 'past' : (hasLive ? 'live' : (hasFuture ? 'upcoming' : 'past')));
-        });
-    </script>
 {% endblock %}

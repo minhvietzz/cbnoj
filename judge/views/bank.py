@@ -1,3 +1,5 @@
+import copy
+import logging
 import random
 
 from django import forms
@@ -12,17 +14,20 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.generic import FormView, ListView, TemplateView, View
 
-from judge.models import BankQuestion, BankTag
+from judge.models import BankQuestion, BankTag, Quiz, Subject
 from judge.utils.question_bank import add_to_bank, bank_to_marker_text, copy_to_quiz, count_duplicates, get_tags, \
     question_hash, split_tags
+from judge.utils.quiz_import_plain import MAX_BYTES as PLAIN_MAX_BYTES, PlainImportError, parse_plain_file
 from judge.utils.quiz_parser import QuizFormatError, parse_quiz_file, parse_quiz_lines
 from judge.utils.views import TitleMixin
 from judge.views.quiz import MAX_UPLOAD_BYTES, ManageForm, can_upload, make_slug
 
-__all__ = ['BankList', 'BankAction', 'BankImport', 'BankImportConfirm', 'BankEdit', 'BankCompose']
+__all__ = ['BankList', 'BankAction', 'BankImport', 'BankImportConfirm', 'BankEdit', 'BankCompose',
+           'BankImportPlain', 'BankImportPlainPreview']
 
 COMPOSE_KEY = 'bank_compose'
 IMPORT_KEY = 'bank_import'
+PLAIN_KEY = 'bank_import_plain'
 PAGE_SIZE = 20
 
 
@@ -204,6 +209,219 @@ class BankImportConfirm(BankAccessMixin, View):
         messages.success(request, _('%(added)d new questions were added to the question bank '
                                     '(%(skipped)d already existed).') % {'added': added, 'skipped': skipped})
         return HttpResponseRedirect(reverse('bank_list'))
+
+
+def warning_labels():
+    return {
+        'no_answer': _('No correct answer found: choose it below.'),
+        'bad_answer': _('The answer given does not match the options: check it.'),
+        'partial_answer': _('Only some statements have an answer: the others were set to false.'),
+        'few_options': _('The number of options looks wrong for this type.'),
+        'no_options': _('No options were found for this question.'),
+        'figure': _('Has a picture or refers to one: pictures are not imported, add them by hand.'),
+        'formula': _('Has a formula: check that it was read correctly.'),
+    }
+
+
+PLAIN_KINDS = ('single', 'tf4', 'short')
+
+
+def kind_labels():
+    return {'single': _('Single choice'), 'multi': _('Multiple choice'), 'tf4': _('True/False (4 statements)'),
+            'short': _('Short answer')}
+
+
+def apply_plain_edits(questions, post):
+    """The draft questions with the teacher's edits from the preview form applied; deleted ones are dropped."""
+    result = []
+    for index, original in enumerate(questions):
+        if post.get('del_%d' % index):
+            continue
+        q = copy.deepcopy(original)
+        if 'text_%d' % index in post:
+            q['text'] = post.get('text_%d' % index, '').strip()
+        kind = post.get('kind_%d' % index)
+        if kind in PLAIN_KINDS:
+            q['kind'] = kind
+        if q['kind'] in ('single', 'multi', 'tf4'):
+            chosen = {int(i) for i in post.getlist('ok_%d' % index) if i.isdigit()}
+            for position, option in enumerate(q['options']):
+                option['correct'] = position in chosen
+            if q['kind'] != 'tf4':
+                q['kind'] = 'multi' if len(chosen) > 1 else 'single'
+        else:
+            raw = post.get('ans_%d' % index, '')
+            q['answers'] = [a.strip() for a in raw.replace('\n', '|').split('|') if a.strip()]
+        result.append(q)
+    return result
+
+
+def plain_problems(q):
+    """Why a question cannot be saved yet (codes); empty list when it is fine."""
+    problems = []
+    if not q['text'].strip():
+        problems.append(_('The question text is empty.'))
+    if q['kind'] in ('single', 'multi'):
+        if len(q['options']) < 2:
+            problems.append(_('A choice question needs at least 2 options.'))
+        elif not any(o['correct'] for o in q['options']):
+            problems.append(_('Choose the correct option.'))
+    elif q['kind'] == 'tf4':
+        if len(q['options']) != 4:
+            problems.append(_('A true/false question needs exactly 4 statements.'))
+    elif not q['answers']:
+        problems.append(_('Enter the accepted answer.'))
+    return problems
+
+
+def refresh_warnings(q):
+    keep = [w for w in q.get('warn', []) if w in ('figure', 'formula')]
+    if q['kind'] == 'short':
+        if not q['answers']:
+            keep.append('no_answer')
+    else:
+        if not q['options']:
+            keep.append('no_options')
+        elif not any(o['correct'] for o in q['options']) and q['kind'] != 'tf4':
+            keep.append('no_answer')
+        if q['kind'] != 'tf4' and len(q['options']) < 2 or q['kind'] == 'tf4' and len(q['options']) != 4:
+            keep.append('few_options')
+    q['warn'] = list(dict.fromkeys(keep))
+    return q
+
+
+class PlainUploadForm(forms.Form):
+    file = forms.FileField()
+
+    def clean_file(self):
+        upload = self.cleaned_data['file']
+        if upload.size > PLAIN_MAX_BYTES:
+            raise forms.ValidationError(_('The file is larger than 10 MB.'))
+        return upload
+
+
+class BankImportPlain(BankAccessMixin, TitleMixin, TemplateView):
+    """Step 1: upload an ordinary exam paper (.docx or text PDF). Nothing is written to the database."""
+    template_name = 'bank/import_plain.html'
+
+    def get_title(self):
+        return _('Import an exam paper')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.tab_context())
+        context.update({'form': kwargs.get('form') or PlainUploadForm(), 'error': kwargs.get('error'),
+                        'max_mb': PLAIN_MAX_BYTES // 1024 // 1024})
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = PlainUploadForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+        upload = form.cleaned_data['file']
+        try:
+            result = parse_plain_file(upload.name, upload.read())
+        except PlainImportError as e:
+            return self.render_to_response(self.get_context_data(form=form, error=str(e)))
+        except Exception:
+            logging.getLogger('judge.quiz').exception('plain import failed for %s', upload.name)
+            return self.render_to_response(self.get_context_data(
+                form=form, error=_('The file could not be read. Try saving it again as .docx.')))
+        request.session[PLAIN_KEY] = {'questions': result['questions'], 'source': upload.name[:255],
+                                      'format': result['format'], 'doc_warnings': result['doc_warnings'],
+                                      'has_key': result['has_key']}
+        return HttpResponseRedirect(reverse('bank_import_plain_preview'))
+
+
+class BankImportPlainPreview(BankAccessMixin, TitleMixin, TemplateView):
+    """Steps 2 and 3: review and fix what was recognised, then save (the only step that writes)."""
+    template_name = 'bank/import_plain_preview.html'
+
+    def get_title(self):
+        return _('Review the imported questions')
+
+    def get(self, request, *args, **kwargs):
+        if not request.session.get(PLAIN_KEY):
+            return HttpResponseRedirect(reverse('bank_import_plain'))
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        draft = self.request.session[PLAIN_KEY]
+        questions = draft['questions']
+        counts = {}
+        for q in questions:
+            counts[q['kind']] = counts.get(q['kind'], 0) + 1
+        flagged = [(i + 1, q) for i, q in enumerate(questions) if q.get('warn')]
+        form = kwargs.get('form') or {}
+        context.update(self.tab_context())
+        context.update({
+            'draft': draft, 'questions': questions, 'counts': counts, 'flagged': flagged,
+            'labels': warning_labels(), 'kinds': kind_labels(), 'form': form, 'problems': kwargs.get('problems', []),
+            'subjects': list(Subject.objects.filter(is_active=True)),
+            'default_subject': Subject.objects.filter(slug='tin-hoc').values_list('id', flat=True).first(),
+            'tag_names': list(BankTag.objects.filter(group='topic').values_list('name', flat=True)[:300]),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        draft = request.session.get(PLAIN_KEY)
+        if not draft:
+            return HttpResponseRedirect(reverse('bank_import_plain'))
+        post = request.POST
+        if post.get('action') == 'cancel':
+            request.session.pop(PLAIN_KEY, None)
+            return HttpResponseRedirect(reverse('bank_import_plain'))
+        questions = [refresh_warnings(q) for q in apply_plain_edits(draft['questions'], post)]
+        draft['questions'] = questions
+        request.session[PLAIN_KEY] = draft          # edits stay in the session only; the database is untouched
+        if post.get('action') != 'save':
+            return self.render_to_response(self.get_context_data(form=post))
+        problems = []
+        for number, q in enumerate(questions, 1):
+            for text in plain_problems(q):
+                problems.append(_('Question %(n)d: %(why)s') % {'n': number, 'why': text})
+        if not questions:
+            problems.append(_('There are no questions left to save.'))
+        subject = Subject.objects.filter(id=to_id(post.get('subject')), is_active=True).first()
+        mode = post.get('mode') if post.get('mode') in ('bank', 'quiz') else 'bank'
+        title = post.get('title', '').strip()[:200]
+        if mode == 'quiz' and not title:
+            problems.append(_('Enter a title for the quiz.'))
+        if problems:
+            return self.render_to_response(self.get_context_data(form=post, problems=problems))
+        level = to_id(post.get('level'))
+        level = level if level in (1, 2, 3) else 0
+        for q in questions:
+            q['level'] = level
+        profile = request.user.profile
+        with transaction.atomic():
+            banks, added, skipped = add_to_bank(questions, profile, draft['source'], split_tags(post.get('tags', '')),
+                                                subject=subject)
+            quiz = None
+            if mode == 'quiz':
+                quiz = Quiz.objects.create(title=title, slug=make_slug(title), creator=profile, subject=subject,
+                                           source_name=draft['source'], show_answers=True)
+                unique, seen = [], set()
+                for bank in banks:
+                    if bank.id not in seen:
+                        seen.add(bank.id)
+                        unique.append(bank)
+                copy_to_quiz(quiz, unique)
+        request.session.pop(PLAIN_KEY, None)
+        messages.success(request, _('%(added)d new questions were added to the question bank '
+                                    '(%(skipped)d already existed).') % {'added': added, 'skipped': skipped})
+        if quiz is not None:
+            messages.success(request, _('Quiz created with %(n)d questions.') % {'n': quiz.questions.count()})
+            return HttpResponseRedirect(quiz.get_absolute_url())
+        return HttpResponseRedirect(reverse('bank_list'))
+
+
+def to_id(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 class BankEdit(BankAccessMixin, TitleMixin, TemplateView):

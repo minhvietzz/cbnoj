@@ -1,0 +1,213 @@
+// Contests list (Contests.dc.html): "live now" cards with a 6px blue edge + one table of upcoming / finished contests
+body.cbn-ui .cx-page { gap: 24px; }
+
+body.cbn-ui .cx-live {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px;
+    border-left: 6px solid var(--c-blue);
+}
+
+body.cbn-ui .cx-live-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+body.cbn-ui .cx-live-tag {
+    color: var(--c-blue);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+body.cbn-ui .cx-live h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.3; }
+body.cbn-ui .cx-live h2 a, body.cbn-ui .cx-live h2 a:link, body.cbn-ui .cx-live h2 a:visited { color: var(--c-ink); text-decoration: none; }
+body.cbn-ui .cx-live h2 a:hover { color: var(--c-blue); }
+body.cbn-ui .cx-live-meta { color: var(--c-mute); font-size: 14px; }
+body.cbn-ui .cx-live-meta b { color: var(--c-ink); font-variant-numeric: tabular-nums; }
+body.cbn-ui .cx-live form { margin: 0; }
+
+body.cbn-ui .cx-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 20px;
+    border-bottom: 1px solid var(--c-line);
+}
+
+body.cbn-ui .cx-bar h2.bp-card-h { border-bottom: 0; }
+
+body.cbn-ui .cx-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0 16px;
+}
+
+body.cbn-ui .cx-sel { width: 170px; }
+body.cbn-ui .cx-sel .select2-container { width: 100% !important; }
+body.cbn-ui .cx-sel .select2-container .select2-selection--single { height: 36px; }
+body.cbn-ui .cx-sel .select2-container .select2-selection__rendered { line-height: 34px; }
+body.cbn-ui .cx-sel .select2-container .select2-selection__arrow { height: 34px; }
+body.cbn-ui .cx-filters input[type=text] { width: 190px; height: 36px; min-height: 0; font-size: 14px; }
+
+body.cbn-ui .cx-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+body.cbn-ui .cx-table td { padding-top: 13px; padding-bottom: 13px; }
+body.cbn-ui .cx-nowrap { white-space: nowrap; }
+
+body.cbn-ui .cx-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+body.cbn-ui .cx-tags:empty { display: none; }
+
+body.cbn-ui .cx-tag {
+    display: inline-block;
+    padding: 0 7px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    color: var(--c-mute);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+body.cbn-ui .cx-tag.cx-warn { color: var(--c-warn-fg); }
+
+body.cbn-ui .cx-table td form { display: inline; margin: 0; }
+
+body.cbn-ui .cx-table input.cx-act, body.cbn-ui input[type=submit].cx-act {
+    margin: 0 8px 0 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--c-blue);
+    font: 600 13px var(--cbn-sans);
+    cursor: pointer;
+}
+
+body.cbn-ui input[type=submit].cx-act:hover { background: transparent; color: var(--c-blue-h); }
+body.cbn-ui .cx-act-note { margin-right: 8px; color: var(--c-mute); font-size: 12px; }
+
+body.cbn-ui .cx-live input[type=submit].bp-btn, body.cbn-ui .cx-live a.bp-btn { padding: 11px 22px; }
+
+@media (max-width: 760px) {
+    body.cbn-ui .cx-live { padding: 18px; }
+    body.cbn-ui .cx-filters { padding: 0 16px 12px; }
+    body.cbn-ui .cx-filters input[type=text] { flex: 1 1 140px; }
+}
+
+// ---- contest detail / ranking: flat, same family as the problems + ranking pages ---------------------------------
+body.cbn-ui .tabs form.contest-join-pseudotab .button, body.cbn-ui .contest-join-pseudotab button, body.cbn-ui .contest-join-pseudotab input[type=submit] {
+    border-radius: 6px;
+}
+body.cbn-ui .ct-hero { border-radius: 6px; }
+body.cbn-ui .ct-state { border-radius: 4px; }
+body.cbn-ui .ct-time { border-radius: 4px; }
+body.cbn-ui .ct-section .ct-head { border-bottom: 1px solid var(--c-line); padding-bottom: 12px; margin-bottom: 12px; }
+body.cbn-ui .ct-section h2.ct-h { font-size: 18px; font-weight: 700; color: var(--c-ink); }
+body.cbn-ui .ct-section h2.ct-h i, body.cbn-ui .ct-section h2.ct-h .fa { color: var(--c-mute); }
+body.cbn-ui .ct-actions a.button, body.cbn-ui .ct-actions button.button, body.cbn-ui .ct-foot a.button {
+    border-radius: 6px; background: var(--c-card); color: var(--c-ink) !important; border: 1px solid var(--c-ink);
+    box-shadow: none; font-weight: 600; padding: 8px 14px;
+}
+body.cbn-ui .ct-foot a.button { display: block; text-align: center; }
+body.cbn-ui .ct-actions a.button:hover, body.cbn-ui .ct-foot a.button:hover { background: var(--c-soft); }
+body.cbn-ui .ct-chip { border-radius: 4px; background: var(--c-ce-bg); color: var(--c-mute); }
+body.cbn-ui .ct-label { border-radius: 4px; }
+body.cbn-ui .pr-bubble { box-shadow: none; }
+body.cbn-ui .pr-pbubble { border-radius: 4px; box-shadow: none; }
+
+body.cbn-ui #ranking-table.users-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    background: var(--c-card);
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    overflow: hidden;
+}
+body.cbn-ui #ranking-table.users-table thead th {
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--c-ink);
+    background: var(--c-card);
+    color: var(--c-mute);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+body.cbn-ui #ranking-table.users-table thead th.username { padding-left: 16px; }
+body.cbn-ui #ranking-table.users-table thead th.points a, body.cbn-ui #ranking-table.users-table thead th.points a:link {
+    border-radius: 4px; background: var(--c-ce-bg); color: var(--c-ink); padding: 3px 10px;
+}
+body.cbn-ui #ranking-table.users-table thead th.points a:hover { background: var(--c-blue); color: #fff; }
+body.cbn-ui #ranking-table.users-table tbody td {
+    background: transparent;
+    border-radius: 0;
+    border-bottom: 1px solid var(--c-line);
+    padding: 9px 12px;
+}
+body.cbn-ui #ranking-table.users-table tbody tr:hover td { background: var(--c-soft); }
+body.cbn-ui #ranking-table.users-table tbody tr td:first-child { width: 56px; border-radius: 0; font-weight: 600; color: var(--c-mute); }
+body.cbn-ui #ranking-table.users-table td.user-name { border-radius: 0; padding: 9px 16px; }
+body.cbn-ui #ranking-table.users-table td.user-name a { font-weight: 600; font-size: 14px; }
+body.cbn-ui #ranking-table.users-table td.user-points { font-weight: 700; font-variant-numeric: tabular-nums; }
+body.cbn-ui #ranking-table.users-table .rank-bubble, body.cbn-ui .rk-n, body.cbn-ui .rk-n1, body.cbn-ui .rk-n2, body.cbn-ui .rk-n3 { border-radius: 4px; }
+
+// quiz results / live monitor: flat panels
+body.cbn-ui .qz-live, body.cbn-ui .qr-bar, body.cbn-ui .qr-actions { border-radius: 6px; }
+body.cbn-ui input[type=submit].qr-btn, body.cbn-ui .qr-actions .button { border-radius: 6px; }
+
+body.cbn-ui .tabs form.contest-join-pseudotab, body.cbn-ui form.contest-join-pseudotab { border-radius: 6px !important; margin-bottom: 8px; align-self: center; }
+body.cbn-ui .tabs form.contest-join-pseudotab input[type=submit], body.cbn-ui form.contest-join-pseudotab input { padding: 9px 18px; font-size: 13px; font-weight: 600; }
+body.cbn-ui .rk-toolbar .rk-filter, body.cbn-ui .rk-toolbar .rk-chip {
+    border-radius: 6px; background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-input); box-shadow: none; padding: 7px 14px; font-weight: 600;
+}
+body.cbn-ui .rk-toolbar .rk-filter b, body.cbn-ui .rk-toolbar .rk-filter i { color: var(--c-ink); }
+body.cbn-ui #ranking-table .rk-num { display: inline-block; padding: 0 6px; min-width: 26px; border-radius: 4px; background: transparent; box-shadow: none; color: var(--c-ink); font-weight: 600; line-height: 24px; }
+body.cbn-ui .rk-num.rk-n1 { background: #f2c230; }
+body.cbn-ui .rk-num.rk-n2 { background: #d5d7dd; }
+body.cbn-ui .rk-num.rk-n3 { background: #e0a97c; }
+body.cbn-ui #ranking-table.users-table td.user-points, body.cbn-ui #ranking-table.users-table td.user-points a, body.cbn-ui #ranking-table.users-table .user-points .solving-time { color: var(--c-ink); }
+
+// ranking: flat problem cells, points cell, header links
+body.cbn-ui #ranking-table.users-table td.full-score, body.cbn-ui #ranking-table.users-table td.partial-score,
+body.cbn-ui #ranking-table.users-table td.failed-score, body.cbn-ui #ranking-table.users-table td.first-solve,
+body.cbn-ui #ranking-table.users-table td.pending, body.cbn-ui #ranking-table.users-table td.pretest-full-score,
+body.cbn-ui #ranking-table.users-table td.pretest-partial-score, body.cbn-ui #ranking-table.users-table td.pretest-failed-score {
+    border-radius: 0; box-shadow: none; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+body.cbn-ui #ranking-table.users-table tbody tr:hover td.full-score, body.cbn-ui #ranking-table.users-table tbody tr:hover td.first-solve { filter: brightness(.97); }
+body.cbn-ui #ranking-table.users-table td.full-score, body.cbn-ui #ranking-table.users-table td.pretest-full-score { background: var(--c-ok-bg) !important; color: var(--c-ok-fg); }
+body.cbn-ui #ranking-table.users-table td.first-solve { background: var(--c-ok-bg) !important; color: var(--c-ok-fg); box-shadow: inset 0 0 0 2px var(--c-ok-fg); }
+body.cbn-ui #ranking-table.users-table td.partial-score, body.cbn-ui #ranking-table.users-table td.pretest-partial-score { background: var(--c-warn-bg) !important; color: var(--c-warn-fg); }
+body.cbn-ui #ranking-table.users-table td.failed-score, body.cbn-ui #ranking-table.users-table td.pretest-failed-score { background: var(--c-bad-bg) !important; color: var(--c-bad-fg); }
+body.cbn-ui #ranking-table.users-table td.pending { background: var(--c-soft) !important; color: var(--c-mute); }
+body.cbn-ui #ranking-table.users-table td.user-points { border-radius: 0; background: transparent; }
+body.cbn-ui #ranking-table.users-table tbody tr:hover td.user-points { background: var(--c-soft); }
+body.cbn-ui #ranking-table.users-table td.user-points .solving-time { color: var(--c-mute); font-weight: 500; }
+body.cbn-ui #ranking-table.users-table thead th.points a, body.cbn-ui #ranking-table.users-table thead th.points a:link, body.cbn-ui #ranking-table.users-table thead th.points a:visited {
+    border-radius: 4px; background: transparent; color: var(--c-ink); border: 1px solid var(--c-line); padding: 3px 10px;
+}
+body.cbn-ui #ranking-table.users-table thead th.points a .point-denominator { border-top-color: var(--c-line); color: var(--c-mute); opacity: 1; }
+body.cbn-ui #ranking-table.users-table thead th.points a:hover { background: var(--c-ink); color: var(--c-card); border-color: var(--c-ink); }
+body.cbn-ui #ranking-table.users-table tr.favorite td:not(.full-score):not(.partial-score):not(.failed-score):not(.first-solve):not(.pending):not(.user-points) { background: var(--c-warn-bg); color: var(--c-ink); }
+body.cbn-ui #ranking-table.users-table tr.disqualified td { background: var(--c-bad-bg) !important; color: var(--c-bad-fg); }
+body.cbn-ui #ranking-table.users-table tbody tr:last-child td.total-ac { border-radius: 0; box-shadow: none; }
+
+// ICPC cell legend
+body.cbn-ui #cell_legend { width: 12em !important; border: 1px solid var(--c-line); border-radius: 6px; border-collapse: separate; overflow: hidden; background: var(--c-card); }
+body.cbn-ui #cell_legend th { background: var(--c-card); color: var(--c-mute); border-bottom: 2px solid var(--c-ink); font-size: 12px; text-align: left; }
+body.cbn-ui #cell_legend td { border: 0; border-top: 1px solid var(--c-line); font-size: 13px; text-align: left; padding: 7px 12px; color: var(--c-ink); }
+body.cbn-ui #cell_legend tr.first-solve td { background: var(--c-ok-bg); color: var(--c-ok-fg); box-shadow: inset 3px 0 0 var(--c-ok-fg); font-weight: 600; }
+body.cbn-ui #cell_legend tr.full-score td { background: var(--c-ok-bg); color: var(--c-ok-fg); }
+body.cbn-ui #cell_legend tr.failed-score td { background: var(--c-bad-bg); color: var(--c-bad-fg); }
+body.cbn-ui #cell_legend tr.pending td { background: var(--c-soft); color: var(--c-mute); }

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    <div class="cx-head">
+        <div class="cx-title-row" style="margin-top:0">
+            <h1 class="cx-title">{{ _('My classes') }}</h1>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <form method="post" action="{{ url('class_join') }}" style="display:flex;gap:8px">
+                    {% csrf_token %}
+                    <input class="cx-input" style="width:160px" type="text" name="code" placeholder="{{ _('Class code') }}" maxlength="12" autocomplete="off" required>
+                    <button type="submit" class="cx-btn ghost">{{ _('Join a class') }}</button>
+                </form>
+                {% if can_create %}
+                    <a class="cx-btn ghost" href="{{ url('class_import') }}">{{ _('Import a class list') }}</a>
+                    <a class="cx-btn" href="{{ url('class_create') }}">{{ _('Create class') }}</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="cx-tabs">
+            <a href="{{ url('class_list') }}?tab=mine" class="{{ 'on' if tab == 'mine' }}">{{ _('My classes') }}</a>
+            {% if can_see_all %}<a href="{{ url('class_list') }}?tab=all" class="{{ 'on' if tab == 'all' }}">{{ _('All classes') }}</a>{% endif %}
+            <a href="{{ url('class_list') }}?tab={{ tab }}&archived={{ 0 if show_archived else 1 }}" class="{{ 'on' if show_archived }}">{{ _('Archived') }}</a>
+        </div>
+    </div>
+    {% if messages %}{% for message in messages %}<div class="cx-flash {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+    {% if classes %}
+        <div class="cx-grid">
+            {% for c in classes %}
+                <a class="cx-tile" href="{{ c.get_absolute_url() }}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 22px 0">
+                        <span class="cx-badge" style="background:{{ c.color_hex }}">{{ c.badge }}</span>
+                        {% if c.my_role %}<span class="cx-chip">{{ role_names[c.my_role] }}</span>{% endif %}
+                    </div>
+                    <div style="padding:14px 22px 18px;display:flex;flex-direction:column;gap:6px">
+                        <span style="font-size:20px;font-weight:700">{{ c.name }}</span>
+                        <span style="font-size:13px;color:var(--c-muted)">
+                            {% if c.organization %}{{ c.organization.name }}{% else %}{{ _('Independent class') }}{% endif %}{% if c.school_year %} · {{ c.school_year }}{% endif %}{% if c.subject %} · {{ c.subject.name }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="cx-stat">
+                        <span><b>{{ c.student_count }}</b>{{ _('students') }}</span>
+                        <span><b>{{ c.due_count }}</b>{{ _('assignments due soon') }}</span>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="cx-card cx-empty">
+            <h3 style="margin:0 0 6px">{{ _('No classes yet') }}</h3>
+            <p style="margin:0">{{ _('You are not in any class yet. Ask your teacher for the class code, or wait to be added to a class.') }}</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

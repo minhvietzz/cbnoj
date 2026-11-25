@@ -1,58 +1,40 @@
 {% extends "base.html" %}
+{% block title_row %}{% set with_tabs = True %}{% include "organization/requests/_head.html" %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
 {% block body %}
-    <style>
-        table {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        .reason{
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-break: break-all;
-            white-space: nowrap;
-            width: 30%;
-        }
-
-        .reason:hover {
-            overflow: visible;
-            white-space: unset;
-        }
-    </style>
+<div class="og neo-flat">
     {% include "messages.html" %}
-    {% include "organization/requests/tabs.html" %}
 
     {% if formset.forms %}
         <form action="" method="post">
             {% csrf_token %}
             {{ formset.management_form }}
-            <table class="table">
-                <tr>
+            <section class="og-card og-flush"><div class="og-scroll">
+            <table class="og-table">
+                <thead><tr>
                     <th>{{ _('User') }}</th>
                     <th>{{ _('Time') }}</th>
                     <th>{{ _('State') }}</th>
-                    <th class="reason">{{ _('Reason') }}</th>
-                    {% if formset.can_delete %}
-                        <th>{{ _('Delete?') }}</th>
-                    {% endif %}
-                </tr>
+                    <th>{{ _('Reason') }}</th>
+                    {% if formset.can_delete %}<th>{{ _('Delete?') }}</th>{% endif %}
+                </tr></thead>
+                <tbody>
                 {% for form in formset %}
                     <tr id="request-{{ form.instance.id }}">
                         <td>{{ form.id }}{{ link_user(form.instance.user) }}</td>
-                        <td><a href="{{ url('request_organization_detail', object.slug, form.instance.id) }}">
-                            {{ form.instance.time|date(_("N j, Y, H:i")) }}
-                        </a></td>
+                        <td class="og-nowrap"><a href="{{ url('request_organization_detail', object.slug, form.instance.id) }}">{{ form.instance.time|date(_("N j, Y, H:i")) }}</a></td>
                         <td>{{ form.state }}</td>
-                        <td class="reason">{{ form.instance.reason }}</td>
-                        {% if formset.can_delete %}
-                            <td>{{ form.DELETE }}</td>
-                        {% endif %}
+                        <td class="og-mute">{{ form.instance.reason|truncatechars(120) }}</td>
+                        {% if formset.can_delete %}<td>{{ form.DELETE }}</td>{% endif %}
                     </tr>
                 {% endfor %}
-            </table>
-            <button type="submit">{{ _('Update') }}</button>
+                </tbody>
+            </table></div></section>
+            <div class="og-form-foot" style="margin-top:16px"><button type="submit" class="og-btn">{{ _('Update') }}</button></div>
         </form>
     {% else %}
-        <p>{{ _('There are no requests to approve.') }}</p>
+        <section class="og-card"><div class="og-empty">{{ _('There are no requests to approve.') }}</div></section>
     {% endif %}
+</div>
 {% endblock %}

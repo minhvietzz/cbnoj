@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static cbn_admin %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}" />{% endblock %}
+{% block coltype %}colMS{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content_title %}<div class="cba-head"><div><h1>Xin chào, {{ user.get_username }}</h1><p class="cba-sub">Chọn việc cần làm, hoặc mở một nhóm dữ liệu bên dưới.</p></div></div>{% endblock %}
+{% block content %}
+<div id="content-main" class="cba-home">
+    <h2 class="cba-h">Việc thường làm</h2>
+    <div class="cba-tiles">
+        <a class="cba-tile" href="{% url 'admin:judge_problem_add' %}"><b>Thêm bài tập</b><span>Đề, giới hạn, điểm, rồi tải bộ test lên.</span></a>
+        <a class="cba-tile" href="{% url 'admin:judge_contest_add' %}"><b>Tạo kỳ thi lập trình</b><span>Đặt giờ, chọn bài, ẩn hoặc đóng băng bảng điểm.</span></a>
+        <a class="cba-tile" href="{% url 'quiz_upload' %}"><b>Đăng đề trắc nghiệm</b><span>Tải từ Word hoặc PDF, đặt chế độ thi.</span></a>
+        <a class="cba-tile" href="{% url 'admin:judge_classroom_add' %}"><b>Tạo lớp</b><span>Lớp trong tổ chức hoặc đứng riêng.</span></a>
+        <a class="cba-tile" href="{% url 'admin:judge_blogpost_add' %}"><b>Đăng bài viết</b><span>Thông báo, bài học, ghim lên trang chủ.</span></a>
+        <a class="cba-tile" href="{% url 'admin:judge_ticket_changelist' %}"><b>Phiếu hỗ trợ</b><span>Xem và trả lời yêu cầu của học sinh.</span></a>
+    </div>
+    <h2 class="cba-h">Tất cả dữ liệu</h2>
+    <div class="cba-groups">
+    {% for g in app_list|admin_groups %}
+        <section class="cba-group">
+            <h3>{{ g.title }}</h3>
+            <ul>
+            {% for model in g.models %}
+                <li>
+                    {% if model.admin_url %}<a class="cba-name" href="{{ model.admin_url }}">{{ model.name }}</a>{% else %}<span class="cba-name">{{ model.name }}</span>{% endif %}
+                    {% if model.add_url %}<a class="cba-add" href="{{ model.add_url }}" title="{% trans 'Add' %}">+ Thêm</a>{% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        </section>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
