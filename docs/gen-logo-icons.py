@@ -1,5 +1,9 @@
+# flake8: noqa
+# One-off generator for the CBNoj logo set (resources/icons). Needs rsvg-convert and Pillow.
+# Usage: LOGO_OUT=/some/tmp/dir python gen-logo-icons.py   (then copy the files you want into resources/icons)
 import os, subprocess
-OUT = '/tmp/claude-0/-home/42cb8108-c8dc-4be3-a667-6e8a875f868a/scratchpad/logo/out'
+OUT = os.environ.get('LOGO_OUT', '/tmp/cbnoj-logo')
+os.makedirs(OUT, exist_ok=True)
 ICONS = '/home/vnojsite/site/resources/icons'
 
 PATHS = {
