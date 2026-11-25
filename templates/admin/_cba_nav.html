@@ -1,6 +1,6 @@
-{% load cbn_admin %}
+{% load cbn_admin static %}
 <nav id="cba-nav" aria-label="Menu quản trị">
-    <a class="cba-brand" href="{% url 'admin:index' %}"><span class="cba-logo">CB</span><span><b>CBNoj</b> <i>Quản trị</i></span></a>
+    <a class="cba-brand" href="{% url 'admin:index' %}"><img class="cba-mark" src="{% static 'icons/logo-white.svg' %}" alt="CBNoj"><span><i>Quản trị</i></span></a>
     <button type="button" class="cba-burger" aria-label="Mở menu" aria-expanded="false">Menu</button>
     <div class="cba-navbody">
         <a class="cba-home{% if request.path == '/admin/' %} on{% endif %}" href="{% url 'admin:index' %}">Tổng quan</a>

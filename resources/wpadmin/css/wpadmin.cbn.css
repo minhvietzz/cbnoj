@@ -216,6 +216,7 @@ body.login #content { padding: 24px; }
 #cba-nav { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; overflow-y: auto; background: var(--a-navy); color: #fff; padding: 18px 12px 28px; box-sizing: border-box; z-index: 9000; font-family: inherit; }
 #cba-nav a { text-decoration: none; }
 #cba-nav .cba-brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 16px; color: #fff; }
+#cba-nav .cba-mark { display: block; height: 36px; width: auto; }
 #cba-nav .cba-logo { width: 32px; height: 32px; border-radius: 6px; background: #F2B705; color: var(--a-navy); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 14px; }
 #cba-nav .cba-brand b { font-size: 17px; }
 #cba-nav .cba-brand i { font-style: normal; font-weight: 500; color: #9CA8D6; font-size: 13px; }
@@ -290,6 +291,7 @@ body #content .cba-jump { margin-top: 18px; }
 body.cba-login-page { margin: 0; background: #0F1A44; min-height: 100vh; font-family: 'Be Vietnam Pro', system-ui, sans-serif; color: #15171C; }
 .cba-login { max-width: 400px; margin: 0 auto; padding: 72px 16px 32px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; }
 .cba-login-brand { display: flex; align-items: center; gap: 12px; color: #fff; font-size: 22px; }
+.cba-login-brand .cba-mark { display: block; height: 48px; width: auto; }
 .cba-login-brand .cba-logo { width: 40px; height: 40px; border-radius: 6px; background: #F2B705; color: #0F1A44; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 17px; }
 .cba-login-brand i { font-style: normal; font-weight: 500; color: #9CA8D6; font-size: 15px; }
 .cba-login-card { background: #fff; border: 1px solid #DAD8D0; border-radius: 6px; padding: 28px 26px; display: flex; flex-direction: column; gap: 16px; }

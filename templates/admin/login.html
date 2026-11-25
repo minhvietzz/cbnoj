@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="NONE,NOARCHIVE">
 <title>Đăng nhập | CBNoj Quản trị</title>
-<link rel="stylesheet" href="{% static 'wpadmin/css/wpadmin.cbn.css' %}?v=8">
+<link rel="stylesheet" href="{% static 'wpadmin/css/wpadmin.cbn.css' %}?v=9">
 </head>
 <body class="cba-login-page">
 <main class="cba-login">
-    <div class="cba-login-brand"><span class="cba-logo">CB</span><span><b>CBNoj</b> <i>Quản trị</i></span></div>
+    <div class="cba-login-brand"><img class="cba-mark" src="{% static 'icons/logo-white.svg' %}" alt="CBNoj"><span><i>Quản trị</i></span></div>
     <form method="post" action="{{ app_path }}" class="cba-login-card">
         {% csrf_token %}
         <h1>Đăng nhập</h1>
