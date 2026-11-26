@@ -914,7 +914,8 @@ OAUTH_ONLY = False
 # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#settings
 OAUTH2_PROVIDER = {
     'OAUTH2_VALIDATOR_CLASS': 'judge.oauth_validator.VNOIOAuthValidator',
-    'PKCE_REQUIRED': False,
+    'PKCE_REQUIRED': True,
+    'OAUTH2_SERVER_CLASS': 'judge.oauth_server.S256OnlyServer',
     # only required if using OpenID Connect
     # 'OIDC_ENABLED': True,
     # 'OIDC_RSA_PRIVATE_KEY': '',
@@ -922,8 +923,33 @@ OAUTH2_PROVIDER = {
         'openid': 'OpenID Connect',
         'profile': 'Your profile',
         'email': 'Your email address',
+        'mcp': 'Đăng quiz, bài viết và bài tập thay mặt bạn (qua trợ lý AI)',
     },
+    'DEFAULT_SCOPES': ['mcp'],
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
+    'ROTATE_REFRESH_TOKEN': True,
 }
+
+# MCP server (judge/mcp): lets teachers publish quizzes/posts/problems from AI chat clients such as Gemini.
+MCP_ENABLED = False
+MCP_ALLOWED_REDIRECT_PREFIXES = (
+    'https://oauth-redirect.googleusercontent.com/r/',
+    'https://oauth-redirect.googleusercontent.com/a/',
+    'https://claude.ai/api/mcp/auth_callback',
+    'https://claude.com/api/mcp/auth_callback',
+)
+MCP_RATE_LIMIT_PER_MINUTE = 60
+# An AI connection unused for this long must be authorised again (sliding window, 0 = never expires)
+MCP_REFRESH_TOKEN_LIFETIME_SECONDS = 30 * 24 * 3600
+MCP_MAX_BODY_BYTES = 1024 * 1024
+MCP_LOG_FILE = '/var/log/cbnoj/mcp.log'
+
+# Automatic test generation through MCP (problem_generate_*): a reference solution is run in the judge sandbox.
+MCP_GEN_ENABLED = False
+MCP_GEN_JOBS_PER_HOUR = 5
+MCP_GEN_MAX_QUEUE = 5  # refuse while more submissions than this wait for the judges (generation shares their CPU)
+MCP_GEN_BLOCK_DURING_EXAMS = False  # True: refuse the whole time a contest or an exam-mode quiz is running
+RUNNER_GEN_URL = 'http://127.0.0.1:9777/gen'
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:

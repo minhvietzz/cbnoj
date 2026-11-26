@@ -5,6 +5,9 @@ description: Quy trình sửa code/cấu hình/giao diện/bản dịch CBNoj v�
 
 # Sửa và triển khai thay đổi trên CBNoj
 
+> **Giáo viên tự đăng qua Gemini (MCP):** mã MCP ở `judge/mcp/`; sau khi sửa phải chạy `judge/tests/test_mcp_*.py` trên MariaDB tạm (xem mục 11) và reload mềm `supervisorctl signal HUP site`. Xem `docs/HUONG-DAN-GIAO-VIEN-MCP.md` và mục 14A của `docs/HE-THONG.md`. Skill này dành cho quản trị viên làm trực tiếp trên máy chủ.
+
+
 Trang chạy thật cho người dùng thật. Đọc `CLAUDE.md` và mục liên quan trong `docs/HE-THONG.md` trước.
 
 ## 0. Trước khi làm

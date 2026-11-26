@@ -5,6 +5,9 @@ description: Đăng đề trắc nghiệm lên CBNoj (mục Quiz) từ PDF/DOCX/
 
 # Đăng quiz lên CBNoj
 
+> **Giáo viên tự đăng qua Gemini (MCP):** tool `quiz_format_help`, `quiz_preview`, `quiz_create`, `quiz_configure` làm cùng việc này, tạo quiz riêng tư. Xem `docs/HUONG-DAN-GIAO-VIEN-MCP.md` và mục 14A của `docs/HE-THONG.md`. Skill này dành cho quản trị viên làm trực tiếp trên máy chủ.
+
+
 Trước tiên đọc `docs/HE-THONG.md` mục 9 (hệ thống quiz). Mọi thao tác dùng `/home/vnojsite/bin/python manage.py shell`.
 
 ## 1. Lấy nội dung đề

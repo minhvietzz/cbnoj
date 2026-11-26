@@ -156,7 +156,8 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
-    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('', include('judge.mcp.urls')),  # MCP endpoint, OAuth discovery, /o/register/ (must precede 'o/')
+    path('o/', include('judge.mcp.oauth_urls', namespace='oauth2_provider')),
 
     # URL Shortener management (on main domain)
     path('shorteners/', include('urlshortener.urls')),

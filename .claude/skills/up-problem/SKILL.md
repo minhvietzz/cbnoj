@@ -5,6 +5,9 @@ description: Đăng bài tập lập trình (problem) có bộ test lên CBNoj -
 
 # Đăng bài tập có bộ test
 
+> **Giáo viên tự đăng qua Gemini (MCP):** tool `problem_create`, `problem_set_tests`, `problem_submit_check` (test dạng chữ ≤ 50 test, ~800 KB). Có thêm `problem_generate_*` (sinh test ngẫu nhiên theo spec rồi chạy lời giải mẫu trong sandbox). Xem `docs/HUONG-DAN-GIAO-VIEN-MCP.md` và mục 14A của `docs/HE-THONG.md`. Skill này dành cho quản trị viên làm trực tiếp trên máy chủ.
+
+
 Đọc `docs/HE-THONG.md` mục 7.1. Một bài gồm **(a) bản ghi `Problem` trong DB** và **(b) thư mục dữ liệu** `/home/vnojsite/problems/<mã>/` mà judge đọc.
 
 ## 1. Thu thập thông tin (hỏi người dùng nếu thiếu)

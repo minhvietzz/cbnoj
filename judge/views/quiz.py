@@ -1,6 +1,5 @@
 import ipaddress
 import secrets
-import unicodedata
 from datetime import timedelta
 
 from django import forms
@@ -8,7 +7,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -16,16 +14,15 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.text import slugify
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 
-from judge.models import Classroom, Course, CourseLesson, Organization, Profile, Quiz, QuizAttempt, QuizOption, \
-    QuizQuestion, Subject
+from judge.models import Classroom, Course, CourseLesson, Organization, Profile, Quiz, QuizAttempt, Subject
 from judge.models.course import EDITABLE_ROLES
 from judge.utils import exam_variants, quiz_grading, seb
-from judge.utils.question_bank import add_to_bank, split_tags
+from judge.utils.question_bank import split_tags
+from judge.utils.quiz_create import apply_quiz, make_slug, save_questions  # noqa: F401  (re-exported for bank.py)
 from judge.utils.quiz_parser import QuizFormatError, build_template_docx, parse_quiz_file, parse_quiz_lines
 from judge.utils.views import TitleMixin
 
@@ -34,17 +31,6 @@ __all__ = ['QuizList', 'QuizDetail', 'QuizStart', 'QuizAttemptView', 'QuizAttemp
 
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 DRAFT_KEY = 'quiz_draft'
-
-
-def make_slug(title):
-    text = title.replace('đ', 'd').replace('Đ', 'D')
-    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
-    base = slugify(text)[:100] or 'quiz'
-    slug, counter = base, 2
-    while Quiz.objects.filter(slug=slug).exists():
-        slug = '%s-%d' % (base, counter)
-        counter += 1
-    return slug
 
 
 def client_ip(request):
@@ -604,17 +590,6 @@ class QuizUpload(LoginRequiredMixin, TitleMixin, FormView):
         return render(self.request, 'quiz/preview.html', context)
 
 
-def save_questions(quiz, questions, banks=None):
-    for number, q in enumerate(questions, 1):
-        question = QuizQuestion.objects.create(
-            quiz=quiz, order=number, kind=q['kind'], text=q['text'], points=q['points'],
-            section=q.get('section', ''), passage=q.get('passage', ''), explanation=q['explanation'], accepted_answers='\n'.join(q['answers']),  # noqa: E501
-            bank_question=banks[number - 1] if banks else None)
-        for index, option in enumerate(q['options'], 1):
-            QuizOption.objects.create(question=question, order=index, text=option['text'],
-                                      is_correct=option['correct'])
-
-
 class QuizUploadConfirm(LoginRequiredMixin, View):
     http_method_names = ['post']
 
@@ -634,51 +609,22 @@ class QuizUploadConfirm(LoginRequiredMixin, View):
             if draft['lesson'] else None
         if lesson and not lesson.course.is_editable_by(request.user):
             lesson = None
-        with transaction.atomic():
-            if draft['replace']:
-                quiz = get_object_or_404(Quiz, slug=draft['replace'])
-                if not quiz.is_manageable_by(request.user):
-                    raise PermissionDenied()
-                quiz.questions.all().delete()
-            else:
-                quiz = Quiz(slug=make_slug(draft['title']), creator=request.user.profile)
-            quiz.title = draft['title']
-            quiz.description = draft['description']
-            quiz.time_limit = draft['time_limit']
-            quiz.max_attempts = draft['max_attempts']
-            quiz.shuffle_questions = draft['shuffle_questions']
-            quiz.shuffle_options = draft['shuffle_options']
-            quiz.show_answers = draft['show_answers']
-            quiz.is_public = draft['is_public']
-            quiz.lesson = lesson
-            quiz.source_name = draft['source']
-            if classroom is not None and not draft['replace']:
-                # An exam held in a class: only the class members see it; the window is a placeholder.
-                start = timezone.now().replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
-                quiz.mode = 'exam'
-                quiz.start_time = start
-                quiz.end_time = start + timedelta(minutes=(draft['time_limit'] or 45) + 15)
-                quiz.is_public = False
-            elif org is not None and not draft['replace']:
-                # An exam held in an organization behaves like an organization contest: it has a time window and
-                # only members see it. The window is a placeholder the organizer adjusts on the manage page.
-                start = timezone.now().replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
-                quiz.mode = 'exam'
-                quiz.start_time = start
-                quiz.end_time = start + timedelta(minutes=(draft['time_limit'] or 45) + 15)
-                quiz.is_public = False
-            quiz.save()
-            if classroom is not None and not draft['replace']:
-                quiz.classes.add(classroom)
-            elif org is not None and not draft['replace']:
-                quiz.organizations.add(org)
-            banks = None
-            if draft.get('to_bank'):
-                banks, added, skipped = add_to_bank(draft['questions'], request.user.profile, draft['source'],
-                                                    split_tags(draft.get('bank_tags')))
-                messages.success(request, _('%(added)d new questions were added to the question bank '
-                                            '(%(skipped)d already existed).') % {'added': added, 'skipped': skipped})
-            save_questions(quiz, draft['questions'], banks)
+        replacing = None
+        if draft['replace']:
+            replacing = get_object_or_404(Quiz, slug=draft['replace'])
+            if not replacing.is_manageable_by(request.user):
+                raise PermissionDenied()
+        quiz, bank_result = apply_quiz(
+            request.user.profile, draft['questions'], quiz=replacing, title=draft['title'],
+            description=draft['description'], time_limit=draft['time_limit'], max_attempts=draft['max_attempts'],
+            shuffle_questions=draft['shuffle_questions'], shuffle_options=draft['shuffle_options'],
+            show_answers=draft['show_answers'], is_public=draft['is_public'], lesson=lesson, source=draft['source'],
+            org=org, classroom=classroom, to_bank=bool(draft.get('to_bank')),
+            bank_tags=split_tags(draft.get('bank_tags')))
+        if bank_result is not None:
+            messages.success(request, _('%(added)d new questions were added to the question bank '
+                                        '(%(skipped)d already existed).') % {'added': bank_result[0],
+                                                                             'skipped': bank_result[1]})
         if classroom is not None and not draft['replace']:
             messages.success(request, _('The exam was created for %(org)s. Set its start and end time here.')
                              % {'org': classroom.name})

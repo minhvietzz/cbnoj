@@ -5,6 +5,9 @@ description: Đăng bài viết/thông báo/bài học (blog) lên CBNoj - tạo
 
 # Đăng bài viết (blog)
 
+> **Giáo viên tự đăng qua Gemini (MCP):** tool `blog_create`, `blog_update` (mặc định là bản nháp). Xem `docs/HUONG-DAN-GIAO-VIEN-MCP.md` và mục 14A của `docs/HE-THONG.md`. Skill này dành cho quản trị viên làm trực tiếp trên máy chủ.
+
+
 Bài viết là `judge.models.BlogPost` (`title`, `slug`, `content` Markdown, `summary`, `publish_on`, `visible`, `sticky`, `global_post`, `organization`, `og_image`). Đăng công khai là hành động **hiển thị cho mọi người** → luôn cho người dùng xem bản nháp và xác nhận trước khi đặt `visible=True`.
 
 ## Các bước

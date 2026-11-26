@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cho phép kết nối - CBNoj</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#14213d;--muted:#5b6579;--line:#dfe4ef;--brand:#0000e6;--on:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1a44;--card:#16235a;--ink:#eef1ff;--muted:#aab4d6;--line:#2a3a7a;--brand:#5b7cff;--on:#fff}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.card{width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px}
+h1{font-size:1.25rem;margin:0 0 8px}
+p{margin:0 0 12px;color:var(--muted)}
+ul{margin:0 0 16px;padding-left:20px}
+li{margin-bottom:4px}
+.who{font-weight:600;color:var(--ink)}
+.row{display:flex;gap:10px;margin-top:20px}
+button{flex:1;padding:12px 14px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink)}
+button.ok{background:var(--brand);border-color:var(--brand);color:var(--on)}
+.err{color:#c0392b}
+.warn{border:1px solid #e0a800;background:rgba(224,168,0,.12);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.warn code{word-break:break-all;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="card">
+{% if not error %}
+<form id="authorizationForm" method="post">
+<h1>Cho phép <span class="who">{{ application.name }}</span> kết nối với CBNoj?</h1>
+<p>Ứng dụng này sẽ làm việc nhân danh tài khoản <b>{{ request.user.get_username() }}</b> của bạn và được phép:</p>
+{% csrf_token %}
+{% for field in form %}{% if field.is_hidden %}{{ field }}{% endif %}{% endfor %}
+<ul>{% for scope in scopes_descriptions %}<li>{{ scope }}</li>{% endfor %}</ul>
+<p>Chỉ làm được những gì tài khoản của bạn vốn làm được trên CBNoj. Bạn có thể thu hồi kết nối bất cứ lúc nào: xóa kết nối trong ứng dụng AI, hoặc vào <a href="/o/authorized_tokens/">danh sách kết nối đã cấp</a> trên CBNoj.</p>
+<p class="warn"><b>Chỉ bấm "Cho phép" nếu chính bạn vừa thêm kết nối này trong Gemini hoặc Claude.</b> Nếu một người khác gửi đường dẫn này cho bạn, hãy bấm "Hủy". Kết quả sẽ được gửi về: <code>{{ redirect_uri }}</code></p>
+{% if form.errors %}<p class="err">{{ form.errors }}</p>{% endif %}
+{% if form.non_field_errors %}<p class="err">{{ form.non_field_errors }}</p>{% endif %}
+<div class="row">
+<button type="submit">Hủy</button>
+<button type="submit" class="ok" name="allow" value="Authorize">Cho phép</button>
+</div>
+</form>
+{% else %}
+<h1 class="err">Không kết nối được</h1>
+<p>{{ error.error }}</p>
+<p>{{ error.description }}</p>
+{% endif %}
+</div>
+</body>
+</html>

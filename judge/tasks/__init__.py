@@ -6,5 +6,6 @@ from judge.tasks.organization import *
 from judge.tasks.problem import *
 from judge.tasks.quiz import *
 from judge.tasks.submission import *
+from judge.tasks.test_gen import *
 from judge.tasks.user import *
 from judge.tasks.webhook import *

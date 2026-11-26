@@ -5,7 +5,8 @@ CBNoj = trang chấm bài + thi trắc nghiệm của trường chuyên Bắc Ni
 ## Đọc trước khi làm
 1. **`docs/HE-THONG.md`** — tài liệu đầy đủ (kiến trúc, dịch vụ, đường dẫn, quiz, giao diện, sao lưu, nhật ký). Đọc ít nhất mục 1–6 và mục liên quan tới việc sắp làm.
 2. Kế hoạch dự án đang làm: `docs/DU-AN-CAI-TAO.md` (Lớp, Môn, mã đề, giao diện mới) và `docs/DU-AN-TRAC-NGHIEM.md`; ghi chú trạng thái dự án nằm trong bộ nhớ (`cbnoj-class-project`).
-3. Skill trong `.claude/skills/` — quy trình từng việc (đăng quiz, đăng bài tập, tạo kỳ thi, kiểm tra sức khỏe, deploy, sao lưu…). Có skill khớp thì dùng skill.
+3. **MCP server** cho giáo viên đăng quiz/bài viết/bài code từ Gemini: mục 14A của `docs/HE-THONG.md` (cho người quản trị) và `docs/HUONG-DAN-GIAO-VIEN-MCP.md` (cho giáo viên). Mã ở `judge/mcp/`; tắt khẩn cấp bằng `MCP_ENABLED = False` trong `dmoj/local_settings.py` rồi `supervisorctl signal HUP site`.
+4. Skill trong `.claude/skills/` — quy trình từng việc (đăng quiz, đăng bài tập, tạo kỳ thi, kiểm tra sức khỏe, deploy, sao lưu…). Có skill khớp thì dùng skill.
 
 ## QUY TẮC BẮT BUỘC: giữ tài liệu luôn đúng
 Sau **mỗi** thay đổi thật (code, cấu hình, dịch vụ, dữ liệu quan trọng như tạo quiz/kỳ thi/bài tập, đổi giao diện, sự cố và cách xử lý):
