@@ -5,7 +5,7 @@ from celery import shared_task
 from django.conf import settings
 from django.db import IntegrityError
 
-from judge.models import ContestSimilarity, ContestSubmission, Submission, SubmissionFingerprint
+from judge.models import ContestSimilarity, ContestSubmission, SubmissionFingerprint
 from judge.utils import code_similarity as cs_
 
 __all__ = ('check_submission_similarity', 'rebuild_contest_similarity')
@@ -121,8 +121,8 @@ def check_submission_similarity(submission_id):
 @shared_task(ignore_result=True)
 def rebuild_contest_similarity(contest_key):
     """Quét lại toàn bộ một kỳ thi (dùng cho kỳ thi đã diễn ra hoặc khi chỉnh ngưỡng)."""
-    ids = (ContestSubmission.objects.filter(participation__contest__key=contest_key, participation__virtual=0,
-                                           submission__points__gt=0)
+    ids = (ContestSubmission.objects
+           .filter(participation__contest__key=contest_key, participation__virtual=0, submission__points__gt=0)
            .order_by('submission_id').values_list('submission_id', flat=True))
     for sid in ids:
         check_submission_similarity(sid)

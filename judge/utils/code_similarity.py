@@ -1,8 +1,9 @@
 """So sánh mã nguồn bài nộp để phát hiện bài giống nhau trong kỳ thi (chạy ngay trên máy chủ, không gửi mã ra ngoài).
 
-Cách làm: tách token bằng pygments, chuẩn hóa (tên -> N, chuỗi -> S, số -> D, bỏ chú thích/#include), rồi tạo "dấu vân tay"
-bằng winnowing trên các đoạn K token liên tiếp. Độ giống giữa hai bài = tỉ lệ đoạn chung có trọng số (xem _weight): đoạn mà nhiều bài
-cùng có (lời giải chuẩn, đọc/ghi dữ liệu) ít giá trị, đoạn hiếm chỉ hai bài có thì giá trị đầy đủ.
+Cách làm: tách token bằng pygments, chuẩn hóa (tên -> N, chuỗi -> S, số -> D, bỏ chú thích/#include), rồi tạo
+"dấu vân tay" bằng winnowing trên các đoạn K token liên tiếp. Độ giống giữa hai bài = tỉ lệ đoạn chung có trọng số
+(xem _weight): đoạn mà nhiều bài cùng có (lời giải chuẩn, đọc/ghi dữ liệu) ít giá trị, đoạn hiếm chỉ hai bài có thì
+giá trị đầy đủ.
 Tín hiệu thứ hai ("literal"): giống cả tên biến, bằng chứng mạnh hơn chỉ giống cấu trúc.
 """
 import hashlib
@@ -92,7 +93,7 @@ def containment(a, b):
 
 
 def _weight(df):
-    """Đoạn chỉ hai bài có (chính cặp đang xét) hoặc chỉ bài mới có: giá trị đầy đủ; từ 3 bài trở lên cùng có thì giảm dần."""
+    """Đoạn chỉ hai bài có (chính cặp đang xét) hoặc chỉ bài mới có: giá trị đầy đủ; từ 3 bài trở lên thì giảm dần."""
     return 1.0 if df <= 2 else 2.0 / df
 
 
@@ -100,7 +101,8 @@ def compare_new(new_struct, new_literal, others):
     """So một bài mới với các bài khác cùng bài tập.
 
     others: {khóa: (struct_fp, literal_fp)}. Trả về danh sách
-    (khóa, điểm_cấu_trúc, điểm_tên_biến, số_đoạn_chung, số_đoạn_hiếm) cho các cặp có điểm cấu trúc >= SIMILARITY_MIN_REPORT.
+    (khóa, điểm_cấu_trúc, điểm_tên_biến, số_đoạn_chung, số_đoạn_hiếm) cho các cặp có điểm cấu trúc
+    >= SIMILARITY_MIN_REPORT.
     """
     new = set(new_struct)
     if not new:

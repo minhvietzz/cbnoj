@@ -2,8 +2,8 @@ import csv
 from collections import defaultdict
 from datetime import timedelta
 
-from django.conf import settings
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -276,7 +276,8 @@ class CourseLessonAssignForm(forms.Form):
     classroom = forms.ModelChoiceField(queryset=Classroom.objects.none(), label=_l('Class'), empty_label=None)
     scope = forms.ChoiceField(choices=(('lesson', _l('The whole lesson')), ('problems', _l('Only some problems'))),
                               widget=forms.RadioSelect, label=_l('What to give'), initial='lesson')
-    problems = forms.ModelMultipleChoiceField(queryset=Problem.objects.none(), required=False, widget=forms.CheckboxSelectMultiple,
+    problems = forms.ModelMultipleChoiceField(queryset=Problem.objects.none(), required=False,
+                                              widget=forms.CheckboxSelectMultiple,
                                               label=_l('Problems'))
     title = forms.CharField(max_length=200, label=_l('Title'))
     due = forms.DateTimeField(required=False, label=_l('Due'), input_formats=[

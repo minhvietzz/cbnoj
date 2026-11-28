@@ -3,7 +3,6 @@ import difflib
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext as _
 from django.views.generic import View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 
@@ -55,11 +54,12 @@ class ContestSimilarityView(ContestSimilarityMixin, TitleMixin, DetailView):
             qs = qs.exclude(status=ContestSimilarity.STATUS_DISMISSED)
         elif status == 'dismissed':
             qs = qs.filter(status=ContestSimilarity.STATUS_DISMISSED)
-        rows = list(qs.order_by('-level', '-score', '-literal_score')[:500])   # 'strong' > 'review' theo chữ cái giảm dần
+        # 'strong' > 'review' theo chữ cái giảm dần
+        rows = list(qs.order_by('-level', '-score', '-literal_score')[:500])
         context.update({
             'rows': rows, 'problems': problems, 'sel_problem': problem, 'sel_status': status, 'sel_level': level,
-            'signature': _signature(self.base_queryset()), 'feed_url': reverse('contest_similarity_feed',
-                                                                              args=(self.object.key,)),
+            'signature': _signature(self.base_queryset()),
+            'feed_url': reverse('contest_similarity_feed', args=(self.object.key,)),
             'n_new': sum(1 for r in rows if r.status == ContestSimilarity.STATUS_NEW),
             'can_edit': True, 'tab': 'similarity',
         })
@@ -87,7 +87,7 @@ class ContestSimilarityPair(ContestSimilarityMixin, TitleMixin, DetailView):
         context = super().get_context_data(**kwargs)
         try:
             pair = self.base_queryset().select_related('submission_a__source', 'submission_b__source',
-                                                       'submission_a__language', 'submission_b__language'
+                                                       'submission_a__language', 'submission_b__language',
                                                        ).get(pk=self.kwargs['sim_id'])
         except ContestSimilarity.DoesNotExist:
             raise Http404()
