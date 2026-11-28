@@ -39,7 +39,7 @@ Mọi nội dung tạo ra mặc định riêng tư, quyền kiểm tra như trê
 ## Tài liệu
 
 - `docs/HE-THONG.md`: tài liệu vận hành nội bộ (đường dẫn, dịch vụ, nhật ký). Không đưa lên repo công khai; nằm trên máy chủ.
-- [`CLAUDE.md`](CLAUDE.md) và [`.claude/skills/`](.claude/skills): hướng dẫn và quy trình vận hành cho Claude (đăng quiz, đăng bài tập, tạo kỳ thi, sao lưu, deploy...).
+- [`.claude/skills/`](.claude/skills): quy trình vận hành cho Claude (đăng quiz, đăng bài tập, tạo kỳ thi, sao lưu, deploy...).
 
 ## Cài đặt
 
