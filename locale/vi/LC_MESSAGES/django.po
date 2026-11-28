@@ -5681,6 +5681,11 @@ msgstr "Bạn có thông báo chưa đọc."
 msgid "proudly powered by %(dmoj)s"
 msgstr "dựa trên nền tảng %(dmoj)s"
 
+#: templates/base.html:494
+#, python-format
+msgid "follow CBNoj on %(github)s"
+msgstr "theo dõi CBNoj trên %(github)s"
+
 #: templates/base.html:432
 #, python-format
 msgid "follow us on %(github)s and %(facebook)s"
@@ -13257,3 +13262,84 @@ msgstr "Kỳ thi trắc nghiệm"
 
 msgid "Programming contest"
 msgstr "Kỳ thi lập trình"
+
+msgid "Whole course lesson"
+msgstr "Cả bài học trong khóa"
+
+msgid "Course lesson"
+msgstr "Bài học trong khóa"
+
+msgid "Optional. Members of the organization can open the course, and its administrators can edit it."
+msgstr "Không bắt buộc. Thành viên tổ chức xem được khóa học, quản trị viên tổ chức sửa được."
+
+msgid "A whole lesson: its problems and quizzes, including ones added later. For a list of problems it only records where they came from."
+msgstr "Cả bài học: mọi bài tập và bài trắc nghiệm trong đó, kể cả bài thêm sau. Với danh sách bài tập, chỉ ghi nhận bài học nguồn."
+
+msgid "Whole lesson: all its problems and quizzes. The class joins the course."
+msgstr "Cả bài học: mọi bài tập và bài trắc nghiệm trong đó. Lớp sẽ được thêm vào khóa học."
+
+msgid "Choose a lesson."
+msgstr "Hãy chọn bài học."
+
+msgid "This lesson is hidden."
+msgstr "Bài học này đang ẩn."
+
+msgid "You cannot use this course."
+msgstr "Bạn không dùng được khóa học này."
+
+msgid "This class is not part of the course \"%s\". Ask a course editor to add it first."
+msgstr "Lớp này chưa thuộc khóa học \"%s\". Hãy nhờ người quản lý khóa thêm lớp trước."
+
+msgid "The class was added to the course \"%s\" so the students can open the lesson."
+msgstr "Lớp đã được thêm vào khóa học \"%s\" để học sinh mở được bài học."
+
+msgid "The whole lesson"
+msgstr "Cả bài học"
+
+msgid "Only some problems"
+msgstr "Chỉ một số bài tập"
+
+msgid "What to give"
+msgstr "Giao gì"
+
+msgid "Choose at least one problem."
+msgstr "Hãy chọn ít nhất một bài tập."
+
+msgid "You cannot use some of these problems."
+msgstr "Bạn không dùng được một số bài tập này."
+
+msgid "Assign: %s"
+msgstr "Giao: %s"
+
+msgid "Assign to a class"
+msgstr "Giao cho lớp"
+
+msgid "Assign the whole lesson"
+msgstr "Giao cả bài học"
+
+msgid "If the class is not part of this course yet, it is added when you give the whole lesson, so the students can open it."
+msgstr "Nếu lớp chưa thuộc khóa học này, lớp sẽ được thêm vào khi bạn giao cả bài học để học sinh mở được bài."
+
+msgid "The whole lesson counts every problem and quiz in it, including ones you add later."
+msgstr "Giao cả bài học là tính mọi bài tập và bài trắc nghiệm trong đó, kể cả bài bạn thêm sau."
+
+msgid "This lesson has no problems."
+msgstr "Bài học này chưa có bài tập."
+
+msgid "Courses of %s"
+msgstr "Khóa học của %s"
+
+msgid "Add a course"
+msgstr "Thêm khóa học"
+
+msgid "Enrolled"
+msgstr "Đã tham gia"
+
+msgid "Members only"
+msgstr "Chỉ thành viên"
+
+msgid "This organization has no courses yet."
+msgstr "Tổ chức này chưa có khóa học."
+
+msgid "Give"
+msgstr "Giao"
