@@ -1,3 +1,4 @@
+from judge.mcp import places
 from judge.mcp.registry import tool
 from judge.models.classroom import ClassMember, MANAGER_ROLES
 
@@ -13,7 +14,8 @@ CAPABILITIES = (
 @tool(
     'whoami',
     'Cho biết tài khoản CBNoj đang đăng nhập và những việc tài khoản này được phép làm '
-    '(đăng quiz, tạo bài tập, tổ chức/lớp đang quản lý). Nên gọi đầu tiên.',
+    '(đăng quiz, tạo bài tập, tổ chức/lớp đang quản lý) và NƠI được đăng từng loại nội dung (toàn trang, tổ chức, lớp: '
+    'where_can_post). Nên gọi đầu tiên; nếu một loại có nhiều nơi đăng thì hỏi giáo viên muốn đăng ở đâu.',
     read_only=True,
     idempotent=True,
 )
@@ -26,6 +28,7 @@ def whoami(ctx):
         'superuser': user.is_superuser,
         'can': [text for perm, text in CAPABILITIES if user.has_perm(perm)],
         'organizations_administered': [{'slug': o.slug, 'name': o.name} for o in profile.admin_of.all()],
+        'where_can_post': places.describe(ctx),
         'classes_managed': [{'id': m.classroom_id, 'name': m.classroom.name} for m in classes],
         'site': ctx.request.build_absolute_uri('/').rstrip('/'),
     }

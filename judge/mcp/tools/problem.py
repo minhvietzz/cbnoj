@@ -13,7 +13,7 @@ from django.utils import timezone
 from reversion import revisions
 
 from judge.forms import ProblemEditForm
-from judge.mcp import audit
+from judge.mcp import audit, places
 from judge.mcp.registry import ToolError, tool
 from judge.models import (Language, Organization, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType,
                           Submission, SubmissionSource)
@@ -78,7 +78,9 @@ def _memory_kb(memory_mb):
     'problem_create',
     'Tạo bài tập lập trình mới ở chế độ RIÊNG TƯ (chưa ai làm được). Chưa có test; sau đó gọi problem_set_tests để thêm test. '
     'Có organization thì tạo bài riêng của tổ chức (bạn phải là quản trị tổ chức; mã bài bắt buộc bắt đầu bằng "<slug tổ chức không dấu gạch>_"); '
-    'không có thì cần quyền tạo bài toàn trang. Đề bài viết bằng Markdown, có thể dùng $...$ cho công thức.',
+    'không có thì cần quyền tạo bài toàn trang. NƠI ĐĂNG: xem where_can_post trong whoami; có nhiều nơi thì hỏi giáo viên; '
+    'chỉ đăng được ở đúng một tổ chức thì bỏ trống organization, hệ thống tự đăng vào đó (nhớ mã bài phải bắt đầu bằng "<slug>_"). '
+    'Đề bài viết bằng Markdown, có thể dùng $...$ cho công thức.',
     {
         'code': {'type': 'string', 'description': 'Mã bài: chữ thường a-z, số và dấu gạch dưới, tối đa 32 ký tự, ví dụ "tong2so".'},
         'name': {'type': 'string', 'description': 'Tên bài hiển thị, ví dụ "Tổng hai số".'},
@@ -100,6 +102,11 @@ def problem_create(ctx, code, name, statement, time_limit_seconds=1.0, memory_li
     if not user.has_perm('judge.edit_own_problem'):
         raise ToolError('Tài khoản của bạn chưa có quyền sửa bài tập của chính mình (edit_own_problem), '
                         'nên tạo xong cũng không thêm test được. Hãy nhờ quản trị viên cấp quyền.')
+    auto = None
+    if not organization:
+        auto = places.default_destination(ctx, 'problem')
+        if auto is not None:
+            organization = auto[1].slug
     if organization:
         org = _find_org(organization)
         if org is None or not org.is_admin(profile):
@@ -164,6 +171,8 @@ def problem_create(ctx, code, name, statement, time_limit_seconds=1.0, memory_li
         except Exception:
             logger.exception('on_new_problem failed for %s', problem.code)
     result = _info(ctx, problem)
+    if auto is not None:
+        result['placed'] = places.where_note(*auto)
     result['next'] = (
         'Bài đã được tạo (riêng tư), CHƯA có test. Nếu người dùng chỉ yêu cầu tạo bài thì dừng ở đây và nói họ vào '
         'test_data_url để tải file test (zip) lên. Chỉ khi người dùng muốn bạn làm test: test nhỏ gõ tay dùng '

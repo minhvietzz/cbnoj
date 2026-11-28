@@ -7,6 +7,7 @@ from django.utils import timezone
 from reversion import revisions
 
 from judge.forms import BlogPostForm
+from judge.mcp import places
 from judge.mcp.registry import ToolError, tool
 from judge.models import BlogPost, Organization
 from judge.tasks.webhook import on_new_blogpost
@@ -54,7 +55,8 @@ def _check_content(content):
     'blog_create',
     'Tạo bài viết/thông báo (nội dung Markdown). Mặc định là BẢN NHÁP (chưa ai thấy ngoài tác giả); chỉ đặt publish=true '
     'khi giáo viên yêu cầu đăng ngay. Có organization thì đăng trong tổ chức (bạn phải là quản trị tổ chức; chỉ thành viên '
-    'tổ chức thấy); không có thì là bài cá nhân công khai trên trang (cần đã giải đủ số bài theo quy định của trang).',
+    'tổ chức thấy); không có thì là bài cá nhân công khai trên trang (cần đã giải đủ số bài theo quy định của trang). '
+    'NƠI ĐĂNG: xem where_can_post trong whoami; có nhiều nơi thì hỏi giáo viên; chỉ đăng được ở đúng một tổ chức thì bỏ trống organization, hệ thống tự đăng vào đó.',
     {
         'title': {'type': 'string', 'description': 'Tiêu đề, tối đa 100 ký tự.'},
         'content': {'type': 'string', 'description': 'Nội dung Markdown (có thể dùng $...$ cho công thức, ![](url) cho ảnh).'},
@@ -68,6 +70,11 @@ def blog_create(ctx, title, content, organization=None, publish=False):
     title = ' '.join(str(title).split())
     content = _check_content(content)
     org = None
+    auto = None
+    if not organization:
+        auto = places.default_destination(ctx, 'blog')
+        if auto is not None:
+            organization = auto[1].slug
     if organization:
         org = _find_org(organization)
         if org is None or not org.is_admin(profile):
@@ -106,6 +113,8 @@ def blog_create(ctx, title, content, organization=None, publish=False):
     if post.visible and org is None:
         on_new_blogpost(post.id)
     result = _info(ctx, post)
+    if auto is not None:
+        result['placed'] = places.where_note(*auto)
     result['next'] = ('Đã đăng.' if post.visible else
                       'Đây là bản nháp. Mở edit_url để xem/sửa, hoặc gọi blog_update với publish=true để đăng.')
     return result

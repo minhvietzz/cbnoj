@@ -8,6 +8,7 @@ from django.forms.models import model_to_dict
 from django.urls import reverse
 from django.utils import timezone
 
+from judge.mcp import places
 from judge.mcp.registry import ToolError, tool
 from judge.models import Classroom, Organization, Quiz
 from judge.utils import quiz_stats
@@ -171,7 +172,9 @@ def _target(ctx, organization, class_id):
     'quiz_create',
     'Tạo một quiz từ đề viết theo cú pháp CBNoj. Quiz được tạo ở chế độ RIÊNG TƯ (chỉ người quản lý thấy), '
     'nếu đăng cho tổ chức/lớp thì thành bài thi riêng với khung giờ tạm (ngày mai), giáo viên chỉnh lại bằng '
-    'quiz_configure hoặc trang quản lý. LUÔN gọi quiz_preview trước và chỉ tạo khi giáo viên đã đồng ý.',
+    'quiz_configure hoặc trang quản lý. LUÔN gọi quiz_preview trước và chỉ tạo khi giáo viên đã đồng ý. '
+    'NƠI ĐĂNG: xem where_can_post trong whoami; có nhiều nơi thì hỏi giáo viên rồi truyền organization hoặc class_id; '
+    'tài khoản chỉ đăng được ở đúng một tổ chức/lớp thì bỏ trống, hệ thống tự đăng vào đó.',
     {
         'title': {'type': 'string', 'description': 'Tên quiz, tối đa 200 ký tự.'},
         'text': {'type': 'string', 'description': 'Toàn bộ đề theo cú pháp [qus]/[ans].'},
@@ -197,6 +200,11 @@ def quiz_create(ctx, title, text, description='', time_limit=0, max_attempts=0, 
         raise ToolError('time_limit phải là số phút từ 0 đến 600.')
     if not isinstance(max_attempts, int) or not 0 <= max_attempts <= 100:
         raise ToolError('max_attempts phải từ 0 đến 100.')
+    auto = None
+    if not organization and not class_id:
+        auto = places.default_destination(ctx, 'quiz')
+        if auto is not None:
+            organization, class_id = (auto[1].slug, None) if auto[0] == 'organization' else (None, auto[1].id)
     org, classroom = _target(ctx, organization, class_id)
     questions, errors, warnings = _parse(text)
     if errors:
@@ -215,7 +223,10 @@ def quiz_create(ctx, title, text, description='', time_limit=0, max_attempts=0, 
         max_attempts=max_attempts, shuffle_questions=bool(shuffle_questions), shuffle_options=bool(shuffle_options),
         show_answers=bool(show_answers), is_public=False, source='MCP', org=org, classroom=classroom,
         to_bank=bool(to_bank), bank_tags=split_tags(bank_tags))
-    return _created(ctx, quiz, questions, warnings, bank_result=bank_result)
+    result = _created(ctx, quiz, questions, warnings, bank_result=bank_result)
+    if auto is not None:
+        result['placed'] = places.where_note(*auto)
+    return result
 
 
 def _created(ctx, quiz, questions, warnings, duplicate=False, bank_result=None):

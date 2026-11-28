@@ -129,9 +129,6 @@ class McpQuizTest(TestCase):
         self.assertEqual(Quiz.objects.count(), 1)
 
     def test_organization_admin_without_global_permission(self):
-        error, text = call(self.client, self.org_tok, 'quiz_create', {'title': 'Công khai?', 'text': GOOD})
-        self.assertTrue(error)
-        self.assertIn('quyền', text)
         error, data = call(self.client, self.org_tok, 'quiz_create',
                            {'title': 'Thi tổ chức', 'text': GOOD, 'organization': 'school', 'time_limit': 30})
         self.assertFalse(error, data)
