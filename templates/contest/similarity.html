@@ -1,0 +1,107 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'similarity' %}
+    {% include "contest/contest-tabs.html" %}
+{% endblock %}
+
+{% block content_media %}
+    <style>
+        .sim-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 4px 0 14px; }
+        .sim-bar select { height: 36px; padding: 0 8px; }
+        .sim-note { font-size: 13px; opacity: .75; margin: 0 0 14px; max-width: 860px; line-height: 1.55; }
+        .sim-table { width: 100%; border-collapse: collapse; }
+        .sim-table th, .sim-table td { padding: 10px 12px; border-bottom: 1px solid rgba(128,128,128,.28); text-align: left; vertical-align: middle; }
+        .sim-table th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+        .sim-pill { display: inline-block; padding: 2px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .sim-strong { background: #FBE9E7; color: #B3261E; }
+        .sim-review { background: #FFF3CD; color: #8A6200; }
+        .sim-new { background: #E8EEFF; color: #1F3FBF; }
+        .sim-dismissed { opacity: .5; }
+        .sim-pct { font-variant-numeric: tabular-nums; font-weight: 600; }
+        .sim-banner { display: none; margin: 0 0 12px; padding: 8px 12px; border: 1px solid #1F3FBF; border-radius: 6px; font-size: 13px; }
+        .sim-empty { padding: 28px 0; opacity: .7; }
+    </style>
+{% endblock %}
+
+{% block content_js_media %}
+    <script type="text/javascript">
+        (function () {
+            var sig = {{ signature|htmltojs }};
+            function refresh() {
+                fetch(location.href, {credentials: 'same-origin'}).then(function (r) { return r.text(); }).then(function (html) {
+                    var doc = new DOMParser().parseFromString(html, 'text/html');
+                    var box = doc.getElementById('sim-list');
+                    if (box) document.getElementById('sim-list').innerHTML = box.innerHTML;
+                });
+            }
+            setInterval(function () {
+                if (document.hidden) return;
+                fetch({{ feed_url|htmltojs }}, {credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (d) {
+                    if (d.signature !== sig) { sig = d.signature; refresh(); }
+                }).catch(function () {});
+            }, 10000);
+        })();
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h2 style="margin: 0 0 6px;">Bài giống nhau</h2>
+    <p class="sim-note">
+        Hệ thống so sánh mã nguồn của các thí sinh ngay khi một bài nộp được chấm xong (chuẩn hóa tên biến, bỏ chú thích,
+        không gửi mã ra ngoài). <b>Chỉ là gợi ý:</b> bài ngắn có lời giải chuẩn thì nhiều em viết giống nhau một cách tự nhiên.
+        "Rất đáng ngờ" là giống cả cấu trúc lẫn tên biến.
+        Trang tự cập nhật khi có cặp mới.
+    </p>
+    <form class="sim-bar" method="get">
+        <select name="problem" onchange="this.form.submit()">
+            <option value="">Tất cả bài</option>
+            {% for code, name in problems %}<option value="{{ code }}"{% if code == sel_problem %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+        <select name="level" onchange="this.form.submit()">
+            <option value="">Mọi mức</option>
+            <option value="strong"{% if sel_level == 'strong' %} selected{% endif %}>Rất đáng ngờ</option>
+            <option value="review"{% if sel_level == 'review' %} selected{% endif %}>Cần xem</option>
+        </select>
+        <select name="status" onchange="this.form.submit()">
+            <option value="open"{% if sel_status == 'open' %} selected{% endif %}>Chưa loại trừ</option>
+            <option value="dismissed"{% if sel_status == 'dismissed' %} selected{% endif %}>Đã đánh dấu không gian lận</option>
+            <option value="all"{% if sel_status == 'all' %} selected{% endif %}>Tất cả</option>
+        </select>
+    </form>
+    <div id="sim-list">
+        {% if rows %}
+            <table class="sim-table">
+                <thead><tr><th>Mức</th><th>Thí sinh</th><th>Bài</th><th>Cấu trúc</th><th>Cả tên biến</th><th></th></tr></thead>
+                <tbody>
+                {% for r in rows %}
+                    <tr class="{% if r.status == 'dismissed' %}sim-dismissed{% endif %}">
+                        <td>
+                            <span class="sim-pill {{ 'sim-strong' if r.level == 'strong' else 'sim-review' }}">{{ 'Rất đáng ngờ' if r.level == 'strong' else 'Cần xem' }}</span>
+                            {% if r.status == 'new' %}<span class="sim-pill sim-new">mới</span>{% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url('user_page', r.participation_a.user.user.username) }}">{{ r.participation_a.user.user.username }}</a>
+                            &nbsp;&amp;&nbsp;
+                            <a href="{{ url('user_page', r.participation_b.user.user.username) }}">{{ r.participation_b.user.user.username }}</a>
+                        </td>
+                        <td><a href="{{ url('problem_detail', r.problem.code) }}">{{ r.problem.name }}</a></td>
+                        <td class="sim-pct">{{ (r.score * 100)|round|int }}%</td>
+                        <td class="sim-pct">{{ (r.literal_score * 100)|round|int }}%</td>
+                        <td><a href="{{ url('contest_similarity_pair', contest.key, r.id) }}"><b>So sánh</b></a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="sim-empty">Chưa có cặp nào đáng ngờ{% if sel_status == 'open' and not sel_problem and not sel_level %} trong kỳ thi này{% endif %}.</div>
+        {% endif %}
+    </div>
+    <form method="post" action="{{ url('contest_similarity', contest.key) }}" style="margin-top: 22px;">
+        {% csrf_token %}
+        <button type="submit" class="button" onclick="return confirm('Quét lại toàn bộ bài nộp của kỳ thi này? Việc chạy nền, có thể mất vài phút.');">Quét lại cả kỳ thi</button>
+        <span class="sim-note" style="display: inline; margin-left: 8px;">Dùng cho kỳ thi diễn ra trước khi bật tính năng hoặc sau khi chỉnh ngưỡng.</span>
+    </form>
+{% endblock %}

@@ -1,0 +1,37 @@
+from django import template
+
+register = template.Library()
+
+# (group title, [object names in display order])
+GROUPS = [
+    ('Bài tập', ['Problem', 'Submission', 'ProblemGroup', 'ProblemType', 'Tag', 'TagGroup', 'TagProblem', 'License',
+                 'Language', 'OrganizationProblemTag']),
+    ('Kỳ thi lập trình', ['Contest', 'ContestParticipation', 'ContestTag']),
+    ('Trắc nghiệm', ['Quiz', 'QuizQuestion', 'QuizAttempt', 'BankQuestion', 'BankTag', 'QuizProfileStat']),
+    ('Lớp và môn', ['Classroom', 'ClassAssignment', 'ClassAnnouncement', 'Subject', 'Course', 'CourseLesson']),
+    ('Người dùng và tổ chức', ['User', 'Profile', 'Group', 'Organization', 'OrganizationRequest', 'Badge',
+                               'RegistrationProfile']),
+    ('Bài viết và hỗ trợ', ['BlogPost', 'BlogPostTag', 'Comment', 'CommentLock', 'Ticket', 'FlatPage']),
+    ('Hệ thống', ['Judge', 'NavigationBar', 'MiscConfig', 'Redirect', 'Site', 'LogEntry', 'ImpersonationLog']),
+    ('Đăng nhập bên ngoài', ['Application', 'AccessToken', 'RefreshToken', 'Grant', 'IDToken', 'UserSocialAuth',
+                             'Association', 'Nonce']),
+]
+
+
+@register.filter
+def admin_groups(app_list):
+    """Regroup the admin app list by job instead of by Django app."""
+    by_name = {}
+    for app in app_list or []:
+        for model in app['models']:
+            by_name[model['object_name']] = model
+    groups, used = [], set()
+    for title, names in GROUPS:
+        models = [by_name[n] for n in names if n in by_name]
+        used.update(n for n in names if n in by_name)
+        if models:
+            groups.append({'title': title, 'models': models})
+    rest = [m for n, m in by_name.items() if n not in used]
+    if rest:
+        groups.append({'title': 'Khác', 'models': rest})
+    return groups

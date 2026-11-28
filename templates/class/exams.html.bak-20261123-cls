@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block media %}{% include "class/_style.html" %}{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="cx neo-flat">
+    {% include "class/_head.html" %}
+    <section class="cx-card">
+        {% if exams %}
+        <table class="cx-table">
+            <thead><tr><th>{{ _('Exam') }}</th><th>{{ _('Type') }}</th><th>{{ _('Time') }}</th><th>{{ _('Duration') }}</th><th></th></tr></thead>
+            <tbody>
+            {% for e in exams %}
+                <tr>
+                    <td><a href="{{ e.url }}" style="font-weight:600">{{ e.name }}</a></td>
+                    <td><span class="cx-chip {{ 'ok' if e.kind == 'quiz' else 'blue' }}">{{ _('Quiz') if e.kind == 'quiz' else _('Contest') }}</span></td>
+                    <td>{% if e.when %}{{ e.when|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
+                    <td>{% if e.minutes %}{{ e.minutes }} {{ _('minutes') }}{% else %}—{% endif %}</td>
+                    <td class="r">{% if e.when and e.when > now %}<span class="cx-chip warn">{{ _('Upcoming') }}</span>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<div class="cx-empty">{{ _('No exams are linked to this class yet.') }}</div>{% endif %}
+    </section>
+</div>
+{% endblock %}

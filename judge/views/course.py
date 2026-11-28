@@ -3,6 +3,8 @@ from collections import defaultdict
 from datetime import timedelta
 
 from django.conf import settings
+from django import forms
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max, Min, Q
@@ -12,14 +14,17 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
-from django.views.generic import DetailView, ListView, View
+from django.utils.translation import gettext_lazy as _l
+from django.views.generic import DetailView, FormView, ListView, View
 
-from judge.models import Course, CourseLesson, CourseRole, RoleInCourse, Submission
+from judge.models import ClassAssignment, Classroom, Course, CourseLesson, CourseRole, Problem, RoleInCourse, \
+    Submission
+from judge.utils import classroom as class_stats
 from judge.utils import xlsx
 from judge.utils.views import TitleMixin, generic_message
 
-__all__ = ['CourseList', 'CourseDetail', 'CourseLessonDetail', 'CourseLessonRanking', 'CourseGrades', 'CourseJoin',
-           'CourseLeave']
+__all__ = ['CourseList', 'CourseDetail', 'CourseLessonDetail', 'CourseLessonRanking', 'CourseLessonAssign',
+           'CourseGrades', 'CourseJoin', 'CourseLeave']
 
 COLORS = ('mint', 'sky', 'lilac', 'peach', 'butter', 'pink')
 
@@ -131,13 +136,14 @@ class CourseList(TitleMixin, ListView):
         if self.tab == 'mine':
             visible = visible.filter(roles__user=user.profile)
         elif not user.is_superuser:
-            visible = visible.filter(Q(is_public=True) | Q(roles__user=user.profile)) \
+            visible = visible.filter(Q(is_public=True) | Q(roles__user=user.profile) |
+                                     Q(organization__in=user.profile.organizations.values('id'))) \
                 if user.is_authenticated else visible.filter(is_public=True)
         search = self.request.GET.get('search', '').strip()
         if search:
             visible = visible.filter(Q(name__icontains=search) | Q(about__icontains=search))
         # Count members and lessons in a second query so the filters above cannot skew them.
-        return Course.objects.filter(id__in=visible.values('id')).annotate(
+        return Course.objects.filter(id__in=visible.values('id')).select_related('organization').annotate(
             student_count=Count('roles', filter=Q(roles__role=RoleInCourse.STUDENT), distinct=True),
             lesson_count=Count('lessons', filter=Q(lessons__is_visible=True), distinct=True),
         ).order_by('-created', 'name')
@@ -262,7 +268,109 @@ class CourseLessonDetail(CourseMixin, TitleMixin, DetailView):
             for quiz in quizzes:
                 quiz.my_best = scores.get(quiz.id)
         context['quizzes'] = quizzes
+        context['can_assign'] = class_stats.staffed_classes(self.request.user).exists()
         return context
+
+
+class CourseLessonAssignForm(forms.Form):
+    classroom = forms.ModelChoiceField(queryset=Classroom.objects.none(), label=_l('Class'), empty_label=None)
+    scope = forms.ChoiceField(choices=(('lesson', _l('The whole lesson')), ('problems', _l('Only some problems'))),
+                              widget=forms.RadioSelect, label=_l('What to give'), initial='lesson')
+    problems = forms.ModelMultipleChoiceField(queryset=Problem.objects.none(), required=False, widget=forms.CheckboxSelectMultiple,
+                                              label=_l('Problems'))
+    title = forms.CharField(max_length=200, label=_l('Title'))
+    due = forms.DateTimeField(required=False, label=_l('Due'), input_formats=[
+        '%Y-%m-%dT%H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y'])
+    description = forms.CharField(required=False, label=_l('Description'), widget=forms.Textarea(attrs={'rows': 3}))
+
+    def __init__(self, *args, user, lesson, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user, self.lesson = user, lesson
+        self.fields['classroom'].queryset = class_stats.staffed_classes(user).order_by('-school_year', 'name')
+        self.fields['problems'].queryset = Problem.objects.filter(course_lessons__lesson=lesson) \
+            .order_by('course_lessons__order', 'course_lessons__id')
+        self.fields['problems'].label_from_instance = lambda p: '%s — %s' % (p.code, p.name)
+
+    def clean(self):
+        cleaned = super().clean()
+        classroom = cleaned.get('classroom')
+        if cleaned.get('scope') == 'problems':
+            chosen = cleaned.get('problems')
+            if not chosen:
+                self.add_error('problems', _('Choose at least one problem.'))
+            elif any(not p.is_accessible_by(self.user) for p in chosen):
+                self.add_error('problems', _('You cannot use some of these problems.'))
+        elif classroom is not None:
+            error = class_stats.lesson_assign_error(self.user, classroom, self.lesson)
+            if error:
+                self.add_error('classroom', error)
+        return cleaned
+
+
+class CourseLessonAssign(LoginRequiredMixin, CourseMixin, TitleMixin, FormView):
+    """Give a lesson, or just some of its problems, to one of the user's classes."""
+    template_name = 'course/assign.html'
+    form_class = CourseLessonAssignForm
+
+    def get_title(self):
+        return _('Assign: %s') % self.lesson.title
+
+    @cached_property
+    def lesson(self):
+        self.check_visible()
+        lesson = get_object_or_404(CourseLesson.objects.select_related('course'), course=self.course,
+                                   id=self.kwargs['lesson'])
+        user = self.request.user
+        if not (self.course.is_accessible_by(user) or self.course.is_editable_by(user)):
+            raise Http404()
+        if not lesson.is_visible and not self.course.is_editable_by(user):
+            raise Http404()
+        return lesson
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            self.lesson  # 404 before anything else for lessons the user cannot see
+            if not class_stats.staffed_classes(request.user).exists():
+                raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(user=self.request.user, lesson=self.lesson)
+        if self.request.method == 'GET':
+            code = self.request.GET.get('problem')
+            classes = class_stats.staffed_classes(self.request.user)
+            default = (classes.filter(slug=self.request.GET.get('class')).first() or
+                       classes.filter(courses=self.course).first() or classes.first())
+            problem = self.lesson.lesson_problems.filter(problem__code=code).select_related('problem').first()
+            kwargs['initial'] = {
+                'classroom': default.pk if default else None,
+                'scope': 'problems' if problem else 'lesson',
+                'problems': [problem.problem_id] if problem else [],
+                'title': problem.problem.name if problem else self.lesson.title,
+            }
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_course_context())
+        context['lesson'] = self.lesson
+        context['attached_ids'] = list(self.course.classes.values_list('id', flat=True))
+        return context
+
+    def form_valid(self, form):
+        data = form.cleaned_data
+        classroom, whole = data['classroom'], data['scope'] == 'lesson'
+        attached = whole and not self.course.classes.filter(pk=classroom.pk).exists()
+        class_stats.create_assignment(
+            classroom, self.request.profile, title=data['title'], due=data['due'], description=data['description'],
+            kind=ClassAssignment.KIND_LESSON if whole else ClassAssignment.KIND_PROBLEM,
+            problems=[] if whole else list(data['problems']), lesson=self.lesson)
+        messages.success(self.request, _('Assignment created.'))
+        if attached:
+            messages.info(self.request, _('The class was added to the course "%s" so the students can open the '
+                                          'lesson.') % self.course.name)
+        return HttpResponseRedirect(reverse('class_assignments', args=(classroom.slug,)))
 
 
 class CourseLessonRanking(CourseMixin, TitleMixin, DetailView):

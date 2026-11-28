@@ -1469,3 +1469,28 @@ class OrganizationClasses(PrivateOrganizationMixin, TitleMixin, TemplateView):
         context.update(classes=classes, tab='classes', role_names=class_role_names(),
                        can_create_class=self.can_edit_organization())
         return context
+
+
+class OrganizationCourses(PrivateOrganizationMixin, TitleMixin, TemplateView):
+    """Courses that belong to the organization. Members see all of them; administrators can add more."""
+    template_name = 'organization/courses.html'
+
+    def get_title(self):
+        return _('Courses of %s') % self.organization.name
+
+    def get_context_data(self, **kwargs):
+        from judge.models import Course, RoleInCourse
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        courses = list(Course.objects.filter(organization=self.organization).annotate(
+            lesson_count=Count('lessons', filter=Q(lessons__is_visible=True), distinct=True),
+            student_count=Count('roles', filter=Q(roles__role=RoleInCourse.STUDENT), distinct=True))
+            .order_by('-created', 'name'))
+        can_manage = user.is_superuser or self.can_edit_organization()
+        mine = dict(self.request.profile.course_roles.values_list('course_id', 'role'))
+        for course in courses:
+            course.my_role = mine.get(course.id)
+            course.student_total = course.get_students().count()   # direct students plus the classes of the course
+        context.update(courses=courses, tab='courses', can_manage_courses=can_manage,
+                       can_add_course=can_manage and user.is_staff and user.has_perm('judge.add_course'))
+        return context

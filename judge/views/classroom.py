@@ -19,8 +19,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _l
 from django.views.generic import DetailView, FormView, TemplateView, View
 
-from judge.models import ClassAnnouncement, ClassAssignment, ClassMember, Classroom, Organization, Problem, Profile, \
-    Quiz, RoleInClass, Subject, make_notification
+from judge.models import ClassAnnouncement, ClassAssignment, ClassMember, Classroom, CourseLesson, Organization, \
+    Problem, Profile, Quiz, RoleInClass, Subject, make_notification
 from judge.utils import classroom as stats
 from judge.utils import xlsx
 from judge.utils.views import TitleMixin, generic_message
@@ -350,21 +350,44 @@ class ClassMembers(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView):
         return back
 
 
+class LessonChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return '%s — %s' % (obj.course.name, obj.title)
+
+
 class AssignmentForm(forms.Form):
     title = forms.CharField(max_length=200, label=_l('Title'))
     kind = forms.ChoiceField(choices=ClassAssignment.KINDS, label=_l('Type'))
     problem_codes = forms.CharField(required=False, label=_l('Problem codes'), widget=forms.Textarea(attrs={'rows': 2}),
                                     help_text=_l('Programming problems: codes separated by spaces, commas or lines.'))
     quiz = forms.ModelChoiceField(queryset=Quiz.objects.none(), required=False, label=_l('Quiz'))
+    lesson = LessonChoiceField(queryset=CourseLesson.objects.none(), required=False, label=_l('Course lesson'),
+                               help_text=_l('Whole lesson: all its problems and quizzes. The class joins the course.'))
     due = forms.DateTimeField(required=False, label=_l('Due'), input_formats=[
         '%Y-%m-%dT%H:%M', '%d/%m/%Y %H:%M', '%Y-%m-%d %H:%M', '%d/%m/%Y'])
     description = forms.CharField(required=False, label=_l('Description'), widget=forms.Textarea(attrs={'rows': 3}))
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, user=None, classroom=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
+        self.classroom = classroom
         self.fields['quiz'].queryset = Quiz.objects.exclude(mode='personal').order_by('title')
+        self.fields['lesson'].queryset = self.lesson_queryset(user, classroom)
         self.problems = []
+
+    @staticmethod
+    def lesson_queryset(user, classroom):
+        """Lessons the user can give: courses the class already belongs to, plus courses the user edits."""
+        from judge.models import Course
+        if user.is_superuser:
+            courses = Course.objects.all()
+        else:
+            profile = user.profile
+            courses = Course.objects.filter(Q(classes=classroom) |
+                                            Q(roles__user=profile, roles__role__in=('TE', 'AS')) |
+                                            Q(organization__admins=profile))
+        return (CourseLesson.objects.filter(course__in=courses.values('id'), is_visible=True)
+                .select_related('course').order_by('course__name', 'order', 'id'))
 
     def clean(self):
         cleaned = super().clean()
@@ -374,6 +397,14 @@ class AssignmentForm(forms.Form):
                 self.add_error('quiz', _('Choose a quiz.'))
             elif not cleaned['quiz'].is_accessible_by(self.user):
                 self.add_error('quiz', _('You cannot use this quiz.'))
+        elif kind == ClassAssignment.KIND_LESSON:
+            lesson = cleaned.get('lesson')
+            if not lesson:
+                self.add_error('lesson', _('Choose a lesson.'))
+            else:
+                error = stats.lesson_assign_error(self.user, self.classroom, lesson)
+                if error:
+                    self.add_error('lesson', error)
         elif kind == ClassAssignment.KIND_PROBLEM:
             codes = [c for c in cleaned.get('problem_codes', '').replace(',', ' ').split() if c]
             found = {p.code: p for p in Problem.objects.filter(code__in=codes)}
@@ -399,39 +430,45 @@ class ClassAssignments(LoginRequiredMixin, ClassMixin, TitleMixin, TemplateView)
         ids = stats.student_ids(self.classroom)
         now = timezone.now()
         items = []
-        for a in self.classroom.assignments.select_related('quiz').prefetch_related('problems'):
+        for a in self.classroom.assignments.select_related('quiz', 'lesson__course').prefetch_related('problems'):
             if a.opens > now and not context['can_staff']:
                 continue
             progress = stats.assignment_progress(a, ids)
             done = sum(1 for v in progress.values() if v['done'] >= 0.999)
             mine = progress.get(self.request.profile.id)
             items.append({'a': a, 'done': done, 'total': len(ids), 'pct': int(100 * done / len(ids)) if ids else 0,
-                          'mine': mine, 'problems': list(a.problems.all()),
+                          'mine': mine, 'problems': a.get_problems(), 'quizzes': a.get_quizzes(),
                           'overdue': a.due is not None and a.due < now})
         items.sort(key=lambda i: (i['overdue'], i['a'].due is None, i['a'].due or now))
-        form = kwargs.get('form') or AssignmentForm(user=self.request.user)
+        form = kwargs.get('form') or self.initial_form()
         context.update(items=items, tab='assignments', form=form)
         return context
+
+    def initial_form(self):
+        """Empty form; ?lesson=<id> (from a course page) opens it already set to that whole lesson."""
+        form = AssignmentForm(user=self.request.user, classroom=self.classroom)
+        lesson = form.fields['lesson'].queryset.filter(id=self.request.GET.get('lesson') or 0).first()
+        if lesson is not None:
+            form.initial.update(kind=ClassAssignment.KIND_LESSON, lesson=lesson.id, title=lesson.title)
+        return form
 
     def post(self, request, *args, **kwargs):
         classroom = self.classroom
         if not classroom.is_staffed_by(request.user):
             raise PermissionDenied()
-        form = AssignmentForm(request.POST, user=request.user)
+        form = AssignmentForm(request.POST, user=request.user, classroom=classroom)
         if not form.is_valid():
             return self.render_to_response(self.get_context_data(form=form))
         data = form.cleaned_data
-        with transaction.atomic():
-            assignment = ClassAssignment.objects.create(
-                classroom=classroom, title=data['title'], kind=data['kind'], description=data['description'],
-                quiz=data['quiz'] if data['kind'] == ClassAssignment.KIND_QUIZ else None, due=data['due'],
-                created_by=request.profile)
-            if data['kind'] == ClassAssignment.KIND_PROBLEM:
-                assignment.problems.set(form.problems)
-        make_notification(stats.student_ids(classroom), title=_('New assignment'),
-                          body='%s: %s' % (classroom.name, assignment.title),
-                          url=reverse('class_assignments', args=(classroom.slug,)))
+        attached = (data['kind'] == ClassAssignment.KIND_LESSON and
+                    not data['lesson'].course.classes.filter(pk=classroom.pk).exists())
+        stats.create_assignment(classroom, request.profile, title=data['title'], kind=data['kind'], due=data['due'],
+                                description=data['description'], problems=form.problems, quiz=data['quiz'],
+                                lesson=data['lesson'] if data['kind'] == ClassAssignment.KIND_LESSON else None)
         messages.success(request, _('Assignment created.'))
+        if attached:
+            messages.info(request, _('The class was added to the course "%s" so the students can open the lesson.')
+                          % data['lesson'].course.name)
         return HttpResponseRedirect(reverse('class_assignments', args=(classroom.slug,)))
 
 

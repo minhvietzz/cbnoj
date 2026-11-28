@@ -49,6 +49,7 @@
             {{ og_tab('users', organization.get_users_url(), _('Member list')) }}
             {{ og_tab('exams', url('organization_exams', organization.slug), _('Exams')) }}
             {{ og_tab('classes', url('organization_classes', organization.slug), _('Classes')) }}
+            {{ og_tab('courses', url('organization_courses', organization.slug), _('Courses')) }}
             {{ og_tab('problem-list', url('problem_list_organization', organization.slug), _('Problems')) }}
             {{ og_tab('contest-list', url('contest_list_organization', organization.slug), _('Programming contests')) }}
             {{ og_tab('submission-list', url('submission_list_organization', organization.slug), _('Submissions')) }}

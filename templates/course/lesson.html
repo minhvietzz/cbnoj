@@ -14,6 +14,7 @@
         <span class="lt-sep"></span>
         <a class="lt-btn" href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}" aria-label="{{ _('Lesson ranking') }}"><i class="fa fa-trophy"></i><span class="lt-tip">{{ _('Lesson ranking') }}</span></a>
         <a class="lt-btn" href="{{ url('course_grades', course.slug) }}" aria-label="{{ _('Grades') }}"><i class="fa fa-check-square-o"></i><span class="lt-tip">{{ _('Grades') }}</span></a>
+        {% if can_assign %}<a class="lt-btn" href="{{ url('course_lesson_assign', course.slug, lesson.id) }}" aria-label="{{ _('Assign to a class') }}"><i class="fa fa-paper-plane"></i><span class="lt-tip">{{ _('Assign to a class') }}</span></a>{% endif %}
         {% if can_edit and request.user.is_staff %}
             <a class="lt-btn" href="{{ url('admin:judge_courselesson_change', lesson.id) }}" aria-label="{{ _('Edit this lesson') }}"><i class="fa fa-pencil"></i><span class="lt-tip">{{ _('Edit this lesson') }}</span></a>
         {% endif %}
@@ -59,16 +60,17 @@
         <section class="crs-panel">
             <div class="crs-panel-head">
                 <h2>{{ _('Practice problems') }}</h2>
-                <span>{{ progress.score }}/{{ progress.max }} {{ _('points') }} · <a href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}">{{ _('Ranking') }}</a></span>
+                <span>{{ progress.score }}/{{ progress.max }} {{ _('points') }} · <a href="{{ url('course_lesson_ranking', course.slug, lesson.id) }}">{{ _('Ranking') }}</a>{% if can_assign %} · <a href="{{ url('course_lesson_assign', course.slug, lesson.id) }}">{{ _('Assign the whole lesson') }}</a>{% endif %}</span>
             </div>
             <ul class="crs-items">
                 {% for item in progress.problems %}
-                    <li>
+                    <li{% if can_assign %} class="crs-has-act"{% endif %}>
                         <a href="{{ url('problem_detail', item.problem.code) }}">
                             <i class="crs-dot crs-dot-{{ 'done' if item.solved else ('part' if item.tried else 'todo') }}" aria-hidden="true"></i>
                             <span class="crs-lesson-main"><b>{{ item.problem.name }}</b><span class="crs-sub crs-mono">{{ item.problem.code }}</span></span>
                             <span class="crs-score {% if item.solved %}crs-score-ok{% endif %}">{{ item.score|round|int }}/{{ item.max }}</span>
                         </a>
+                        {% if can_assign %}<a class="crs-act" href="{{ url('course_lesson_assign', course.slug, lesson.id) }}?problem={{ item.problem.code }}">{{ _('Give') }}</a>{% endif %}
                     </li>
                 {% endfor %}
             </ul>

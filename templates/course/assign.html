@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+{% block title_row %}{% endblock %}
+
+{% block body %}
+<div class="crs neo-flat crs-lesson-page crs-assign">
+    <header class="crs-lhead">
+        <div class="crs-lhead-top">
+            <a class="crs-crumb" href="{{ course.get_absolute_url() }}">{{ course.name }}</a>
+            <a class="crs-crumb" href="{{ lesson.get_absolute_url() }}">{{ lesson.title }}</a>
+        </div>
+        <h1>{{ _('Assign to a class') }}</h1>
+    </header>
+
+    <form method="post" class="crs-panel crs-panel-pad crs-assign-form">
+        {% csrf_token %}
+        {{ form.non_field_errors() }}
+
+        <div class="crs-fld">
+            <label for="{{ form.classroom.id_for_label }}">{{ form.classroom.label }}</label>
+            {{ form.classroom }}
+            {% if form.classroom.errors %}<span class="crs-err">{{ form.classroom.errors|join(' ') }}</span>{% endif %}
+            <span class="crs-hint">{{ _('If the class is not part of this course yet, it is added when you give the whole lesson, so the students can open it.') }}</span>
+        </div>
+
+        <div class="crs-fld">
+            <label>{{ form.scope.label }}</label>
+            <div class="crs-radios">
+                {% for radio in form.scope %}<label class="crs-radio">{{ radio.tag() }} <span>{{ radio.choice_label }}</span></label>{% endfor %}
+            </div>
+            <span class="crs-hint">{{ _('The whole lesson counts every problem and quiz in it, including ones you add later.') }}</span>
+        </div>
+
+        <div class="crs-fld" id="assign-problems">
+            <label>{{ form.problems.label }}</label>
+            <div class="crs-checks">
+                {% for check in form.problems %}<label class="crs-check">{{ check.tag() }} <span>{{ check.choice_label }}</span></label>{% else %}<span class="crs-muted">{{ _('This lesson has no problems.') }}</span>{% endfor %}
+            </div>
+            {% if form.problems.errors %}<span class="crs-err">{{ form.problems.errors|join(' ') }}</span>{% endif %}
+        </div>
+
+        <div class="crs-fld">
+            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}<span class="crs-err">{{ form.title.errors|join(' ') }}</span>{% endif %}
+        </div>
+        <div class="crs-fld">
+            <label for="{{ form.due.id_for_label }}">{{ form.due.label }}</label>
+            <input type="text" name="due" id="{{ form.due.id_for_label }}" placeholder="29/11/2026 23:59" value="{{ form.due.value() or '' }}">
+            {% if form.due.errors %}<span class="crs-err">{{ form.due.errors|join(' ') }}</span>{% endif %}
+        </div>
+        <div class="crs-fld">
+            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+            {{ form.description }}
+        </div>
+
+        <div class="crs-assign-actions">
+            <a class="crs-btn" href="{{ lesson.get_absolute_url() }}">{{ _('Cancel') }}</a>
+            <button type="submit" class="crs-btn crs-btn-fill">{{ _('Give') }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js_media %}
+<script>
+$(function () {
+    var $problems = $('#assign-problems');
+    function sync() { $problems.toggle($('input[name=scope]:checked').val() === 'problems'); }
+    $('input[name=scope]').on('change', sync);
+    sync();
+});
+</script>
+{% endblock %}

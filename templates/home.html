@@ -63,6 +63,7 @@
                     {% for t in home_todo %}
                         {% set a = t.assignment %}
                         {% if a.kind == 'quiz' and a.quiz %}{% set go = a.quiz.get_absolute_url() %}
+                        {% elif a.kind == 'lesson' and a.lesson %}{% set go = a.lesson.get_absolute_url() %}
                         {% elif a.problems.all()|length == 1 %}{% set go = url('problem_detail', a.problems.all()[0].code) %}
                         {% else %}{% set go = url('class_assignments', a.classroom.slug) %}{% endif %}
                         <tr>

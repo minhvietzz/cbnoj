@@ -138,7 +138,9 @@ class ClassAssignment(models.Model):
     """Work given to a whole class with an optional deadline: some programming problems, or one quiz."""
     KIND_PROBLEM = 'problem'
     KIND_QUIZ = 'quiz'
-    KINDS = ((KIND_PROBLEM, _('Programming problems')), (KIND_QUIZ, _('Quiz')))
+    KIND_LESSON = 'lesson'
+    KINDS = ((KIND_PROBLEM, _('Programming problems')), (KIND_QUIZ, _('Quiz')),
+             (KIND_LESSON, _('Whole course lesson')))
 
     classroom = models.ForeignKey(Classroom, verbose_name=_('class'), on_delete=models.CASCADE,
                                   related_name='assignments')
@@ -148,6 +150,10 @@ class ClassAssignment(models.Model):
                                       related_name='class_assignments')
     quiz = models.ForeignKey('judge.Quiz', verbose_name=_('quiz'), null=True, blank=True, on_delete=models.CASCADE,
                              related_name='class_assignments')
+    lesson = models.ForeignKey('judge.CourseLesson', verbose_name=_('course lesson'), null=True, blank=True,
+                               on_delete=models.CASCADE, related_name='class_assignments',
+                               help_text=_('A whole lesson: its problems and quizzes, including ones added later. '
+                                           'For a list of problems it only records where they came from.'))
     description = models.TextField(blank=True, verbose_name=_('description'))
     opens = models.DateTimeField(default=timezone.now, verbose_name=_('opens'))
     due = models.DateTimeField(null=True, blank=True, verbose_name=_('due'))
@@ -166,6 +172,20 @@ class ClassAssignment(models.Model):
 
     def get_absolute_url(self):
         return reverse('class_assignments', args=(self.classroom.slug,))
+
+    def get_problems(self):
+        """Problems to solve: the chosen ones, or every problem of the lesson for a whole-lesson assignment."""
+        if self.kind == self.KIND_LESSON:
+            if self.lesson_id is None:
+                return []
+            return [lp.problem for lp in self.lesson.lesson_problems.select_related('problem').order_by('order', 'id')]
+        return list(self.problems.all())
+
+    def get_quizzes(self):
+        """Quizzes to take: the chosen one, or the quizzes of the lesson for a whole-lesson assignment."""
+        if self.kind == self.KIND_LESSON:
+            return list(self.lesson.quizzes.order_by('title')) if self.lesson_id else []
+        return [self.quiz] if self.kind == self.KIND_QUIZ and self.quiz_id else []
 
     @property
     def is_open(self):

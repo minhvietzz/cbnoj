@@ -13,12 +13,13 @@
                 {% set a = it.a %}
                 <div class="cx-card" style="padding:18px 22px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between">
                     <div style="display:flex;gap:16px;align-items:center;min-width:0;flex:1 1 280px">
-                        <span class="cx-badge" style="background:{{ 'var(--c-blue)' if a.kind == 'problem' else 'var(--c-ok)' }};width:44px;height:44px;font-size:13px">{{ 'LT' if a.kind == 'problem' else 'TN' }}</span>
+                        <span class="cx-badge" style="background:{{ 'var(--c-blue)' if a.kind == 'problem' else ('var(--c-navy)' if a.kind == 'lesson' else 'var(--c-ok)') }};width:44px;height:44px;font-size:13px;flex:none">{{ 'LT' if a.kind == 'problem' else ('BH' if a.kind == 'lesson' else 'TN') }}</span>
                         <div style="min-width:0">
                             <div style="font-weight:700;font-size:16px">{{ a.title }}</div>
                             <div style="font-size:13px;color:var(--c-muted)">
-                                {% if a.kind == 'problem' %}{{ it.problems|length }} {{ _('problems') }}: {% for p in it.problems[:5] %}<a href="{{ p.get_absolute_url() }}" style="font-family:'JetBrains Mono',monospace">{{ p.code }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
-                                {% elif a.quiz %}<a href="{{ a.quiz.get_absolute_url() }}">{{ a.quiz.title }}</a>{% endif %}
+                                {% if a.kind == 'lesson' and a.lesson %}<a href="{{ a.lesson.get_absolute_url() }}" style="font-weight:600">{{ a.lesson.course.name }} — {{ a.lesson.title }}</a>{% if it.problems or it.quizzes %} &middot; {% endif %}{% endif %}
+                                {% if a.kind in ('problem', 'lesson') and it.problems %}{{ it.problems|length }} {{ _('problems') }}: {% for p in it.problems[:5] %}<a href="{{ p.get_absolute_url() }}" style="font-family:'JetBrains Mono',monospace">{{ p.code }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% if it.problems|length > 5 %}…{% endif %}{% endif %}
+                                {% if a.kind == 'lesson' and it.quizzes %}{% if it.problems %} &middot; {% endif %}{{ it.quizzes|length }} {{ _('quizzes') }}{% elif a.kind == 'quiz' and a.quiz %}<a href="{{ a.quiz.get_absolute_url() }}">{{ a.quiz.title }}</a>{% endif %}
                             </div>
                             {% if a.description %}<div style="font-size:13px;margin-top:4px;white-space:pre-line">{{ a.description }}</div>{% endif %}
                         </div>
@@ -44,7 +45,7 @@
                 <h3 style="margin:0 0 14px;font-size:18px;font-weight:700">{{ _('New assignment') }}</h3>
                 {{ form.non_field_errors() }}
                 {% for field in form %}
-                    <div class="cx-field">
+                    <div class="cx-field" data-field="{{ field.name }}">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {% if field.name == 'due' %}<input type="text" name="due" id="{{ field.id_for_label }}" class="cx-input" placeholder="29/11/2026 23:59" value="{{ field.value() or '' }}">{% else %}{{ field }}{% endif %}
                         {% if field.help_text %}<span class="cx-hint">{{ field.help_text }}</span>{% endif %}
@@ -58,5 +59,21 @@
         {% endif %}
     </div>
 </div>
+<script>
+(function () {
+    var kind = document.getElementById('id_kind');
+    if (!kind) return;
+    var show = {problem: ['problem_codes'], quiz: ['quiz'], lesson: ['lesson']};
+    var all = ['problem_codes', 'quiz', 'lesson'];
+    function sync() {
+        all.forEach(function (name) {
+            var box = document.querySelector('[data-field="' + name + '"]');
+            if (box) box.style.display = (show[kind.value] || []).indexOf(name) >= 0 ? '' : 'none';
+        });
+    }
+    kind.addEventListener('change', sync);
+    sync();
+})();
+</script>
 <style>.cx .cx-field input[type=text], .cx .cx-field select, .cx .cx-field textarea { width: 100%; border: 1px solid var(--c-field); border-radius: 6px; padding: 0 12px; font: inherit; font-size: 14px; background: var(--c-card); color: var(--c-ink); height: 42px; } .cx .cx-field textarea { height: auto; padding: 10px 12px; }</style>
 {% endblock %}

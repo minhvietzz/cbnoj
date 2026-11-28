@@ -14,7 +14,7 @@ from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, bank, blog, comment, contests, course, language, license, mailgun, \
     notification, organization, preview, problem, problem_download, problem_manage, quiz, ranked_submission, \
     register, server_status, stats, status, submission, tag, tasks, ticket, two_factor, user, widgets
-from judge.views import classroom, practice, problem_run, quiz_exam, quiz_report, quiz_variants
+from judge.views import classroom, practice, problem_run, quiz_exam, quiz_report, quiz_variants, similarity
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -314,6 +314,7 @@ urlpatterns = [
         path('', course.CourseDetail.as_view(), name='course_detail'),
         path('lesson/<int:lesson>/', course.CourseLessonDetail.as_view(), name='course_lesson'),
         path('lesson/<int:lesson>/ranking/', course.CourseLessonRanking.as_view(), name='course_lesson_ranking'),
+        path('lesson/<int:lesson>/assign/', course.CourseLessonAssign.as_view(), name='course_lesson_assign'),
         path('grades/', course.CourseGrades.as_view(), name='course_grades'),
         *course_quiz_patterns,
         path('join/', course.CourseJoin.as_view(), name='course_join'),
@@ -337,6 +338,11 @@ urlpatterns = [
         path('/delete', contests.ContestDelete.as_view(), name='contest_delete'),
         path('/moss', contests.ContestMossView.as_view(), name='contest_moss'),
         path('/moss/delete', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
+        path('/similarity', similarity.ContestSimilarityView.as_view(), name='contest_similarity'),
+        path('/similarity/feed', similarity.ContestSimilarityFeed.as_view(), name='contest_similarity_feed'),
+        path('/similarity/<int:sim_id>', similarity.ContestSimilarityPair.as_view(), name='contest_similarity_pair'),
+        path('/similarity/<int:sim_id>/action', similarity.ContestSimilarityAction.as_view(),
+             name='contest_similarity_action'),
         path('/announce', contests.ContestAnnounce.as_view(), name='contest_announce'),
         path('/clone', contests.ContestClone.as_view(), name='contest_clone'),
         path('/ranking/', contests.ContestRanking.as_view(), name='contest_ranking'),
@@ -393,6 +399,7 @@ urlpatterns = [
              name='organization_user_solved'),
         path('/exams', organization.OrganizationExams.as_view(), name='organization_exams'),
         path('/classes', organization.OrganizationClasses.as_view(), name='organization_classes'),
+        path('/courses', organization.OrganizationCourses.as_view(), name='organization_courses'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),

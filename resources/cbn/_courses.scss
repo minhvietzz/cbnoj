@@ -1081,3 +1081,58 @@ body.cbn-ui .gr-table td.gr-user { min-width: 170px; }
 body.cbn-ui .gr-table tbody tr:hover td.gr-rank, body.cbn-ui .gr-table tbody tr:hover td.gr-user, body.cbn-ui .gr-table tbody tr:hover td.gr-total { background: var(--c-soft); }
 body.cbn-ui .gr-table tbody tr.gr-me td.gr-rank, body.cbn-ui .gr-table tbody tr.gr-me td.gr-user, body.cbn-ui .gr-table tbody tr.gr-me td.gr-total { background: #e8ecfa; }
 body.cbn-ui .gr-total-top { white-space: nowrap; }
+
+// ---- giao bài học / bài tập cho lớp (2026-11-27)
+body.cbn-ui ul.crs-items > li.crs-has-act {
+    display: flex;
+    align-items: center;
+
+    > a:first-child { flex: 1 1 auto; min-width: 0; }
+}
+body.cbn-ui ul.crs-items > li.crs-has-act > a.crs-act,
+body.cbn-ui ul.crs-items > li.crs-has-act > a.crs-act:link,
+body.cbn-ui ul.crs-items > li.crs-has-act > a.crs-act:visited {
+    display: inline-block;
+    flex: 0 0 auto;
+    margin: 0 18px 0 0;
+    padding: 4px 12px;
+    border: 1px solid var(--c-line);
+    border-radius: 6px;
+    background: var(--c-card);
+    color: var(--c-blue);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+    text-decoration: none;
+
+    &:hover { border-color: var(--c-blue); background: var(--c-blue); color: #fff; }
+}
+body.cbn-ui .crs-assign-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 640px;
+
+    .crs-fld { display: flex; flex-direction: column; gap: 6px; }
+    .crs-fld > label { font-size: 13px; font-weight: 600; color: var(--c-ink); }
+    input[type=text], select, textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+        height: 42px;
+        border: 1px solid var(--c-input);
+        border-radius: 6px;
+        background: var(--c-card);
+        color: var(--c-ink);
+        font: inherit;
+        font-size: 14px;
+    }
+    textarea { height: auto; padding: 10px 12px; }
+    .crs-hint { font-size: 12px; color: var(--c-mute); }
+    .crs-err { font-size: 12px; color: #b3261e; }
+    .crs-radios, .crs-checks { display: flex; flex-direction: column; gap: 8px; }
+    .crs-radio, .crs-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 400; cursor: pointer; }
+    .crs-checks { max-height: 260px; overflow: auto; padding: 10px 12px; border: 1px solid var(--c-line); border-radius: 6px; }
+    ul { list-style: none; margin: 0; padding: 0; }
+}
+body.cbn-ui .crs-assign-actions { display: flex; justify-content: flex-end; gap: 10px; }

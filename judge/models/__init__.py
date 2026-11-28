@@ -18,6 +18,7 @@ from judge.models.profile import Badge, Organization, OrganizationMonthlyUsage, 
 from judge.models.quiz import BankQuestion, BankTag, ExamVariant, Quiz, QuizAttempt, QuizOption, QuizProfileStat, \
     QuizQuestion, QuizTopicStat, QuizViolation
 from judge.models.runtime import Judge, Language, RuntimeVersion
+from judge.models.similarity import ContestSimilarity, SubmissionFingerprint
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.tag import Tag, TagData, TagGroup, TagProblem
 from judge.models.ticket import GeneralIssue, Ticket, TicketMessage

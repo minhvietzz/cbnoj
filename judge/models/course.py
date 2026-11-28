@@ -35,6 +35,10 @@ class Course(models.Model):
     classes = models.ManyToManyField('judge.Classroom', verbose_name=_('classes'), blank=True,
                                      related_name='courses',
                                      help_text=_('Members of these classes are students of the course.'))
+    organization = models.ForeignKey('judge.Organization', verbose_name=_('organization'), null=True, blank=True,
+                                     on_delete=models.SET_NULL, related_name='courses',
+                                     help_text=_('Optional. Members of the organization can open the course, '
+                                                 'and its administrators can edit it.'))
 
     class Meta:
         ordering = ('-created', 'name')
@@ -59,6 +63,14 @@ class Course(models.Model):
             return RoleInCourse.STUDENT
         return role
 
+    def is_org_admin(self, user):
+        return bool(user.is_authenticated and self.organization_id and
+                    self.organization.admins.filter(id=user.profile.id).exists())
+
+    def is_org_member(self, user):
+        return bool(user.is_authenticated and self.organization_id and
+                    user.profile.organizations.filter(id=self.organization_id).exists())
+
     def is_accessible_by(self, user):
         if not user.is_authenticated:
             return False
@@ -66,14 +78,18 @@ class Course(models.Model):
             return True
         if CourseRole.objects.filter(course=self, user=user.profile).exists():
             return True
-        return self.pk is not None and self.classes.filter(members__user=user.profile).exists()
+        if self.pk is not None and self.classes.filter(members__user=user.profile).exists():
+            return True
+        return self.is_org_member(user)
 
     def is_editable_by(self, user):
         if not user.is_authenticated:
             return False
         if user.is_superuser:
             return True
-        return CourseRole.objects.filter(course=self, user=user.profile, role__in=EDITABLE_ROLES).exists()
+        if CourseRole.objects.filter(course=self, user=user.profile, role__in=EDITABLE_ROLES).exists():
+            return True
+        return self.is_org_admin(user)
 
     def is_visible_to(self, user):
         return self.is_public or self.is_accessible_by(user)

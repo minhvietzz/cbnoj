@@ -39,36 +39,42 @@ def class_weights(classroom):
 
 
 def assignment_progress(assignment, ids):
-    """{profile id: {'done': 0..1, 'score': 0..10}} for the given students."""
+    """{profile id: {'done': 0..1, 'score': 0..10}} for the given students.
+
+    An assignment is a list of items: programming problems and quizzes (a whole lesson can hold both). Each item
+    weighs the same; a problem counts as done at full points, a quiz once a finished attempt exists.
+    """
     result = {pid: {'done': 0.0, 'score': 0.0} for pid in ids}
     if not ids:
         return result
-    if assignment.kind == ClassAssignment.KIND_QUIZ:
-        if assignment.quiz_id is None:
-            return result
-        rows = (QuizAttempt.objects.filter(quiz_id=assignment.quiz_id, user_id__in=ids, finished__isnull=False,
-                                           invalidated=False)
-                .values('user_id', 'score', 'max_score'))
-        for row in rows:
-            best = result[row['user_id']]
-            frac = row['score'] / row['max_score'] if row['max_score'] else 0.0
-            best['done'] = 1.0
-            best['score'] = max(best['score'], round(10 * frac, 2))
+    problems = {p.id: p.points for p in assignment.get_problems()}
+    quizzes = [q.id for q in assignment.get_quizzes()]
+    total = len(problems) + len(quizzes)
+    if not total:
         return result
-    problems = {p.id: p.points for p in assignment.problems.all()}
-    if not problems:
-        return result
-    rows = (Submission.objects.filter(user_id__in=ids, problem_id__in=list(problems), points__isnull=False)
-            .values('user_id', 'problem_id').annotate(best=Max('points')))
     solved = defaultdict(float)
     ratio_sum = defaultdict(float)
-    for row in rows:
-        full = problems[row['problem_id']]
-        ratio = min(1.0, row['best'] / full) if full else 0.0
-        ratio_sum[row['user_id']] += ratio
-        if ratio >= 0.999:
-            solved[row['user_id']] += 1
-    total = len(problems)
+    if problems:
+        rows = (Submission.objects.filter(user_id__in=ids, problem_id__in=list(problems), points__isnull=False)
+                .values('user_id', 'problem_id').annotate(best=Max('points')))
+        for row in rows:
+            full = problems[row['problem_id']]
+            ratio = min(1.0, row['best'] / full) if full else 0.0
+            ratio_sum[row['user_id']] += ratio
+            if ratio >= 0.999:
+                solved[row['user_id']] += 1
+    if quizzes:
+        best = {}
+        rows = (QuizAttempt.objects.filter(quiz_id__in=quizzes, user_id__in=ids, finished__isnull=False,
+                                           invalidated=False)
+                .values('user_id', 'quiz_id', 'score', 'max_score'))
+        for row in rows:
+            frac = row['score'] / row['max_score'] if row['max_score'] else 0.0
+            key = (row['user_id'], row['quiz_id'])
+            best[key] = max(best.get(key, 0.0), round(frac, 4))
+        for (uid, _quiz), frac in best.items():
+            solved[uid] += 1
+            ratio_sum[uid] += frac
     for pid in ids:
         result[pid] = {'done': solved[pid] / total, 'score': round(10 * ratio_sum[pid] / total, 2)}
     return result
@@ -289,7 +295,7 @@ def todo_for(profile, limit=5, now=None):
     classes = Classroom.objects.filter(members__user=profile, members__role=RoleInClass.STUDENT, is_archived=False)
     assignments = (ClassAssignment.objects.filter(classroom__in=classes, opens__lte=now)
                    .filter(Q(due__isnull=True) | Q(due__gte=now))
-                   .select_related('classroom', 'quiz').prefetch_related('problems'))
+                   .select_related('classroom', 'quiz', 'lesson').prefetch_related('problems'))
     rows = []
     for assignment in assignments:
         progress = assignment_progress(assignment, [profile.id])[profile.id]
@@ -319,3 +325,59 @@ def upcoming_exams(user, limit=3, days=21, now=None):
                       'kind': 'contest', 'minutes': int((contest.end_time - contest.start_time).total_seconds() // 60)})
     items.sort(key=lambda i: i['when'])
     return items[:limit]
+
+
+def staffed_classes(user):
+    """Active classes the user may give work to: their teachers and assistants, organization admins, superusers."""
+    from judge.models.classroom import STAFF_ROLES
+    classes = Classroom.objects.filter(is_archived=False)
+    if not user.is_authenticated:
+        return classes.none()
+    if user.is_superuser:
+        return classes
+    profile = user.profile
+    return classes.filter(Q(members__user=profile, members__role__in=STAFF_ROLES) |
+                          Q(organization__admins=profile)).distinct()
+
+
+def lesson_assign_error(user, classroom, lesson):
+    """Why `user` cannot give this lesson to `classroom` (a text), or None when it is fine.
+
+    Students must be able to open the lesson, so the class has to belong to the course. That is added for people who
+    may edit the course (see create_assignment); for anybody else the class must already be there.
+    """
+    from django.utils.translation import gettext as _
+    course = lesson.course
+    if not lesson.is_visible and not course.is_editable_by(user):
+        return _('This lesson is hidden.')
+    if not (course.is_visible_to(user) or course.is_editable_by(user)):
+        return _('You cannot use this course.')
+    if not course.classes.filter(pk=classroom.pk).exists() and not course.is_editable_by(user):
+        return _('This class is not part of the course "%s". Ask a course editor to add it first.') % course.name
+    return None
+
+
+def create_assignment(classroom, creator, *, title, kind, due=None, description='', problems=(), quiz=None,
+                      lesson=None, notify=True):
+    """Create a class assignment and tell the students. Callers check permissions first.
+
+    kind 'problem': `problems` (optionally `lesson` as the source); 'quiz': `quiz`; 'lesson': a whole `lesson`,
+    which also puts the class in the lesson's course so the students can open it.
+    """
+    from django.db import transaction
+    from django.urls import reverse
+    from django.utils.translation import gettext as _
+    from judge.models import make_notification
+    with transaction.atomic():
+        assignment = ClassAssignment.objects.create(
+            classroom=classroom, title=title, kind=kind, description=description, due=due, created_by=creator,
+            quiz=quiz if kind == ClassAssignment.KIND_QUIZ else None, lesson=lesson)
+        if kind == ClassAssignment.KIND_PROBLEM:
+            assignment.problems.set(problems)
+        if kind == ClassAssignment.KIND_LESSON:
+            lesson.course.classes.add(classroom)
+    if notify:
+        make_notification(student_ids(classroom), title=_('New assignment'),
+                          body='%s: %s' % (classroom.name, assignment.title),
+                          url=reverse('class_assignments', args=(classroom.slug,)))
+    return assignment

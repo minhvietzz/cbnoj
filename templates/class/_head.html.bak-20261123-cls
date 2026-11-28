@@ -1,0 +1,24 @@
+{# Header band of every class page. Needs: classroom, tab, can_manage, can_staff, my_role. #}
+<div class="cx-head">
+    <div class="cx-crumb"><a href="{{ url('class_list') }}">{{ _('My classes') }}</a>{% if tab == 'assignments' %} / <a href="{{ url('class_detail', classroom.slug) }}">{{ classroom.name }}</a>{% elif classroom.organization %} / <a href="{{ classroom.organization.get_absolute_url() }}">{{ classroom.organization.name }}</a>{% endif %}</div>
+    <div class="cx-title-row">
+        <div class="cx-title-main">
+            <h1 class="cx-title">{{ _('Assignments') if tab == 'assignments' else classroom.name }}</h1>
+            {% if my_role and tab != 'assignments' %}<span class="cx-chip">{{ role_names[my_role] }}</span>{% endif %}
+            {% if classroom.is_archived %}<span class="cx-chip warn">{{ _('Archived') }}</span>{% endif %}
+        </div>
+        {% if tab == 'assignments' %}{% if can_staff %}<a href="#new-assignment" class="cx-btn">{{ _('New assignment') }}</a>{% endif %}{% else %}<span class="cx-sub">
+            {% if head_homeroom %}{{ _('Homeroom:') }} {{ head_homeroom|join(', ') }} &middot; {% endif %}{{ head_student_count }} {{ _('pupils') }}{% if classroom.school_year %} &middot; {{ classroom.school_year }}{% endif %}{% if classroom.subject %} &middot; {{ classroom.subject.name }}{% endif %}
+        </span>{% endif %}
+    </div>
+    <div class="cx-tabs" role="navigation">
+        <a href="{{ url('class_detail', classroom.slug) }}" class="{{ 'on' if tab == 'home' }}">{{ _('Overview') }}</a>
+        <a href="{{ url('class_assignments', classroom.slug) }}" class="{{ 'on' if tab == 'assignments' }}">{{ _('Assignments') }}</a>
+        <a href="{{ url('class_ranking', classroom.slug) }}" class="{{ 'on' if tab == 'ranking' }}">{{ _('Class ranking') }}</a>
+        <a href="{{ url('class_grades', classroom.slug) }}" class="{{ 'on' if tab == 'grades' }}">{{ _('Grade book') }}</a>
+        <a href="{{ url('class_members', classroom.slug) }}" class="{{ 'on' if tab == 'members' }}">{{ _('Member list') }}</a>
+        <a href="{{ url('class_exams', classroom.slug) }}" class="{{ 'on' if tab == 'exams' }}">{{ _('Exams') }}</a>
+        {% if can_manage %}<a href="{{ url('class_edit', classroom.slug) }}" class="{{ 'on' if tab == 'edit' }}">{{ _('Edit class') }}</a>{% endif %}
+    </div>
+</div>
+{% if messages %}{% for message in messages %}<div class="cx-flash {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}

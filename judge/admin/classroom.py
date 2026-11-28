@@ -27,7 +27,7 @@ class ClassAssignmentAdmin(admin.ModelAdmin):
     list_display = ('title', 'classroom', 'kind', 'due', 'created')
     list_filter = ('kind', 'classroom')
     search_fields = ('title', 'classroom__name')
-    raw_id_fields = ('quiz', 'created_by')
+    raw_id_fields = ('quiz', 'lesson', 'created_by')
     filter_horizontal = ('problems',)
 
 

@@ -1,0 +1,52 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'similarity' %}
+    {% include "contest/contest-tabs.html" %}
+{% endblock %}
+
+{% block content_media %}
+    <style>
+        .sp-head { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 4px 0 14px; }
+        .sp-cols { display: flex; flex-wrap: wrap; gap: 16px; }
+        .sp-col { flex: 1 1 420px; min-width: 0; border: 1px solid rgba(128,128,128,.35); border-radius: 6px; overflow: hidden; }
+        .sp-col h3 { margin: 0; padding: 10px 14px; font-size: 14px; border-bottom: 1px solid rgba(128,128,128,.35); }
+        .sp-code { margin: 0; padding: 6px 0; font: 13px/1.5 "JetBrains Mono", Consolas, monospace; overflow-x: auto; }
+        .sp-line { display: block; padding: 0 12px 0 0; white-space: pre; }
+        .sp-line i { display: inline-block; width: 38px; text-align: right; padding-right: 10px; font-style: normal; opacity: .45; user-select: none; }
+        .sp-same { background: rgba(242, 183, 5, .25); }
+        .sp-pill { display: inline-block; padding: 2px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+        .sim-strong { background: #FBE9E7; color: #B3261E; }
+        .sim-review { background: #FFF3CD; color: #8A6200; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="sp-head">
+        <a href="{{ back_url }}">&larr; Danh sách</a>
+        <h2 style="margin: 0;">{{ pair.problem.name }}</h2>
+        <span class="sp-pill {{ 'sim-strong' if pair.level == 'strong' else 'sim-review' }}">{{ 'Rất đáng ngờ' if pair.level == 'strong' else 'Cần xem' }}</span>
+        <span>Cấu trúc <b>{{ (pair.score * 100)|round|int }}%</b> &middot; cả tên biến <b>{{ (pair.literal_score * 100)|round|int }}%</b> &middot; {{ same_count }} dòng giống hệt (tô vàng)</span>
+        <form method="post" action="{{ url('contest_similarity_action', contest.key, pair.id) }}" style="margin-left: auto;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ back_url }}">
+            {% if pair.status == 'dismissed' %}
+                <button class="button" name="action" value="restore">Bỏ đánh dấu</button>
+            {% else %}
+                <button class="button" name="action" value="dismiss">Đánh dấu: không phải gian lận</button>
+            {% endif %}
+        </form>
+    </div>
+    <div class="sp-cols">
+        <div class="sp-col">
+            <h3>{{ pair.participation_a.user.user.username }} &middot; <a href="{{ url('submission_status', pair.submission_a_id) }}">bài nộp #{{ pair.submission_a_id }}</a> &middot; {{ pair.submission_a.language.name }} &middot; {{ pair.submission_a.date|date('H:i:s d/m') }}</h3>
+            <pre class="sp-code">{% for n, t, same in lines_a %}<span class="sp-line{% if same %} sp-same{% endif %}"><i>{{ n }}</i>{{ t }}</span>{% endfor %}</pre>
+        </div>
+        <div class="sp-col">
+            <h3>{{ pair.participation_b.user.user.username }} &middot; <a href="{{ url('submission_status', pair.submission_b_id) }}">bài nộp #{{ pair.submission_b_id }}</a> &middot; {{ pair.submission_b.language.name }} &middot; {{ pair.submission_b.date|date('H:i:s d/m') }}</h3>
+            <pre class="sp-code">{% for n, t, same in lines_b %}<span class="sp-line{% if same %} sp-same{% endif %}"><i>{{ n }}</i>{{ t }}</span>{% endfor %}</pre>
+        </div>
+    </div>
+{% endblock %}

@@ -16,6 +16,7 @@ from judge.caching import finished_submission
 from judge.models import Judge, Language, LanguageLimit, Profile, \
     RuntimeVersion, Submission, SubmissionTestCase
 from judge.models.problem import ProblemTestcaseResultAccess
+from judge.tasks import check_submission_similarity
 from judge.utils.url import get_absolute_submission_file_url
 
 logger = logging.getLogger('judge.bridge')
@@ -445,6 +446,12 @@ class JudgeHandler(ZlibPacketHandler):
         submission.update_credit(total_time)
 
         finished_submission(submission)
+
+        if hasattr(submission, 'contest') and sub_points > 0:
+            try:
+                check_submission_similarity.delay(submission.id)
+            except Exception:
+                logger.exception('Could not queue similarity check for submission %s', submission.id)
 
         event.post('sub_%s' % submission.id_secret, {'type': 'grading-end'})
         if hasattr(submission, 'contest'):
